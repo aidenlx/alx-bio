@@ -10,7 +10,7 @@ function parsePos(input: string) {
 }
 export function parseSegmentQuery(query: string) {
   const [chr, _range] = query.split(":");
-  const range = _range.replaceAll(",", "");
+  const range = _range?.replaceAll(",", "");
   assert(range, `No range provided in query: ${query}`);
   switch(range.split("-").length) {
     case 2: {

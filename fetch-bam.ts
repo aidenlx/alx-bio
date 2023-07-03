@@ -35,7 +35,7 @@ export default new Command()
     "fetch reads around chr1:60000 (~50000bp)",
     "bioa fetch-bam /path/to/remote.bam chr1:60000^5e4"
   )
-  .action(async (options, _range, inputBam, outputName) => {
+  .action(async (options, inputBam, _range, outputName) => {
     const igvPort = options.igvPort ?? defaultIgvPort;
     if (!Number.isInteger(igvPort) || igvPort < 0 || igvPort > 65535) {
       console.error("Invalid IGV_PORT: " + igvPort);
