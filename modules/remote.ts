@@ -1,10 +1,9 @@
 import { basename, assert, join } from "../deps.ts";
-import { parseSegmentQuery } from "./parse.ts";
 
 export async function getBamSegment({
   inputBam,
-  outputName = basename(inputBam).split(".")[0],
-  range: _range,
+  range,
+  outputName = `${basename(inputBam).split(".")[0]}-${range.replace(":", "-")}`,
   sshDest,
 }: {
   inputBam: string;
@@ -15,9 +14,6 @@ export async function getBamSegment({
   const bam = `${outputName}.bam`,
     bamIdx = `${bam}.bai`;
 
-  // IGV can handle chr-less ranges, but samtools can't, detect it in remote
-  const range = parseSegmentQuery(_range).replace(/^chr/, "");
-  console.info(`Getting bam segment: ${range} (${_range})`);
   const localTmpDir = await Deno.makeTempDir();
 
   const script = `#!/bin/bash
@@ -49,7 +45,6 @@ ssh -C "${sshDest}" -t /bin/bash $REMOTE_SCRIPT | tar -x -C "${localTmpDir}"
 
   return {
     bam: join(localTmpDir, bam),
-    range,
     async cleanup() {
       await Deno.remove(localTmpDir, { recursive: true });
     },

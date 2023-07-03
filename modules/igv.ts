@@ -1,8 +1,9 @@
 import { BufReader, BufWriter } from "../deps.ts";
+export const defaultIgvPort = 60151;
 
 export async function connectIGV({
   hostname = "127.0.0.1",
-  port = 60151,
+  port = defaultIgvPort,
 }: {
   hostname?: string;
   port?: number;

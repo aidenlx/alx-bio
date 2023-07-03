@@ -5,4 +5,6 @@ export {
   Command,
   CompletionsCommand,
   HelpCommand,
+  Type,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.1/command/mod.ts";
+export type { ArgumentValue } from "https://deno.land/x/cliffy@v1.0.0-rc.1/command/mod.ts";

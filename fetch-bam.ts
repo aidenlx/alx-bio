@@ -1,15 +1,23 @@
 import { Command } from "./deps.ts";
-import { connectIGV } from "./modules/igv.ts";
+import { connectIGV, defaultIgvPort } from "./modules/igv.ts";
+import { RangeType } from "./modules/parse.ts";
 import { getBamSegment } from "./modules/remote.ts";
 
-const defaultIgvPort = 60151;
 const envPrefix = "RI_" as const;
 
 export default new Command()
   .name("fetch-bam")
   .description("Fetch a segment of a remote BAM file and load into IGV")
+  .type("range", new RangeType())
+  .type("port", ({ value }) => {
+    const port = +value;
+    if (!Number.isInteger(port) || port < 0 || port > 65535) {
+      throw new Error("Invalid port: " + port);
+    }
+    return port;
+  })
   .env(
-    `${envPrefix}IGV_PORT=<value:number>`,
+    `${envPrefix}IGV_PORT=<value:port>`,
     `Port for IGV to connect to (default to ${defaultIgvPort})`,
     { prefix: envPrefix }
   )
@@ -18,29 +26,28 @@ export default new Command()
     "SSH destination for remote IGV",
     { required: true, prefix: envPrefix }
   )
-  .arguments("<inputBam:string> <range:string> [label_name:string]")
+  .option("-r, --range <range:range>", "Range to fetch", { required: true })
+  .option("-l, --label <name:string>", "label of the track")
+  .arguments("<inputBam:string>")
   .example(
     "fetch chr1:5000-6000 from /path/to/remote.bam",
-    "bio fetch-bam /path/to/remote.bam chr1:5000-6000"
+    "bio fetch-bam /path/to/remote.bam -r chr1:5000-6000"
   )
   .example(
-    "fetch reads around chr1:60000 (~1000bp by default)",
-    "bioa fetch-bam /path/to/remote.bam chr1:60000"
+    "fetch around chr1:60000 (~1000bp by default) with label 'mine'",
+    "bioa fetch-bam /path/to/remote.bam -r chr1:60000 -l mine"
   )
   .example(
-    "fetch reads around chr1:60000 (~5000bp)",
-    "bioa fetch-bam /path/to/remote.bam chr1:60000^5000"
+    "fetch around chr1:60000 (~5000bp)",
+    "bioa fetch-bam /path/to/remote.bam -r chr1:60000^5000"
   )
   .example(
-    "fetch reads around chr1:60000 (~50000bp)",
-    "bioa fetch-bam /path/to/remote.bam chr1:60000^5e4"
+    "fetch around chr1:60000 (~50000bp)",
+    "bioa fetch-bam /path/to/remote.bam -r chr1:60000^5e4"
   )
-  .action(async (options, inputBam, _range, outputName) => {
-    const igvPort = options.igvPort ?? defaultIgvPort;
-    if (!Number.isInteger(igvPort) || igvPort < 0 || igvPort > 65535) {
-      console.error("Invalid IGV_PORT: " + igvPort);
-      Deno.exit(1);
-    }
+  .action(async (options, inputBam) => {
+    const { label, range, sshDest, igvPort } = options;
+
     const igvConn = await connectIGV({ port: igvPort }).catch((error) => {
       if (error instanceof Deno.errors.ConnectionRefused) {
         console.error(
@@ -52,11 +59,12 @@ export default new Command()
       }
       throw error;
     });
-    const { bam, range, cleanup } = await getBamSegment({
+    console.info(`Getting bam segment: ${range}`);
+    const { bam, cleanup } = await getBamSegment({
       inputBam,
-      outputName,
-      range: _range,
-      sshDest: options.sshDest,
+      outputName: label,
+      range,
+      sshDest,
     });
     console.info(
       `Got bam and bam index files within range ${range}, loading into IGV`
