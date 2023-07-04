@@ -6,5 +6,7 @@ export {
   CompletionsCommand,
   HelpCommand,
   Type,
+  ValidationError,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.1/command/mod.ts";
 export type { ArgumentValue } from "https://deno.land/x/cliffy@v1.0.0-rc.1/command/mod.ts";
+export { $ } from "npm:zx@7.1.1/core";

@@ -1,5 +1,17 @@
-import { assert } from "https://deno.land/std@0.192.0/_util/asserts.ts";
-import { ArgumentValue, Type } from "../deps.ts";
+import { ArgumentValue, Type, ValidationError } from "../deps.ts";
+
+export function assert(expr: unknown, msg = ""): asserts expr {
+  if (expr) return;
+  throw new ValidationError(msg);
+}
+
+export function portType({ value }: ArgumentValue) {
+  const port = +value;
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new ValidationError("Invalid port: " + port);
+  }
+  return port;
+}
 
 // chr1 to chrY
 const chrom = [
@@ -20,7 +32,7 @@ export class RangeType extends Type<string> {
     assert(!!chr, `No chromosome provided in query: ${query}`);
 
     // IGV can handle chr-less ranges, but samtools can't,
-    // detect from bam header it in remote
+    // detect from bam header in remote
     chr = chr.replace(/^chr/, "");
     assert(range, `No range provided in query: ${query}`);
     switch (range.split("-").length) {
@@ -38,7 +50,7 @@ export class RangeType extends Type<string> {
         }
       }
       default:
-        throw new Error(`Invalid range: ${range}`);
+        throw new ValidationError(`Invalid range: ${range}`);
     }
   }
 }

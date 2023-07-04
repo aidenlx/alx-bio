@@ -1,6 +1,6 @@
 import { Command } from "./deps.ts";
 import { connectIGV, defaultIgvPort } from "./modules/igv.ts";
-import { RangeType } from "./modules/parse.ts";
+import { RangeType, portType } from "./modules/parse.ts";
 import { getBamSegment } from "./modules/remote.ts";
 
 const envPrefix = "RI_" as const;
@@ -9,13 +9,7 @@ export default new Command()
   .name("fetch-bam")
   .description("Fetch a segment of a remote BAM file and load into IGV")
   .type("range", new RangeType())
-  .type("port", ({ value }) => {
-    const port = +value;
-    if (!Number.isInteger(port) || port < 0 || port > 65535) {
-      throw new Error("Invalid port: " + port);
-    }
-    return port;
-  })
+  .type("port", portType)
   .env(
     `${envPrefix}IGV_PORT=<value:port>`,
     `Port for IGV to connect to (default to ${defaultIgvPort})`,
