@@ -11,6 +11,16 @@ export async function connectIGV({
   const igvConn = await Deno.connect({
     port,
     hostname,
+  }).catch((error) => {
+    if (error instanceof Deno.errors.ConnectionRefused) {
+      console.error(
+        `Connection to IGV failed, make sure IGV is running ` +
+          `and Port ${port} is enabled in View > Preferences > Advanced.` +
+          error.message.replace("Connection refused", "")
+      );
+      Deno.exit(1);
+    }
+    throw error;
   });
   const writer = new BufWriter(igvConn);
   const reader = new BufReader(igvConn);

@@ -2,13 +2,16 @@ import { basename, assert, join, $ } from "../deps.ts";
 
 export async function getBamSegment({
   inputBam,
-  range,
-  outputName = `${basename(inputBam).split(".")[0]}-${range.replace(":", "-")}`,
+  region,
+  outputName = `${basename(inputBam).split(".")[0]}-${region.replace(
+    ":",
+    "-"
+  )}`,
   sshDest,
 }: {
   inputBam: string;
   outputName?: string;
-  range: string;
+  region: string;
   sshDest: string;
 }) {
   const bam = `${outputName}.bam`,
@@ -22,7 +25,7 @@ INPUT_BAM=$(realpath "${inputBam}")
 TMP_DIR=$(mktemp -d); cd $TMP_DIR
 __cleanup () { rm -rf $TMP_DIR; }; trap __cleanup EXIT
 RANGE_PREFIX=$(samtools view "$INPUT_BAM" -H | grep '@SQ' | cut -f 2 | grep -q 'chr' && echo 'chr' || echo '');
-samtools view "$INPUT_BAM" -h $RANGE_PREFIX"${range}" \
+samtools view "$INPUT_BAM" -h $RANGE_PREFIX"${region}" \
 | samtools sort -o "${bam}" - && samtools index "${bam}" \
 && tar -c "${bam}" "${bamIdx}"`;
 

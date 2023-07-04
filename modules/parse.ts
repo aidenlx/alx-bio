@@ -20,43 +20,43 @@ const chrom = [
   "Y",
 ].map((v) => `chr${v}:`);
 
-export class RangeType extends Type<string> {
+export class RegionType extends Type<string> {
   complete(): string[] {
     return chrom;
   }
 
-  parse({ value: query }: ArgumentValue): string {
-    let [chr, range] = query.split(":");
-    range = range?.replaceAll(",", "");
+  parse({ value: query }: Pick<ArgumentValue, "value">): string {
+    let [chr, region] = query.split(":");
+    region = region?.replaceAll(",", "");
 
     assert(!!chr, `No chromosome provided in query: ${query}`);
 
-    // IGV can handle chr-less ranges, but samtools can't,
+    // IGV can handle chr-less regions, but samtools can't,
     // detect from bam header in remote
     chr = chr.replace(/^chr/, "");
     // support variant syntax (chr1-123-A-T)
-    if (!range && chr.match(/^[0-9XY]{1,2}-\d+-[A-Z]+-[A-Z]+$/)) {
-      [chr, range] = chr.split("-");
-    } else if (range?.match(/^\d+-[A-Z]+-[A-Z]+$/)) {
-      [range] = range.split("-");
+    if (!region && chr.match(/^[0-9XY]{1,2}-\d+-[A-Z]+-[A-Z]+$/)) {
+      [chr, region] = chr.split("-");
+    } else if (region?.match(/^\d+-[A-Z]+-[A-Z]+$/)) {
+      [region] = region.split("-");
     }
-    assert(range, `No range provided in query: ${query}`);
-    switch (range.split("-").length) {
+    assert(region, `No region provided in query: ${query}`);
+    switch (region.split("-").length) {
       case 2: {
-        const [start, _end] = range.split("-");
+        const [start, _end] = region.split("-");
         const [end, offset] = _end.split("^");
         return toRange(chr, start, end, offset);
       }
       case 1: {
-        const [pos, offset] = range.split("^");
+        const [pos, offset] = region.split("^");
         if (offset) {
           return toRange(chr, pos, pos, offset);
         } else {
-          return toRange(chr, pos, pos, "1000");
+          return toRange(chr, pos, pos, "100");
         }
       }
       default:
-        throw new ValidationError(`Invalid range: ${range}`);
+        throw new ValidationError(`Invalid region: ${region}`);
     }
   }
 }
@@ -76,7 +76,7 @@ function toRange(chr: string, _start: string, _end: string, _offset: string) {
   const offset = _offset ? parsePos(_offset) : 0;
   assert(
     [start, end, offset].every((x) => !Number.isNaN(x)),
-    `Invalid range, must be in format: (pos)-(pos)[^offset]`
+    `Invalid region, must be in format: (pos)-(pos)[^offset]`
   );
   if (start < end) {
     console.warn(`Range start < end, swapping`);

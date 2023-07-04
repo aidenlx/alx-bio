@@ -1,10 +1,12 @@
 import { Command, CompletionsCommand, HelpCommand } from "./deps.ts";
-import inspectBam from "./inspect-bam.ts";
+import inspectBamBatch from "./insp-bam-b.ts";
+import inspectBam from "./insp-bam.ts";
 
 await new Command()
   .name("bioa")
   .version("0.1.0")
-  .command("inspect-bam", inspectBam)
+  .command("insp-bam", inspectBam)
+  .command("insp-bam-batch", inspectBamBatch)
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
