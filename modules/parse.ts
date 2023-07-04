@@ -5,6 +5,8 @@ export function assert(expr: unknown, msg = ""): asserts expr {
   throw new ValidationError(msg);
 }
 
+export const defaultOffset = "100";
+
 export function portType({ value }: ArgumentValue) {
   const port = +value;
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
@@ -52,7 +54,7 @@ export class RegionType extends Type<string> {
         if (offset) {
           return toRange(chr, pos, pos, offset);
         } else {
-          return toRange(chr, pos, pos, "100");
+          return toRange(chr, pos, pos, defaultOffset);
         }
       }
       default:

@@ -1,6 +1,6 @@
 import { Command } from "./deps.ts";
 import { connectIGV, defaultIgvPort } from "./modules/igv.ts";
-import { RegionType, portType } from "./modules/parse.ts";
+import { RegionType, defaultOffset, portType } from "./modules/parse.ts";
 import { getBamSegment } from "./modules/remote.ts";
 
 const envPrefix = "RI_" as const;
@@ -28,7 +28,7 @@ export default new Command()
     "bio insp-bam /path/to/remote.bam -r chr1:5000-6000"
   )
   .example(
-    "fetch around chr1:60000 (~1000bp by default) with label 'mine'",
+    `fetch around chr1:60000 (~${defaultOffset}bp by default) with label 'mine'`,
     "bioa insp-bam /path/to/remote.bam -r chr1:60000 -l mine"
   )
   .example(
