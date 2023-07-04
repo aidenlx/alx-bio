@@ -34,6 +34,12 @@ export class RangeType extends Type<string> {
     // IGV can handle chr-less ranges, but samtools can't,
     // detect from bam header in remote
     chr = chr.replace(/^chr/, "");
+    // support variant syntax (chr1-123-A-T)
+    if (!range && chr.match(/^[0-9XY]{1,2}-\d+-[A-Z]+-[A-Z]+$/)) {
+      [chr, range] = chr.split("-");
+    } else if (range?.match(/^\d+-[A-Z]+-[A-Z]+$/)) {
+      [range] = range.split("-");
+    }
     assert(range, `No range provided in query: ${query}`);
     switch (range.split("-").length) {
       case 2: {

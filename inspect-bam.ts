@@ -6,7 +6,7 @@ import { getBamSegment } from "./modules/remote.ts";
 const envPrefix = "RI_" as const;
 
 export default new Command()
-  .name("fetch-bam")
+  .name("inspect-bam")
   .description("Fetch a segment of a remote BAM file and load into IGV")
   .type("range", new RangeType())
   .type("port", portType)
@@ -25,19 +25,19 @@ export default new Command()
   .arguments("<inputBam:string>")
   .example(
     "fetch chr1:5000-6000 from /path/to/remote.bam",
-    "bio fetch-bam /path/to/remote.bam -r chr1:5000-6000"
+    "bio inspect-bam /path/to/remote.bam -r chr1:5000-6000"
   )
   .example(
     "fetch around chr1:60000 (~1000bp by default) with label 'mine'",
-    "bioa fetch-bam /path/to/remote.bam -r chr1:60000 -l mine"
+    "bioa inspect-bam /path/to/remote.bam -r chr1:60000 -l mine"
   )
   .example(
     "fetch around chr1:60000 (~5000bp)",
-    "bioa fetch-bam /path/to/remote.bam -r chr1:60000^5000"
+    "bioa inspect-bam /path/to/remote.bam -r chr1:60000^5000"
   )
   .example(
     "fetch around chr1:60000 (~50000bp)",
-    "bioa fetch-bam /path/to/remote.bam -r chr1:60000^5e4"
+    "bioa inspect-bam /path/to/remote.bam -r chr1:60000^5e4"
   )
   .action(async (options, inputBam) => {
     const { label, range, sshDest, igvPort } = options;
