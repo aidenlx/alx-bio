@@ -21,13 +21,12 @@ export async function getBamSegment({
 
   const remoteScript = `#!/bin/bash
 set -e
-INPUT_BAM=$(realpath "${inputBam}")
-TMP_DIR=$(mktemp -d); cd $TMP_DIR
+TMP_DIR=$(mktemp -d);
 __cleanup () { rm -rf $TMP_DIR; }; trap __cleanup EXIT
-RANGE_PREFIX=$(samtools view "$INPUT_BAM" -H | grep '@SQ' | cut -f 2 | grep -q 'chr' && echo 'chr' || echo '');
-samtools view "$INPUT_BAM" -h $RANGE_PREFIX"${region}" \
-| samtools sort -o "${bam}" - && samtools index "${bam}" \
-&& tar -c "${bam}" "${bamIdx}"`;
+RANGE_PREFIX=$(samtools view "${inputBam}" -H | grep '@SQ' | cut -f 2 | grep -q 'chr' && echo 'chr' || echo '');
+samtools view "${inputBam}" -h $RANGE_PREFIX"${region}" \
+| samtools sort -o $TMP_DIR/"${bam}" - && samtools index $TMP_DIR/"${bam}" \
+&& cd $TMP_DIR && tar -c "${bam}" "${bamIdx}"`;
 
   const remoteResp =
     await $`ssh -C ${sshDest} ${remoteScript} | tar -x -C ${localTmpDir}`
