@@ -63,7 +63,7 @@ export class RegionType extends Type<string> {
   }
 }
 
-function parsePos(input: string) {
+function parsePos(input: string): number {
   input = input.replaceAll(",", "");
   if (Number.isInteger(+input) && +input > 0) {
     return +input;
@@ -74,14 +74,15 @@ function parsePos(input: string) {
 
 function toRange(chr: string, _start: string, _end: string, _offset: string) {
   let start = parsePos(_start),
-    end = parsePos(_end);
+  end = parsePos(_end);
   const offset = _offset ? parsePos(_offset) : 0;
+  console.log({ chr, start, end, offset });
   assert(
     [start, end, offset].every((x) => !Number.isNaN(x)),
     `Invalid region, must be in format: (pos)-(pos)[^offset]`
   );
-  if (start < end) {
-    console.warn(`Range start < end, swapping`);
+  if (start > end) {
+    console.warn(`Range start > end, swapping`);
     [start, end] = [end, start];
   }
   start = start - offset >= 0 ? start - offset : 1;

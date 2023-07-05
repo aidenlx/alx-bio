@@ -30,7 +30,7 @@ samtools view "$INPUT_BAM" -h $RANGE_PREFIX"${region}" \
 && tar -c "${bam}" "${bamIdx}"`;
 
   const remoteResp =
-    await $`ssh -C ${sshDest} ${remoteScript} | tar -x -C ${localTmpDir}`.quiet();
+    await $`ssh -C ${sshDest} ${remoteScript} | tar -x -C ${localTmpDir}`
 
   assert(
     remoteResp.exitCode === 0,
