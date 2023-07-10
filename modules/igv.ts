@@ -42,5 +42,8 @@ export async function connectIGV({
       }
       igvConn.close();
     },
+    close() {
+      igvConn.close();
+    },
   };
 }
