@@ -7,7 +7,7 @@ export async function connectIGV({
 }: {
   hostname?: string;
   port?: number;
-}) {
+} = {}) {
   const igvConn = await Deno.connect({
     port,
     hostname,
@@ -27,19 +27,19 @@ export async function connectIGV({
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   return {
-    async exec(command: string): Promise<void> {
-      await writer.write(encoder.encode(command + "\n"));
-      await writer.flush();
+    async exec(...commands: string[]): Promise<void> {
+      for (const command of commands) {
+        await writer.write(encoder.encode(command + "\n"));
+        await writer.flush();
 
-      const response = await reader.readLine();
-      const respText = decoder.decode(response?.line);
-      if (respText !== "OK") {
-        throw new Error(`Error for "${command}": ${respText}`);
-      } else {
-        return;
+        const response = await reader.readLine();
+        const respText = decoder.decode(response?.line);
+        if (respText !== "OK") {
+          throw new Error(`Error for "${command}": ${respText}`);
+        } else {
+          console.log(`OK: ${command}`);
+        }
       }
-    },
-    close() {
       igvConn.close();
     },
   };

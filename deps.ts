@@ -9,7 +9,7 @@ export {
   ValidationError,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.1/command/mod.ts";
 export type { ArgumentValue } from "https://deno.land/x/cliffy@v1.0.0-rc.1/command/mod.ts";
-export { $ } from "npm:zx@7.1.1/core";
+export { $, cd } from "npm:zx@7.1.1/core";
 export { parse as yamlParse } from "https://deno.land/std@0.192.0/yaml/mod.ts";
 export * as c from "https://deno.land/std@0.192.0/fmt/colors.ts";
 export { keypress } from "https://deno.land/x/cliffy@v1.0.0-rc.1/keypress/mod.ts";

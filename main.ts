@@ -4,7 +4,7 @@ import inspectBam from "./insp-bam.ts";
 
 await new Command()
   .name("bioa")
-  .version("0.2.2")
+  .version("0.2.3")
   .command("insp-bam", inspectBam)
   .command("insp-bam-batch", inspectBamBatch)
   .command("help", new HelpCommand().global())

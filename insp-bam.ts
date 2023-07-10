@@ -42,7 +42,6 @@ export default new Command()
   .action(async (options, inputBam) => {
     const { label, region, sshDest, igvPort } = options;
 
-    const igvConn = await connectIGV({ port: igvPort });
     console.info(`Getting bam segment: ${region}`);
     const { bam, cleanup } = await getBamSegment({
       inputBam,
@@ -54,9 +53,8 @@ export default new Command()
       `Got bam and bam index files within region ${region}, loading into IGV`
     );
 
-    await igvConn.exec(`load ${bam}`);
-    await igvConn.exec(`goto ${region}`);
-
-    igvConn.close();
+    await connectIGV({ port: igvPort }).then((i) =>
+      i.exec(`load ${bam}`, `goto ${region}`)
+    );
     await cleanup();
   });

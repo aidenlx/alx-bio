@@ -76,7 +76,6 @@ function toRange(chr: string, _start: string, _end: string, _offset: string) {
   let start = parsePos(_start),
   end = parsePos(_end);
   const offset = _offset ? parsePos(_offset) : 0;
-  console.log({ chr, start, end, offset });
   assert(
     [start, end, offset].every((x) => !Number.isNaN(x)),
     `Invalid region, must be in format: (pos)-(pos)[^offset]`
