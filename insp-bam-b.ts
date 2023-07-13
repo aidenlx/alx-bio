@@ -15,22 +15,24 @@ import { getBamSegment } from "./modules/remote.ts";
 
 const regionParser = new RegionType();
 const yamlFormat = z.record(
-  z.array(
-    z.string().superRefine((value, ctx) => {
-      try {
-        regionParser.parse({ value });
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: error.message,
-          });
-        } else {
-          throw error;
+  z
+    .array(
+      z.string().superRefine((value, ctx) => {
+        try {
+          regionParser.parse({ value });
+        } catch (error) {
+          if (error instanceof ValidationError) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: error.message,
+            });
+          } else {
+            throw error;
+          }
         }
-      }
-    })
-  )
+      })
+    )
+    .or(z.record(z.string().min(0), z.record(z.string().min(0), z.unknown())))
 );
 
 export default new Command()
@@ -59,13 +61,23 @@ export default new Command()
         .then(yamlParse)
         .then(yamlFormat.parseAsync)
     )
-      .flatMap(([inputBam, regions]) =>
-        regions.map((value) => ({
-          inputBam,
-          query: value,
-          region: regionParser.parse({ value }),
-        }))
-      )
+      .flatMap(([inputBam, regions]) => {
+        if (Array.isArray(regions)) {
+          return regions.map((query) => ({
+            inputBam,
+            query,
+            region: regionParser.parse({ value: query }),
+          }));
+        } else {
+          return Object.keys(regions).map((query) => {
+            return {
+              inputBam,
+              query,
+              region: regionParser.parse({ value: query }),
+            };
+          });
+        }
+      })
       .values();
 
     console.clear();
@@ -124,7 +136,6 @@ export default new Command()
         promptForNextQuery(values.curr);
         continue;
       }
-      goNext();
       if (values.curr.done) break;
       const { inputBam, region } = values.curr.value;
       console.info(`Fetching bam segment`);
@@ -139,7 +150,8 @@ export default new Command()
       );
       await cleanup();
       console.clear();
-      const prettyQuery = printQuery(values.curr.value);
+      goNext();
+      const prettyQuery = printQuery(values.prev!.value);
       console.log(`Loaded ${prettyQuery}`);
       promptForNextQuery(values.curr);
     }
