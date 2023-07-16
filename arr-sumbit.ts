@@ -29,6 +29,7 @@ export default new Command()
   .name("arr-sumbit")
   .description("Inspect a list of variant calls in a BAM file")
   .option("-a, --array <array:string>", "job array index values")
+  .option("--dependency <deps:string>", "job dependency")
   .type("ref", ref)
   .type("method", method)
   .option("--parsable", "parsable output")
@@ -37,6 +38,7 @@ export default new Command()
   })
   .option("-m, --method <type:method>", "method", { required: true })
   .option("-r, --ref <ref:ref>", "reference genome", { required: true })
+  .option("--skip-gt", "pause before gvcf->rawvcf")
   .arguments("<array_file:file>")
   .action(async (options, arrayFile) => {
     const job = (name: string) => ["-J", `${options.jobName}-${name}`];
@@ -73,7 +75,9 @@ export default new Command()
 
     const ref_call = options.ref === "hg19" ? "hs37" : options.ref;
 
-    const bam = await $`sbatch ${opts} ${job("bam")} \
+    const bam = await $`sbatch ${opts} ${job("bam")} ${
+      options.dependency ? ["--dependency", options.dependency] : []
+    } \
 ${script("snv-bam.slurm")} \
 ${arrayFile} ${ref_call} ${options.method}`;
 
@@ -81,27 +85,34 @@ ${arrayFile} ${ref_call} ${options.method}`;
 ${depAfterCorr(bam)} ${script("snv-vcf.slurm")} \
 ${arrayFile} ${ref_call} ${options.method}`;
 
-    const ref_annot = options.ref;
+    const jobs = [bam, vcf];
 
-    const cadd = await $`sbatch ${opts} ${job("cadd")} \
-${depAfterCorr(vcf)} ${script("cadd.slurm")} \
+    if (!options.skipGt) {
+      const merge = await $`sbatch ${opts} ${job("merge")} \
+${depAfterCorr(vcf)} ${script("snv-merge.slurm")} \
+${arrayFile} ${ref_call}`;
+
+      const ref_annot = options.ref;
+
+      const cadd = await $`sbatch ${opts} ${job("cadd")} \
+${depAfterCorr(merge)} ${script("cadd.slurm")} \
 ${arrayFile} ${ref_annot}`;
 
-    const annot_single = await $`sbatch ${opts} ${job("anns")} \
-${depAfterCorr(vcf)} ${script("snv-annot-s.slurm")} \
+      const annot_single = await $`sbatch ${opts} ${job("anns")} \
+${depAfterCorr(merge)} ${script("snv-annot-s.slurm")} \
 ${arrayFile} ${ref_annot}`;
 
-    const annot_multi = await $`sbatch ${opts} ${job("annm")} \
+      const annot_multi = await $`sbatch ${opts} ${job("annm")} \
 ${depAfterCorr(annot_single)} ${script("snv-annot-m.slurm")} \
 ${arrayFile} ${ref_annot}`;
 
-    const final = await $`sbatch ${opts} ${job("final")} \
+      const final = await $`sbatch ${opts} ${job("final")} \
 ${depAfterCorr(annot_multi, cadd)} ${script("snv-final.slurm")} \
 ${arrayFile} ${ref_annot}`;
+      jobs.push(merge, cadd, annot_single, annot_multi, final);
+    }
 
-    const jobIds = [bam, vcf, cadd, annot_single, annot_multi, final]
-      .map(toJobId)
-      .join(" ");
+    const jobIds = jobs.map(toJobId).join(" ");
     if (options.parsable) {
       console.log(jobIds);
     } else {
