@@ -74,10 +74,10 @@ export default new Command()
     });
     await ensureDir(opts.out);
     const types = opts.type as PlotType[];
-    console.log(`type: ${types.join(", ")}`);
 
     const downloadGraph = getDlGraphFn(browser, opts.out);
     const genes = new Set(inputGenes);
+    console.log(`genes: ${[...genes]}, type: ${types}`);
     const existing = new Set<string>();
     for await (const i of Deno.readDir(opts.out)) {
       if (i.isDirectory) continue;
