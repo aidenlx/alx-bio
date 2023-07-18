@@ -39,6 +39,7 @@ export default new Command()
   .option("-m, --method <type:method>", "method", { required: true })
   .option("-r, --ref <ref:ref>", "reference genome", { required: true })
   .option("--skip-gt", "pause before gvcf->rawvcf")
+  .option("--no-cleanup", "do not clean up intermediate files")
   .arguments("<array_file:file>")
   .action(async (options, arrayFile) => {
     const job = (name: string) => ["-J", `${options.jobName}-${name}`];
@@ -79,11 +80,15 @@ export default new Command()
       options.dependency ? ["--dependency", options.dependency] : []
     } \
 ${script("snv-bam.slurm")} \
-${arrayFile} ${ref_call} ${options.method}`;
+${arrayFile} ${ref_call} ${options.method} ${
+      !options.cleanup ? "--no-cleanup" : ""
+    }`;
 
     const vcf = await $`sbatch ${opts} ${job("vcf")} \
 ${depAfterCorr(bam)} ${script("snv-vcf.slurm")} \
-${arrayFile} ${ref_call} ${options.method}`;
+${arrayFile} ${ref_call} ${options.method} ${
+      !options.cleanup ? "--no-cleanup" : ""
+    }`;
 
     const jobs = [bam, vcf];
 
