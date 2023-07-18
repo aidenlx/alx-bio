@@ -1,4 +1,3 @@
-import arrSumbit from "./arr-sumbit.ts";
 import { Command, CompletionsCommand, HelpCommand } from "./deps.ts";
 import exomiserCfg from "./exomiser-cfg.ts";
 import inspectBamBatch from "./insp-bam-b.ts";
@@ -10,7 +9,6 @@ await new Command()
   .version("0.4.0")
   .command("insp-bam", inspectBam)
   .command("insp-bam-batch", inspectBamBatch)
-  .command("arr-submit", arrSumbit)
   .command("exomiser-cfg", exomiserCfg)
   .command("gtex-plot", gtexPlot)
   .command("help", new HelpCommand().global())
