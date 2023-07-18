@@ -38,7 +38,9 @@ export default new Command()
   })
   .option("-m, --method <type:method>", "method", { required: true })
   .option("-r, --ref <ref:ref>", "reference genome", { required: true })
+  .option("--interval <interval:file>", "interval BED file")
   .option("--skip-gt", "pause before gvcf->rawvcf")
+  .option("--align-only", "pause after alignment")
   .option("--no-cleanup", "do not clean up intermediate files")
   .arguments("<array_file:file>")
   .action(async (options, arrayFile) => {
@@ -50,6 +52,7 @@ export default new Command()
       );
     }
     const list = await Deno.open(arrayFile, { read: true });
+    console.log(`Reading array file: ${arrayFile}`);
     let lineCount = 0;
     for await (const line of readLines(list)) {
       lineCount++;
@@ -73,50 +76,59 @@ export default new Command()
     console.log(`Array index: ${array}`);
 
     const opts = [...commonOptions, ...["-a", array]];
+    const initDependency = options.dependency
+      ? ["--dependency", options.dependency]
+      : [];
+    const intevalOption =
+      options.interval && options.method === "wes"
+        ? ["--interval", options.interval]
+        : [];
+    const cleanup = options.cleanup ? "" : "--no-cleanup";
 
     const ref_call = options.ref === "hg19" ? "hs37" : options.ref;
 
-    const bam = await $`sbatch ${opts} ${job("bam")} ${
-      options.dependency ? ["--dependency", options.dependency] : []
-    } \
-${script("snv-bam.slurm")} \
-${arrayFile} ${ref_call} ${options.method} ${
-      !options.cleanup ? "--no-cleanup" : ""
-    }`;
+    const align = await $`sbatch ${opts} ${job("align")} ${initDependency} \
+${script("snv-align.slurm")} \
+${arrayFile} ${ref_call} ${options.method} ${cleanup}`;
 
-    const vcf = await $`sbatch ${opts} ${job("vcf")} \
+    const jobs = [align];
+
+    if (!options.alignOnly) {
+      const bam = await $`sbatch ${opts} ${job("bam")} \
+${depAfterCorr(align)} ${script("snv-bam.slurm")} \
+${arrayFile} ${ref_call} ${options.method} ${cleanup} ${intevalOption}`;
+
+      const vcf = await $`sbatch ${opts} ${job("vcf")} \
 ${depAfterCorr(bam)} ${script("snv-vcf.slurm")} \
-${arrayFile} ${ref_call} ${options.method} ${
-      !options.cleanup ? "--no-cleanup" : ""
-    }`;
+${arrayFile} ${ref_call} ${options.method} ${cleanup} ${intevalOption}`;
 
-    const jobs = [bam, vcf];
+      jobs.push(bam, vcf);
 
-    if (!options.skipGt) {
-      const merge = await $`sbatch ${opts} ${job("merge")} \
+      if (!options.skipGt) {
+        const merge = await $`sbatch ${opts} ${job("merge")} \
 ${depAfterCorr(vcf)} ${script("snv-merge.slurm")} \
 ${arrayFile} ${ref_call}`;
 
-      const ref_annot = options.ref;
+        const ref_annot = options.ref;
 
-      const cadd = await $`sbatch ${opts} ${job("cadd")} \
+        const cadd = await $`sbatch ${opts} ${job("cadd")} \
 ${depAfterCorr(merge)} ${script("cadd.slurm")} \
 ${arrayFile} ${ref_annot}`;
 
-      const annot_single = await $`sbatch ${opts} ${job("anns")} \
+        const annot_single = await $`sbatch ${opts} ${job("anns")} \
 ${depAfterCorr(merge)} ${script("snv-annot-s.slurm")} \
 ${arrayFile} ${ref_annot}`;
 
-      const annot_multi = await $`sbatch ${opts} ${job("annm")} \
+        const annot_multi = await $`sbatch ${opts} ${job("annm")} \
 ${depAfterCorr(annot_single)} ${script("snv-annot-m.slurm")} \
 ${arrayFile} ${ref_annot}`;
 
-      const final = await $`sbatch ${opts} ${job("final")} \
+        const final = await $`sbatch ${opts} ${job("final")} \
 ${depAfterCorr(annot_multi, cadd)} ${script("snv-final.slurm")} \
 ${arrayFile} ${ref_annot}`;
-      jobs.push(merge, cadd, annot_single, annot_multi, final);
+        jobs.push(merge, cadd, annot_single, annot_multi, final);
+      }
     }
-
     const jobIds = jobs.map(toJobId).join(" ");
     if (options.parsable) {
       console.log(jobIds);
