@@ -1,5 +1,6 @@
 import arrSumbit from "./arr-sumbit.ts";
 import { Command, CompletionsCommand, HelpCommand } from "./deps.ts";
+import exomiserCfg from "./exomiser-cfg.ts";
 import inspectBamBatch from "./insp-bam-b.ts";
 import inspectBam from "./insp-bam.ts";
 
@@ -9,6 +10,7 @@ await new Command()
   .command("insp-bam", inspectBam)
   .command("insp-bam-batch", inspectBamBatch)
   .command("arr-submit", arrSumbit)
+  .command("exomiser-cfg", exomiserCfg)
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
