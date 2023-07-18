@@ -1,7 +1,15 @@
 import { readLines } from "https://deno.land/std@0.192.0/io/read_lines.ts";
-import { $, Command, EnumType, formatDate, join, exists } from "./deps.ts";
+import {
+  $,
+  Command,
+  EnumType,
+  formatDate,
+  join,
+  exists,
+  dirname,
+} from "./deps.ts";
 import type { ProcessOutput } from "./deps.ts";
-
+import {} from "https://deno.land/std@0.193.0/path/mod.ts";
 const commonOptions = [
   "--parsable",
   "--output",
@@ -9,6 +17,8 @@ const commonOptions = [
   "--error",
   "log-%A-%x_%a.err",
 ];
+
+const currTime = formatDate(new Date(), "M-d-Hm");
 
 const ref = new EnumType(["hg19", "hg38"]);
 const method = new EnumType(["wes", "wgs"]);
@@ -34,7 +44,7 @@ export default new Command()
   .type("method", method)
   .option("--parsable", "parsable output")
   .option("-J, --job-name <jobName:string>", "job name", {
-    default: formatDate(new Date(), "M-d-Hm"),
+    default: currTime,
   })
   .option("-m, --method <type:method>", "method", { required: true })
   .option("-r, --ref <ref:ref>", "reference genome", { required: true })
@@ -81,7 +91,7 @@ export default new Command()
       : [];
     const intevalOption =
       options.interval && options.method === "wes"
-        ? ["--interval", options.interval]
+        ? ["--bait-intervals", options.interval]
         : [];
     const cleanup = options.cleanup ? "" : "--no-cleanup";
 
@@ -135,4 +145,9 @@ ${arrayFile} ${ref_annot}`;
     } else {
       console.log("Submitted jobs: " + jobIds);
     }
+
+    await Deno.writeTextFile(
+      join(dirname(arrayFile), `job-${currTime}.txt`),
+      jobIds
+    );
   });
