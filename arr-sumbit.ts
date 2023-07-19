@@ -40,6 +40,8 @@ export default new Command()
   .description("Inspect a list of variant calls in a BAM file")
   .option("-a, --array <array:string>", "job array index values")
   .option("--dependency <deps:string>", "job dependency")
+  .option("-p, --partition <partition:string>", "partition")
+  .option("--exclude <exclude:string>", "exclude nodes")
   .type("ref", ref)
   .type("method", method)
   .option("--parsable", "parsable output")
@@ -85,7 +87,12 @@ export default new Command()
     console.log(`Array file line count: ${lineCount}`);
     console.log(`Array index: ${array}`);
 
-    const opts = [...commonOptions, ...["-a", array]];
+    const opts = [
+      ...commonOptions,
+      ...["-a", array],
+      ...(options.partition ? ["-p", options.partition] : []),
+      ...(options.exclude ? ["--exclude", options.exclude] : []),
+    ];
     const initDependency = options.dependency
       ? ["--dependency", options.dependency]
       : [];
