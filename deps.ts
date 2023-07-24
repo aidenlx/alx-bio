@@ -29,7 +29,10 @@ export const envPrefix = "RI_" as const;
 export { exists, ensureDir } from "https://deno.land/std@0.194.0/fs/mod.ts";
 export {
   parse as csvParse,
+  CsvStringifyStream,
   CsvParseStream,
 } from "https://deno.land/std@0.194.0/csv/mod.ts";
 export { groupBy } from "https://deno.land/std@0.194.0/collections/group_by.ts";
 export { stringify as tomlStringify } from "https://deno.land/std@0.194.0/toml/stringify.ts";
+export { format as fmtBytes } from "https://deno.land/std@0.194.0/fmt/bytes.ts";
+export { format as fmtDuration } from "https://deno.land/std@0.194.0/fmt/duration.ts";

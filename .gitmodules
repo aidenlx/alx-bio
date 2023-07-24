@@ -1,0 +1,3 @@
+[submodule "deno-csv"]
+	path = deno-csv
+	url = https://github.com/aidenlx/deno-csv
