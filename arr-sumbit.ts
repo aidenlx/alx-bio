@@ -1,4 +1,4 @@
-import { readLines } from "https://deno.land/std@0.192.0/io/read_lines.ts";
+import { readLines } from "https://deno.land/std@0.193.0/io/read_lines.ts";
 import {
   $,
   Command,
@@ -8,8 +8,7 @@ import {
   exists,
   dirname,
 } from "./deps.ts";
-import type { ProcessOutput } from "./deps.ts";
-import {} from "https://deno.land/std@0.193.0/path/mod.ts";
+import type { ProcessOutput, ProcessPromise } from "./deps.ts";
 const commonOptions = [
   "--parsable",
   "--output",
@@ -24,15 +23,12 @@ const ref = new EnumType(["hg19", "hg38"]);
 const method = new EnumType(["wes", "wgs"]);
 const script = (file: string) =>
   join("/genetics/home/stu_liujiyuan/pipeline/scripts/array", file);
-const depAfterCorr = (...ids: ProcessOutput[]) => [
-  "--dependency",
-  `aftercorr:${ids.map(toJobId).join(",")}`,
-];
+
 const toJobId = (resp: ProcessOutput) => {
   if (resp.exitCode !== 0) {
     throw new Error("Job submission failed: " + resp.stderr);
   }
-  return resp.stdout.trim();
+  return Number.parseInt(resp.stdout.trim(), 10);
 };
 
 export default new Command()
@@ -51,8 +47,7 @@ export default new Command()
   .option("-m, --method <type:method>", "method", { required: true })
   .option("-r, --ref <ref:ref>", "reference genome", { required: true })
   .option("--interval <interval:file>", "interval BED file")
-  .option("--skip-gt", "pause before gvcf->rawvcf")
-  .option("--align-only", "pause after alignment")
+  .option("--pick <task_range:string>", "pick tasks to run")
   .option("--no-cleanup", "do not clean up intermediate files")
   .arguments("<array_file:file>")
   .action(async (options, arrayFile) => {
@@ -93,9 +88,7 @@ export default new Command()
       ...(options.partition ? ["-p", options.partition] : []),
       ...(options.exclude ? ["--exclude", options.exclude] : []),
     ];
-    const initDependency = options.dependency
-      ? ["--dependency", options.dependency]
-      : [];
+
     const intevalOption =
       options.interval && options.method === "wes"
         ? ["--bait-intervals", options.interval]
@@ -103,58 +96,133 @@ export default new Command()
     const cleanup = options.cleanup ? "" : "--no-cleanup";
 
     const ref_call = options.ref === "hg19" ? "hs37" : options.ref;
+    const ref_annot = options.ref;
 
-    const align = await $`sbatch ${opts} ${job("align")} ${initDependency} \
-${script("snv-align.slurm")} \
-${arrayFile} ${ref_call} ${options.method} ${cleanup}`;
+    const TaskList = {
+      align(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep()} ${script(
+          "snv-align.slurm"
+        )} ${arrayFile} ${ref_call} ${options.method} ${cleanup}`;
+      },
+      bam(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep("align")} ${script(
+          "snv-bam.slurm"
+        )} ${arrayFile} ${ref_call} ${
+          options.method
+        } ${cleanup} ${intevalOption}`;
+      },
+      vcf(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep("bam")} ${script(
+          "snv-vcf.slurm"
+        )} ${arrayFile} ${ref_call} ${
+          options.method
+        } ${cleanup} ${intevalOption}`;
+      },
+      merge(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep("vcf")} ${script(
+          "snv-merge.slurm"
+        )} ${arrayFile} ${ref_call}`;
+      },
+      cadd(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep("merge")} ${script(
+          "cadd.slurm"
+        )} ${arrayFile} ${ref_annot}`;
+      },
+      annot_single(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep("merge")} ${script(
+          "snv-annot-s.slurm"
+        )} ${arrayFile} ${ref_annot}`;
+      },
+      annot_multi(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep("annot_single")} ${script(
+          "snv-annot-m.slurm"
+        )} ${arrayFile} ${ref_annot}`;
+      },
+      final(name, dep) {
+        return $`sbatch ${opts} ${job(name)} ${dep(
+          "cadd",
+          "annot_single"
+        )} ${script("snv-final.slurm")} ${arrayFile} ${ref_annot}`;
+      },
+    } satisfies Record<string, Task>;
 
-    const jobs = [align];
-
-    if (!options.alignOnly) {
-      const bam = await $`sbatch ${opts} ${job("bam")} \
-${depAfterCorr(align)} ${script("snv-bam.slurm")} \
-${arrayFile} ${ref_call} ${options.method} ${cleanup} ${intevalOption}`;
-
-      const vcf = await $`sbatch ${opts} ${job("vcf")} \
-${depAfterCorr(bam)} ${script("snv-vcf.slurm")} \
-${arrayFile} ${ref_call} ${options.method} ${cleanup} ${intevalOption}`;
-
-      jobs.push(bam, vcf);
-
-      if (!options.skipGt) {
-        const merge = await $`sbatch ${opts} ${job("merge")} \
-${depAfterCorr(vcf)} ${script("snv-merge.slurm")} \
-${arrayFile} ${ref_call}`;
-
-        const ref_annot = options.ref;
-
-        const cadd = await $`sbatch ${opts} ${job("cadd")} \
-${depAfterCorr(merge)} ${script("cadd.slurm")} \
-${arrayFile} ${ref_annot}`;
-
-        const annot_single = await $`sbatch ${opts} ${job("anns")} \
-${depAfterCorr(merge)} ${script("snv-annot-s.slurm")} \
-${arrayFile} ${ref_annot}`;
-
-        const annot_multi = await $`sbatch ${opts} ${job("annm")} \
-${depAfterCorr(annot_single)} ${script("snv-annot-m.slurm")} \
-${arrayFile} ${ref_annot}`;
-
-        const final = await $`sbatch ${opts} ${job("final")} \
-${depAfterCorr(annot_multi, cadd)} ${script("snv-final.slurm")} \
-${arrayFile} ${ref_annot}`;
-        jobs.push(merge, cadd, annot_single, annot_multi, final);
+    function parsePick(pick: string | undefined) {
+      const tasks = Object.values(TaskList);
+      if (!pick) return tasks;
+      function parseRange(range: string) {
+        const [start, end] = range.split("-"),
+          startTask = start
+            ? TaskList[start as keyof typeof TaskList]
+            : tasks.at(0),
+          endTask = end ? TaskList[end as keyof typeof TaskList] : tasks.at(-1);
+        if (!startTask) {
+          throw new Error(`Begin Task not found for range ${range}: ${start}`);
+        }
+        if (!endTask) {
+          throw new Error(`End Task not found for range ${range}: ${end}`);
+        }
+        return tasks.slice(
+          tasks.indexOf(startTask),
+          tasks.indexOf(endTask) + 1
+        );
       }
+      return pick.split(",").flatMap((arg) => {
+        if (pick.split("-").length === 2) {
+          return parseRange(arg);
+        }
+        const task = TaskList[arg as keyof typeof TaskList];
+        if (!task) {
+          throw new Error("Task not found: " + arg);
+        }
+        return [task];
+      });
     }
-    const jobIds = jobs.map(toJobId).join(" ");
+
+    const taskList = parsePick(options.pick);
+
+    const jobIds = await pipe(options.dependency, ...taskList);
     if (options.parsable) {
-      console.log(jobIds);
+      console.log(jobIds.join(" "));
     } else {
-      console.log("Submitted jobs: " + jobIds);
+      console.log("Submitted jobs: " + jobIds.join(" "));
     }
 
     await Deno.writeTextFile(
       join(dirname(arrayFile), `job-${currTime}.txt`),
-      jobIds
+      jobIds.join("\n")
     );
   });
+
+type Task = (
+  name: string,
+  getDeps: (...name: string[]) => string[]
+) => ProcessPromise;
+
+async function pipe(initDep: string | undefined, ...steps: Task[]) {
+  const tasks = new Tasks();
+  let initial = true;
+  function getDeps(...names: string[]) {
+    if (initial && initDep) {
+      return ["--dependency", initDep];
+    } else if (!initial && names.length > 0) {
+      return ["--dependency", `aftercorr:${tasks.getLots(...names).join(",")}`];
+    }
+    return [];
+  }
+  for (const step of steps) {
+    const id = toJobId(await step(step.name, getDeps));
+    initial = false;
+    tasks.set(step.name, id);
+  }
+  return [...tasks.values()];
+}
+
+class Tasks extends Map<string, number> {
+  getLots(...name: string[]) {
+    return name.map((n) => {
+      const id = this.get(n);
+      if (!id) throw new Error("Task not found: " + n);
+      return id;
+    });
+  }
+}
