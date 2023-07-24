@@ -6,8 +6,6 @@ import {
   EnumType,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.2/command/mod.ts";
 import pLimit from "https://esm.sh/p-limit@4.0.0";
-import { join } from "https://deno.land/std@0.93.0/path/mod.ts";
-import { ensureDir } from "https://deno.land/std@0.93.0/fs/mod.ts";
 import { prepareSVG } from "./modules/render-gtex.js";
 
 // @deno-types="npm:puppeteer@20.8.2"
@@ -17,6 +15,7 @@ import puppeteer, {
   type Connection,
   type ProductLauncher,
 } from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+import { ensureDir, join } from "./deps.ts";
 
 function ParallelType({ label, name, value }: ArgumentValue) {
   const n = Number.parseInt(value, 10);
