@@ -45,7 +45,9 @@ export default new Command()
     default: currTime,
   })
   .option("-m, --method <type:method>", "method", { required: true })
-  .option("-r, --ref <ref:genomeAssembly>", "reference genome", { required: true })
+  .option("-r, --ref <ref:genomeAssembly>", "reference genome", {
+    required: true,
+  })
   .option("--interval <interval:file>", "interval BED file")
   .option("--pick <task_range:string>", "pick tasks to run")
   .option("--no-cleanup", "do not clean up intermediate files")
@@ -201,10 +203,18 @@ type Task = (
 async function pipe(initDep: string | undefined, ...steps: Task[]) {
   const tasks = new Tasks();
   let initial = true;
+  let initialIsMerge = false;
   function getDeps(...names: string[]) {
+    if (initial && names[0] === "merge") {
+      initialIsMerge = true;
+    }
     if (initial && initDep) {
       return ["--dependency", initDep];
-    } else if (!initial && names.length > 0) {
+    } else if (
+      !initial &&
+      !(initialIsMerge && names[0] === "merge") &&
+      names.length > 0
+    ) {
       return ["--dependency", `aftercorr:${tasks.getLots(...names).join(",")}`];
     }
     return [];
