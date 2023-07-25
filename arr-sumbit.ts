@@ -9,6 +9,7 @@ import {
   dirname,
 } from "./deps.ts";
 import type { ProcessOutput, ProcessPromise } from "./deps.ts";
+import { genomeAssembly } from "./modules/common.ts";
 const commonOptions = [
   "--parsable",
   "--output",
@@ -19,7 +20,6 @@ const commonOptions = [
 
 const currTime = formatDate(new Date(), "M-d-Hm");
 
-const ref = new EnumType(["hg19", "hg38"]);
 const method = new EnumType(["wes", "wgs"]);
 const script = (file: string) =>
   join("/genetics/home/stu_liujiyuan/pipeline/scripts/array", file);
@@ -38,14 +38,14 @@ export default new Command()
   .option("--dependency <deps:string>", "job dependency")
   .option("-p, --partition <partition:string>", "partition")
   .option("--exclude <exclude:string>", "exclude nodes")
-  .type("ref", ref)
+  .type("genomeAssembly", genomeAssembly)
   .type("method", method)
   .option("--parsable", "parsable output")
   .option("-J, --job-name <jobName:string>", "job name", {
     default: currTime,
   })
   .option("-m, --method <type:method>", "method", { required: true })
-  .option("-r, --ref <ref:ref>", "reference genome", { required: true })
+  .option("-r, --ref <ref:genomeAssembly>", "reference genome", { required: true })
   .option("--interval <interval:file>", "interval BED file")
   .option("--pick <task_range:string>", "pick tasks to run")
   .option("--no-cleanup", "do not clean up intermediate files")

@@ -1,11 +1,5 @@
-import {
-  $,
-  Command,
-  EnumType,
-  exists,
-  tomlStringify,
-  resolve,
-} from "./deps.ts";
+import { $, Command, exists, tomlStringify, resolve } from "./deps.ts";
+import { genomeAssembly } from "./modules/common.ts";
 import ExtractAndHpoAnnot from "./modules/hpo-annot.ts";
 
 async function caddAnnot(
@@ -48,8 +42,6 @@ async function getSamples(inputVcfGz: string, sampleMap?: string) {
   }
   return samples;
 }
-
-const genomeAssembly = new EnumType(["hg19", "hg38"]);
 
 export default new Command()
   .name("snv.final")
