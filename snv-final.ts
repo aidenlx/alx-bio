@@ -6,6 +6,7 @@ import {
   tomlStringify,
   resolve,
 } from "./deps.ts";
+import ExtractAndHpoAnnot from "./modules/hpo-annot.ts";
 
 async function caddAnnot(
   cadd: string,
@@ -56,9 +57,12 @@ export default new Command()
   .option("-r, --ref <genome:genomeAssembly>", "Genome assembly", {
     required: true,
   })
+  .option("--resource <dir:string>", "Path to Resource", {
+    default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
+  })
   .option("-s, --sample <name:string>", "Sample name", { required: true })
   .option("--sample-map <file:string>", "Sample name mapping file")
-  .action(async ({ ref: assembly, sample, sampleMap }) => {
+  .action(async ({ ref: assembly, sample, sampleMap, resource: resDir }) => {
     const inputVcfGz = `${sample}.m.${assembly}.vcf.gz`;
     const fullVcfGz = `${sample}.full.${assembly}.vcf.gz`;
     const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
@@ -67,10 +71,12 @@ export default new Command()
 
     async function extract(inputVcfGz: string, outputTsvGz: string) {
       console.error(`Extracting from ${inputVcfGz}...`);
-      await $`SnpSift extractFields -s "," -e "." ${inputVcfGz} \
-$(cat /genetics/home/stu_liujiyuan/pipeline/vcf-extract-${assembly}.txt) \
-| deno-csv -s ${samples} \
-| bgzip > ${outputTsvGz}`;
+
+      await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
+        assembly,
+        samples,
+        resDir,
+      });
       console.error(`Done, output to ${outputTsvGz}`);
     }
     async function tsv2excel(inputTsvGz: string, outputCsvGz: string) {
