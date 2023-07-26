@@ -100,47 +100,65 @@ export default new Command()
     const ref_annot = opts.ref;
 
     const TaskList = {
-      align(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep()} ${script(
-          "snv-align.slurm"
-        )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup}`;
-      },
-      bam(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep("align")} ${script(
-          "snv-bam.slurm"
-        )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${intevalOption}`;
-      },
-      vcf(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep("bam")} ${script(
-          "snv-vcf.slurm"
-        )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${intevalOption}`;
-      },
-      merge(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep("vcf")} ${script(
-          "snv-merge.slurm"
-        )} ${arrayFile} ${ref_call}`;
-      },
-      cadd(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep("merge")} ${script(
-          "cadd.slurm"
-        )} ${arrayFile} ${ref_annot}`;
-      },
-      annot_s(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep("merge")} ${script(
-          "snv-annot-s.slurm"
-        )} ${arrayFile} ${ref_annot}`;
-      },
-      annot_m(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep("annot_s")} ${script(
-          "snv-annot-m.slurm"
-        )} ${arrayFile} ${ref_annot}`;
-      },
-      final(name, dep) {
-        return $`sbatch ${slurmOpts} ${job(name)} ${dep(
-          "cadd",
-          "annot_m"
-        )} ${script("snv-final.slurm")} ${arrayFile} ${ref_annot}`;
-      },
+      align: () => ({
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-align.slurm"
+          )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup}`,
+      }),
+      bam: () => ({
+        deps: "align",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-bam.slurm"
+          )} ${arrayFile} ${ref_call} ${
+            opts.method
+          } ${cleanup} ${intevalOption}`,
+      }),
+      vcf: () => ({
+        deps: "bam",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-vcf.slurm"
+          )} ${arrayFile} ${ref_call} ${
+            opts.method
+          } ${cleanup} ${intevalOption}`,
+      }),
+      merge: () => ({
+        deps: "vcf",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-merge.slurm"
+          )} ${arrayFile} ${ref_call}`,
+      }),
+      cadd: () => ({
+        deps: "merge",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "cadd.slurm"
+          )} ${arrayFile} ${ref_annot}`,
+      }),
+      annot_s: () => ({
+        deps: "merge",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-annot-s.slurm"
+          )} ${arrayFile} ${ref_annot}`,
+      }),
+      annot_m: () => ({
+        deps: "annot_s",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-annot-m.slurm"
+          )} ${arrayFile} ${ref_annot}`,
+      }),
+      final: () => ({
+        deps: ["cadd", "annot_m"],
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-final.slurm"
+          )} ${arrayFile} ${ref_annot}`,
+      }),
     } satisfies Record<string, Task>;
 
     function parsePick(pick: string | undefined) {
@@ -190,44 +208,51 @@ export default new Command()
     );
   });
 
-type Task = (
-  name: string,
-  getDeps: (...name: string[]) => string[]
-) => ProcessPromise;
+type Task = () => {
+  run: (name: string, depArgs: string[]) => ProcessPromise;
+  deps?: string[] | string;
+};
 
 async function pipe(initDep: string | undefined, ...steps: Task[]) {
   const tasks = new Tasks();
 
-  const initialRequireMerge =
-    steps[0].name === "cadd" || steps[0].name === "annot_s";
-  if (initialRequireMerge) tasks.set("merge", undefined);
-
-  let initial = true;
-  function getDeps(...names: string[]) {
-    if (initial && initDep) {
+  let firstRequestedDeps: string[] | undefined;
+  function getDepArgs(depNames: string[]): string[] {
+    if (!firstRequestedDeps && initDep) {
       return ["--dependency", initDep];
-    } else if (!initial && names.length > 0) {
-      const taskIds = tasks
-        .getLots(...names)
-        .filter((id): id is number => id !== undefined);
-      if (taskIds.length > 0)
-        return ["--dependency", `aftercorr:${taskIds.join(",")}`];
+    } else if (firstRequestedDeps && depNames.length > 0) {
+      const frDeps = firstRequestedDeps;
+      const taskIds = tasks.getLots(
+        ...depNames.filter((n) => !frDeps.includes(n))
+      );
+      const deps: string[] = [];
+      if (taskIds.length > 0) {
+        deps.push(`aftercorr:${taskIds.join(":")}`);
+      }
+      if (initDep && taskIds.length < depNames.length) {
+        // has same deps as first requested deps
+        deps.push(initDep);
+      }
+      if (deps.length > 0) return ["--dependency", deps.join(",")];
     }
     return [];
   }
   for (const step of steps) {
-    const id = toJobId(await step(step.name, getDeps));
-    initial = false;
+    const { deps: _deps, run } = step();
+    const deps = !_deps ? [] : typeof _deps === "string" ? [_deps] : _deps;
+    const depArgs = getDepArgs(deps);
+    firstRequestedDeps ??= deps;
+    const id = toJobId(await run(step.name, depArgs));
     tasks.set(step.name, id);
   }
   return [...tasks.values()];
 }
 
-class Tasks extends Map<string, number | undefined> {
+class Tasks extends Map<string, number> {
   getLots(...name: string[]) {
     return name.map((n) => {
       if (!this.has(n)) throw new Error("Task not found: " + n);
-      return this.get(n);
+      return this.get(n)!;
     });
   }
 }
