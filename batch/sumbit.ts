@@ -20,7 +20,6 @@ const commonOptions = [
 
 const currTime = formatDate(new Date(), "M-d-Hm");
 
-const method = new EnumType(["wes", "wgs"]);
 const script = (file: string) =>
   join("/genetics/home/stu_liujiyuan/pipeline/scripts/array", file);
 
@@ -39,7 +38,7 @@ export default new Command()
   .option("-p, --partition <partition:string>", "partition")
   .option("--exclude <exclude:string>", "exclude nodes")
   .type("genomeAssembly", genomeAssembly)
-  .type("method", method)
+  .type("method", new EnumType(["wes", "wgs"]))
   .option("--parsable", "parsable output")
   .option("-J, --job-name <jobName:string>", "job name", {
     default: currTime,
@@ -52,8 +51,8 @@ export default new Command()
   .option("--pick <task_range:string>", "pick tasks to run")
   .option("--no-cleanup", "do not clean up intermediate files")
   .arguments("<array_file:file>")
-  .action(async (options, arrayFile) => {
-    const job = (name: string) => ["-J", `${options.jobName}-${name}`];
+  .action(async (opts, arrayFile) => {
+    const job = (name: string) => ["-J", `${opts.jobName}-${name}`];
 
     if (!(await exists(arrayFile, { isReadable: true, isFile: true }))) {
       throw new Error(
@@ -74,76 +73,72 @@ export default new Command()
     }
 
     let array = `1-${lineCount}%4`;
-    if (options.array) {
-      if (options.array.startsWith("%")) {
-        array = `1-${lineCount}` + options.array;
+    if (opts.array) {
+      if (opts.array.startsWith("%")) {
+        array = `1-${lineCount}` + opts.array;
       } else {
-        array = options.array;
+        array = opts.array;
       }
     }
     console.log(`Array file line count: ${lineCount}`);
     console.log(`Array index: ${array}`);
 
-    const opts = [
+    const slurmOpts = [
       ...commonOptions,
       ...["-a", array],
-      ...(options.partition ? ["-p", options.partition] : []),
-      ...(options.exclude ? ["--exclude", options.exclude] : []),
+      ...(opts.partition ? ["-p", opts.partition] : []),
+      ...(opts.exclude ? ["--exclude", opts.exclude] : []),
     ];
 
     const intevalOption =
-      options.interval && options.method === "wes"
-        ? ["--bait-intervals", options.interval]
+      opts.interval && opts.method === "wes"
+        ? ["--bait-intervals", opts.interval]
         : [];
-    const cleanup = options.cleanup ? "" : "--no-cleanup";
+    const cleanup = opts.cleanup ? "" : "--no-cleanup";
 
-    const ref_call = options.ref === "hg19" ? "hs37" : options.ref;
-    const ref_annot = options.ref;
+    const ref_call = opts.ref === "hg19" ? "hs37" : opts.ref;
+    const ref_annot = opts.ref;
 
     const TaskList = {
       align(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep()} ${script(
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep()} ${script(
           "snv-align.slurm"
-        )} ${arrayFile} ${ref_call} ${options.method} ${cleanup}`;
+        )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup}`;
       },
       bam(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep("align")} ${script(
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep("align")} ${script(
           "snv-bam.slurm"
-        )} ${arrayFile} ${ref_call} ${
-          options.method
-        } ${cleanup} ${intevalOption}`;
+        )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${intevalOption}`;
       },
       vcf(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep("bam")} ${script(
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep("bam")} ${script(
           "snv-vcf.slurm"
-        )} ${arrayFile} ${ref_call} ${
-          options.method
-        } ${cleanup} ${intevalOption}`;
+        )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${intevalOption}`;
       },
       merge(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep("vcf")} ${script(
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep("vcf")} ${script(
           "snv-merge.slurm"
         )} ${arrayFile} ${ref_call}`;
       },
       cadd(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep("merge")} ${script(
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep("merge")} ${script(
           "cadd.slurm"
         )} ${arrayFile} ${ref_annot}`;
       },
-      annot_single(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep("merge")} ${script(
+      annot_s(name, dep) {
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep("merge")} ${script(
           "snv-annot-s.slurm"
         )} ${arrayFile} ${ref_annot}`;
       },
-      annot_multi(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep("annot_single")} ${script(
+      annot_m(name, dep) {
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep("annot_s")} ${script(
           "snv-annot-m.slurm"
         )} ${arrayFile} ${ref_annot}`;
       },
       final(name, dep) {
-        return $`sbatch ${opts} ${job(name)} ${dep(
+        return $`sbatch ${slurmOpts} ${job(name)} ${dep(
           "cadd",
-          "annot_single"
+          "annot_m"
         )} ${script("snv-final.slurm")} ${arrayFile} ${ref_annot}`;
       },
     } satisfies Record<string, Task>;
@@ -180,10 +175,10 @@ export default new Command()
       });
     }
 
-    const taskList = parsePick(options.pick);
+    const taskList = parsePick(opts.pick);
 
-    const jobIds = await pipe(options.dependency, ...taskList);
-    if (options.parsable) {
+    const jobIds = await pipe(opts.dependency, ...taskList);
+    if (opts.parsable) {
       console.log(jobIds.join(" "));
     } else {
       console.log("Submitted jobs: " + jobIds.join(" "));
@@ -202,20 +197,21 @@ type Task = (
 
 async function pipe(initDep: string | undefined, ...steps: Task[]) {
   const tasks = new Tasks();
+
+  const initialRequireMerge =
+    steps[0].name === "cadd" || steps[0].name === "annot_s";
+  if (initialRequireMerge) tasks.set("merge", undefined);
+
   let initial = true;
-  let initialIsMerge = false;
   function getDeps(...names: string[]) {
-    if (initial && names[0] === "merge") {
-      initialIsMerge = true;
-    }
     if (initial && initDep) {
       return ["--dependency", initDep];
-    } else if (
-      !initial &&
-      !(initialIsMerge && names[0] === "merge") &&
-      names.length > 0
-    ) {
-      return ["--dependency", `aftercorr:${tasks.getLots(...names).join(",")}`];
+    } else if (!initial && names.length > 0) {
+      const taskIds = tasks
+        .getLots(...names)
+        .filter((id): id is number => id !== undefined);
+      if (taskIds.length > 0)
+        return ["--dependency", `aftercorr:${taskIds.join(",")}`];
     }
     return [];
   }
@@ -227,12 +223,11 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
   return [...tasks.values()];
 }
 
-class Tasks extends Map<string, number> {
+class Tasks extends Map<string, number | undefined> {
   getLots(...name: string[]) {
     return name.map((n) => {
-      const id = this.get(n);
-      if (!id) throw new Error("Task not found: " + n);
-      return id;
+      if (!this.has(n)) throw new Error("Task not found: " + n);
+      return this.get(n);
     });
   }
 }
