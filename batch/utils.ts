@@ -62,11 +62,24 @@ export function isFoundYaml(data: unknown): data is FoundYaml {
     typeof data === "object" &&
     data !== null &&
     !Object.hasOwn(data, "__version__") &&
-    Object.values(data).every(fqPairs.allows)
+    Object.values(data).every((v) => {
+      const check = fqPairs.allows(v);
+      if (!check) console.error("invalid fq pair", v);
+      return check;
+    })
   );
 }
 export function isFoundYamlPed(data: unknown): data is FoundYamlPed {
-  return versionPed.allows(data) && Object.values(data).every(isFoundYaml);
+  if (!versionPed.allows(data)) {
+    console.error("version header not ped");
+    return false;
+  }
+  return Object.entries(data).every(([k, v]) => {
+    if (k === "__version__") return true;
+    const check = isFoundYaml(v);
+    if (!check) console.error("invalid found yaml", v);
+    return check;
+  });
 }
 
 export const defaultMergeDir = "/genetics/home/stu_liujiyuan/analysis/merge";
@@ -96,5 +109,5 @@ export function handleNonAscii(id: string) {
 
 export function numToFixedLength<T>(num: number, array: T[]) {
   const length = Math.ceil(Math.log10(array.length));
-  return num.toString().padStart(length + 1, "0"); // convert to string and pad with zeros
+  return num.toString().padStart(length, "0"); // convert to string and pad with zeros
 }
