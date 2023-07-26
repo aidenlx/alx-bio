@@ -26,10 +26,16 @@ async function caddAnnot(
     ],
   };
   const cfgFile = await Deno.makeTempFile({ suffix: ".toml" });
-  await Deno.writeTextFile(cfgFile, tomlStringify(config));
-  console.error(`Annotating ${inputVcfGz} with ${cadd}`);
-  await $`vcfanno ${cfgFile} ${inputVcfGz} | bgzip > ${outputVcfGz} && tabix -p vcf ${outputVcfGz}`;
-  await Deno.remove(cfgFile);
+  try {
+    await Deno.writeTextFile(cfgFile, tomlStringify(config));
+    console.error(`Annotating ${inputVcfGz} with ${cadd}`);
+    await $`[ ! -f ${cadd}.tbi ] && tabix -b 2 -e 2 -s 1 ${cadd} || true`;
+    await $`vcfanno ${cfgFile} ${inputVcfGz} | bgzip > ${outputVcfGz} && tabix -p vcf ${outputVcfGz}`;
+  } catch (err) {
+    throw err;
+  } finally {
+    await Deno.remove(cfgFile);
+  }
   console.error(`Done, output to ${outputVcfGz}`);
 }
 
