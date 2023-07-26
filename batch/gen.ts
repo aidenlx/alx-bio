@@ -5,9 +5,8 @@ import {
   flatFounds,
   isFoundYamlPed,
   defaultMergeDir,
-  numToFixedLength,
-  handleNonAscii,
 } from "./utils.ts";
+import { handleNonAscii, numToFixedLength } from "@/utils/ascii.ts";
 
 export default new Command()
   .name("pl.gen")

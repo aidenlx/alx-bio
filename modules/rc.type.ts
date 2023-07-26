@@ -1,5 +1,4 @@
-import { type } from "npm:arktype";
-import { scope } from "npm:arktype";
+import { type, scope } from "@/deps.ts";
 
 export const extraColPrepend = [
   "DiseaseSymbol",

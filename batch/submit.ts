@@ -31,7 +31,7 @@ const toJobId = (resp: ProcessOutput) => {
 };
 
 export default new Command()
-  .name("pl.sumbit")
+  .name("pl.submit")
   .description("Inspect a list of variant calls in a BAM file")
   .option("-a, --array <array:string>", "job array index values")
   .option("--dependency <deps:string>", "job dependency")
@@ -47,7 +47,8 @@ export default new Command()
   .option("-r, --ref <ref:genomeAssembly>", "reference genome", {
     required: true,
   })
-  .option("--interval <interval:file>", "interval BED file")
+  .option("-b, --bait-intervals <path:file>", "bait intervals BED file")
+  .option("--target-intervals <path:file>", "target intervals BED file")
   .option("--pick <task_range:string>", "pick tasks to run")
   .option("--no-cleanup", "do not clean up intermediate files")
   .arguments("<array_file:file>")
@@ -90,10 +91,15 @@ export default new Command()
       ...(opts.exclude ? ["--exclude", opts.exclude] : []),
     ];
 
-    const intevalOption =
-      opts.interval && opts.method === "wes"
-        ? ["--bait-intervals", opts.interval]
-        : [];
+    let baitOption: string[] = [],
+      targetOption: string[] = [];
+    if (opts.method === "wes") {
+      if (opts.baitIntervals)
+        baitOption = ["--bait-intervals", opts.baitIntervals];
+      if (opts.targetIntervals)
+        targetOption = ["--target-intervals", opts.targetIntervals];
+    }
+
     const cleanup = opts.cleanup ? "" : "--no-cleanup";
 
     const ref_call = opts.ref === "hg19" ? "hs37" : opts.ref;
@@ -106,23 +112,27 @@ export default new Command()
             "snv-align.slurm"
           )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup}`,
       }),
+      hs_stat: () => ({
+        deps: "align",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "snv-hs-stat.slurm"
+          )} ${arrayFile} ${ref_call} ${baitOption} ${targetOption}`,
+        canRun: opts.method === "wes" && ref_call === "hs37",
+      }),
       bam: () => ({
         deps: "align",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-bam.slurm"
-          )} ${arrayFile} ${ref_call} ${
-            opts.method
-          } ${cleanup} ${intevalOption}`,
+          )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
       }),
       vcf: () => ({
         deps: "bam",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-vcf.slurm"
-          )} ${arrayFile} ${ref_call} ${
-            opts.method
-          } ${cleanup} ${intevalOption}`,
+          )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
       }),
       merge: () => ({
         deps: "vcf",
@@ -211,6 +221,7 @@ export default new Command()
 type Task = () => {
   run: (name: string, depArgs: string[]) => ProcessPromise;
   deps?: string[] | string;
+  canRun?: boolean;
 };
 
 async function pipe(initDep: string | undefined, ...steps: Task[]) {
@@ -238,7 +249,11 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
     return [];
   }
   for (const step of steps) {
-    const { deps: _deps, run } = step();
+    const { deps: _deps, run, canRun } = step();
+    if (canRun === false) {
+      console.log("Skip task: " + step.name);
+      continue;
+    }
     const deps = !_deps ? [] : typeof _deps === "string" ? [_deps] : _deps;
     const depArgs = getDepArgs(deps);
     firstRequestedDeps ??= deps;

@@ -3,14 +3,15 @@ import exomiserCfg from "./exomiser-cfg.ts";
 import inspectBamBatch from "./insp-bam-b.ts";
 import inspectBam from "./insp-bam.ts";
 import gtexPlot from "./gtex-plot.ts";
+import c from "@/utils/sub-cmd.ts";
 
 await new Command()
   .name("bioa")
   .version("0.4.0")
-  .command("insp-bam", inspectBam)
-  .command("insp-bam-batch", inspectBamBatch)
-  .command("exomiser-cfg", exomiserCfg)
-  .command("gtex-plot", gtexPlot)
+  .command(...c(inspectBam))
+  .command(...c(inspectBamBatch))
+  .command(...c(exomiserCfg))
+  .command(...c(gtexPlot))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
