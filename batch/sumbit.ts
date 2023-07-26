@@ -7,9 +7,9 @@ import {
   join,
   exists,
   dirname,
-} from "./deps.ts";
-import type { ProcessOutput, ProcessPromise } from "./deps.ts";
-import { genomeAssembly } from "./modules/common.ts";
+} from "@/deps.ts";
+import type { ProcessOutput, ProcessPromise } from "@/deps.ts";
+import { genomeAssembly } from "@/modules/common.ts";
 const commonOptions = [
   "--parsable",
   "--output",
@@ -32,7 +32,7 @@ const toJobId = (resp: ProcessOutput) => {
 };
 
 export default new Command()
-  .name("arr-sumbit")
+  .name("pl.sumbit")
   .description("Inspect a list of variant calls in a BAM file")
   .option("-a, --array <array:string>", "job array index values")
   .option("--dependency <deps:string>", "job dependency")
