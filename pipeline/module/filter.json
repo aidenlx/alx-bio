@@ -1,0 +1,29 @@
+{
+  "targetEffects": [
+    "exon_loss_variant",
+    "frameshift_variant",
+    "rare_amino_acid_variant",
+    "stop_gained",
+    "start_lost",
+    "stop_lost",
+    "splice_acceptor_variant",
+    "splice_donor_variant",
+    "gene_fusion",
+    "bidirectional_gene_fusion",
+    "3_prime_UTR_truncation",
+    "5_prime_UTR_truncation",
+    "coding_sequence_variant",
+    "disruptive_inframe_deletion",
+    "disruptive_inframe_insertion",
+    "conservative_inframe_deletion",
+    "conservative_inframe_insertion",
+    "missense_variant",
+    "5_prime_UTR_premature_start_codon_gain_variant",
+    "initiator_codon_variant",
+    "non_canonical_start_codon",
+    "splice_region_variant",
+    "start_retained",
+    "stop_retained_variant"
+  ],
+  "hardFilter": "((QUAL >= 20) && (DP >= 10) && (FS < 60) && (MQ >= 40) && (QD >= 2))"
+}

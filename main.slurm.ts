@@ -8,6 +8,7 @@ import hsStat from "@/pipeline/hs-stat.ts";
 import c from "@/utils/sub-cmd.ts";
 import snvAnnotM from "@/pipeline/snv-annot-m.ts";
 import snvAnnotS from "@/pipeline/snv-annot-s.ts";
+import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
 
 await new Command()
   .name("bioa")
@@ -20,6 +21,7 @@ await new Command()
   .command(...c(strAnnot))
   .command(...c(snvAnnotM))
   .command(...c(snvAnnotS))
+  .command(...c(vcfFilterQuery))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);

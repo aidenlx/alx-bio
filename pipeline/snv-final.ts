@@ -2,6 +2,7 @@ import { $, Command, exists, resolve } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
 import ExtractAndHpoAnnot from "./module/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
+import { getFilterQuery } from "@/pipeline/module/filter.ts";
 
 async function caddAnnot(
   cadd: string,
@@ -92,7 +93,7 @@ export default new Command()
         qcCsvGz = `${sample}.full.qc.v2.${assembly}.excel.csv.gz`;
       console.error(`Filtering on qc...`);
       await $`zcat ${fullVcfGz} \
-| SnpSift filter "($(pipeline vcf.filter-q -o qual))" \
+| SnpSift filter ${getFilterQuery("qual")} \
 | bgzip > ${qcVcfGz}`;
       await extract(qcVcfGz, qcTsvGz);
       await tsv2excel(qcTsvGz, qcCsvGz);
@@ -102,7 +103,7 @@ export default new Command()
         fcCsvGz = `${sample}.full.filter.v2.${assembly}.excel.csv.gz`;
       console.error(`Filtering on effect...`);
       await $`zcat ${qcVcfGz} \
-| SnpSift filter "($(pipeline vcf.filter-q -o effect))" \
+| SnpSift filter ${getFilterQuery("effect")} \
 | bgzip > ${fcVcfGz}`;
       await extract(fcVcfGz, fcTsvGz);
       await tsv2excel(fcTsvGz, fcCsvGz);
