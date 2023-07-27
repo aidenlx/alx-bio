@@ -86,34 +86,92 @@ export default new Command()
       console.error(`Done, output to ${outputCsvGz}`);
     }
 
-    await Promise.all([
-      (async function withFilter() {
-        const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
-          qcTsvGz = `${sample}.full.qc.v2.${assembly}.tsv.gz`,
-          qcCsvGz = `${sample}.full.qc.v2.${assembly}.excel.csv.gz`;
-        console.error(`Filtering on qc...`);
-        await $`zcat ${fullVcfGz} \
+    await Promise.all([withFilter(), noFilter(), exomiserExtra()]);
+
+    async function withFilter() {
+      const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
+        qcTsvGz = `${sample}.full.qc.v2.${assembly}.tsv.gz`,
+        qcCsvGz = `${sample}.full.qc.v2.${assembly}.excel.csv.gz`;
+      console.error(`Filtering on qc...`);
+      await $`zcat ${fullVcfGz} \
 | SnpSift filter "($(pipeline vcf.filter-q -o qual))" \
 | bgzip > ${qcVcfGz}`;
-        await extract(qcVcfGz, qcTsvGz);
-        await tsv2excel(qcTsvGz, qcCsvGz);
+      await extract(qcVcfGz, qcTsvGz);
+      await tsv2excel(qcTsvGz, qcCsvGz);
 
-        const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
-          fcTsvGz = `${sample}.full.filter.v2.${assembly}.tsv.gz`,
-          fcCsvGz = `${sample}.full.filter.v2.${assembly}.excel.csv.gz`;
-        console.error(`Filtering on effect...`);
-        await $`zcat ${qcVcfGz} \
+      const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
+        fcTsvGz = `${sample}.full.filter.v2.${assembly}.tsv.gz`,
+        fcCsvGz = `${sample}.full.filter.v2.${assembly}.excel.csv.gz`;
+      console.error(`Filtering on effect...`);
+      await $`zcat ${qcVcfGz} \
 | SnpSift filter "($(pipeline vcf.filter-q -o effect))" \
 | bgzip > ${fcVcfGz}`;
-        await extract(fcVcfGz, fcTsvGz);
-        await tsv2excel(fcTsvGz, fcCsvGz);
-      })(),
-      (async function noFilter() {
-        console.error(`No filter, extracting full...`);
-        const fullTsvGz = `${sample}.full.v2.${assembly}.tsv.gz`,
-          fullCsvGz = `${sample}.full.v2.${assembly}.excel.csv.gz`;
-        await extract(fullVcfGz, fullTsvGz);
-        await tsv2excel(fullTsvGz, fullCsvGz);
-      })(),
-    ]);
+      await extract(fcVcfGz, fcTsvGz);
+      await tsv2excel(fcTsvGz, fcCsvGz);
+    }
+
+    async function noFilter() {
+      console.error(`No filter, extracting full...`);
+      const fullTsvGz = `${sample}.full.v2.${assembly}.tsv.gz`,
+        fullCsvGz = `${sample}.full.v2.${assembly}.excel.csv.gz`;
+      await extract(fullVcfGz, fullTsvGz);
+      await tsv2excel(fullTsvGz, fullCsvGz);
+    }
+
+    /** output extra data for exomiser */
+    async function exomiserExtra() {
+      const exoExtraTsvGz = `${sample}.full.exo-extra.${assembly}.tsv.gz`;
+      await $`SnpSift extractFields \
+-s "," -e "." ${fullVcfGz} ${
+        assembly === "hg19" ? exomiserExtraFields : exomiserExtraFieldsHg38
+      } \
+| bgzip > ${exoExtraTsvGz} \
+&& tabix -s 1 -b 2 -e 2 ${exoExtraTsvGz}`;
+    }
   });
+
+const exomiserExtraFields = `
+CHROM
+POS
+REF
+ALT
+QUAL
+DP
+FS
+MQ
+QD
+gnomad_e211_AF
+gnomad_e211_AF_eas
+gnomad_g211_AF
+gnomad_g211_AF_eas
+WBBC_AF
+WBBC_South_AF
+ANN
+GEN[*].GT
+CADD_PHRED
+`
+  .trim()
+  .split("\n");
+
+const exomiserExtraFieldsHg38 = `
+CHROM
+POS
+REF
+ALT
+QUAL
+DP
+FS
+MQ
+QD
+gnomad_e211_AF
+gnomad_e211_AF_eas
+gnomad312_AF
+gnomad312_AF_eas
+WBBC_AF
+WBBC_South_AF
+ANN
+GEN[*].GT
+CADD_PHRED
+`
+  .trim()
+  .split("\n");
