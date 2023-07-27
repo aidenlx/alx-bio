@@ -1,8 +1,9 @@
-import { Command, D, EnumType, path, cd, $, exists } from "@/deps.ts";
+import { Command, D, EnumType, path, cd } from "@/deps.ts";
 import { snpeff_assembly, vcfannoCfg } from "./_res.ts";
 import { orGzip } from "@/utils/or-gzip.ts";
 import vcfanno from "./module/vcfanno.ts";
 import tableAnnovar from "./module/annovar/table_annovar.ts";
+import { toFinalOutput, pipe } from "./pipe.ts";
 
 export default new Command()
   .name("snv.annot.m")
@@ -46,58 +47,34 @@ export default new Command()
 
     const prefix = options.sample + ".";
 
-    const intermediate = await pipe(
-      inputVcf,
-      async (input) => {
-        console.info(`annotate ${input} with annovar`);
-        const annovarOutBase = prefix + "annovar";
-        const {
-          vcf: vcfAnnovar,
-          avinput,
-          tsv: tsvAnnovar,
-        } = await tableAnnovar(input, annovarOutBase, {
-          threads,
-          assembly: ref,
-        });
-        return [avinput, tsvAnnovar, vcfAnnovar];
-      },
-      async (input) => {
-        console.info(`annotate ${input} with vcfanno`);
-        const output = prefix + `vcfannot.${ref}.vcf`;
-        await vcfanno(orGzip(input), output, {
-          threads,
-          config: vcfannoCfg[ref],
-        });
-        return output;
-      }
-    );
-
-    const output = prefix + `m.${ref}.vcf`;
-    await Promise.all(
-      intermediate.map(async (file, i, arr) => {
-        if (!(await exists(file))) return;
-        if (i === arr.length - 1) {
-          await $`bgzip -c ${file} > ${output}.gz && tabix -f -p vcf ${output}.gz`;
+    const output = await toFinalOutput(
+      pipe(
+        inputVcf,
+        async (input) => {
+          console.info(`annotate ${input} with annovar`);
+          const annovarOutBase = prefix + "annovar";
+          const {
+            vcf: vcfAnnovar,
+            avinput,
+            tsv: tsvAnnovar,
+          } = await tableAnnovar(input, annovarOutBase, {
+            threads,
+            assembly: ref,
+          });
+          return [avinput, tsvAnnovar, vcfAnnovar];
+        },
+        async (input) => {
+          console.info(`annotate ${input} with vcfanno`);
+          const output = prefix + `vcfannot.${ref}.vcf`;
+          await vcfanno(orGzip(input), output, {
+            threads,
+            config: vcfannoCfg[ref],
+          });
+          return output;
         }
-        await $`bgzip -f ${file}`;
-      })
+      ),
+      prefix + `m.${ref}.vcf`
     );
 
     console.info(`multithread Annotation finished. Output: ${output}.gz`);
   });
-
-async function pipe(
-  input: string,
-  ...steps: ((input: string) => Promise<string | string[]>)[]
-) {
-  const outputs: string[] = [];
-  for (const step of steps) {
-    let output = await step(input);
-    if (typeof output === "string") output = [output];
-    if (output.length === 0) throw new Error("no output for " + input);
-    outputs.push(...output);
-    input = output.pop()!;
-  }
-  if (outputs.length === 0) throw new Error("no steps");
-  return outputs;
-}
