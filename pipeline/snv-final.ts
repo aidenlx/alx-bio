@@ -1,6 +1,6 @@
 import { $, Command, exists, resolve } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
-import ExtractAndHpoAnnot from "./module/hpo-annot.ts";
+import ExtractAndHpoAnnot, { loadHpoData } from "./module/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
 
@@ -19,7 +19,6 @@ async function caddAnnot(
   }
 
   console.error(`Annotating ${inputVcfGz} with ${cadd}`);
-  await $`[ ! -f ${cadd}.tbi ] && tabix -b 2 -e 2 -s 1 ${cadd} || true`;
   const output = outputVcfGz.replace(/\.gz$/, "");
   await vcfanno(inputVcfGz, output, {
     config: [
@@ -33,7 +32,7 @@ async function caddAnnot(
     threads: 4,
   });
   if (await exists(output)) {
-    await $`bgzip -f ${output} && tabix -p vcf ${outputVcfGz}`;
+    await $`bgzip -f ${output} && tabix -f -p vcf ${outputVcfGz}`;
   }
   console.error(`Done, output to ${outputVcfGz}`);
 }
@@ -65,6 +64,7 @@ export default new Command()
     const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
     await caddAnnot(caddData, inputVcfGz, fullVcfGz);
     const samples = await getSamples(fullVcfGz, sampleMap);
+    const hpoData = await loadHpoData(resDir);
 
     async function extract(inputVcfGz: string, outputTsvGz: string) {
       console.error(`Extracting from ${inputVcfGz}...`);
@@ -72,7 +72,7 @@ export default new Command()
       await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
         assembly,
         samples,
-        resDir,
+        data: hpoData,
       });
       console.error(`Done, output to ${outputTsvGz}`);
     }
@@ -80,8 +80,9 @@ export default new Command()
       console.error(`Converting ${inputTsvGz} to excel csv format...`);
       // write BOM header (printf "\xEF\xBB\xBF")
       const outputCsv = outputCsvGz.slice(0, -3);
-      await Deno.writeTextFile(outputCsv, "\xEF\xBB\xBF");
-      await $`zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} && bgzip -f ${outputCsv}`;
+      await $`printf "\\xEF\\xBB\\xBF" > ${outputCsv} && \
+zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
+&& bgzip -f ${outputCsv}`;
       console.error(`Done, output to ${outputCsvGz}`);
     }
 
@@ -125,7 +126,7 @@ export default new Command()
       await $`SnpSift extractFields -s "," -e "." ${fullVcfGz} ${extraFields} \
 | sed '1s/CHROM/#CHROM/' \
 | bgzip > ${exoExtraTsvGz} \
-&& tabix -s 1 -b 2 -e 2 ${exoExtraTsvGz}`;
+&& tabix -f -s 1 -b 2 -e 2 ${exoExtraTsvGz}`;
     }
   });
 

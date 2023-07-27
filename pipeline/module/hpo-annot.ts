@@ -47,18 +47,15 @@ export default async function ExtractAndHpoAnnot(
   {
     samples,
     assembly,
-    resDir,
-  }: { assembly: "hg19" | "hg38"; samples: string[]; resDir: string }
+    data,
+  }: { assembly: "hg19" | "hg38"; samples: string[]; data: HpoData }
 ) {
   const fieldList = assembly === "hg38" ? hg38FieldList : hg19FieldList;
   if (fieldList.length === 0) {
     throw new Error("fieldList is empty: " + fieldList);
   }
 
-  const hpoAnnot = await HpoAnnot({
-    samples,
-    resDir,
-  });
+  const hpoAnnot = await HpoAnnot({ samples, data });
   const output = await Deno.open(outputTsv, {
     create: true,
     write: true,
@@ -109,14 +106,8 @@ export default async function ExtractAndHpoAnnot(
   }
 }
 
-async function HpoAnnot({
-  resDir,
-  samples,
-}: {
-  samples: string[];
-  resDir: string;
-}) {
-  console.error(`sample: ${samples.join(",")}`);
+type HpoData = Awaited<ReturnType<typeof loadHpoData>>;
+export async function loadHpoData(resDir: string) {
   const [
     hpoDisease,
     hpoPhenotype,
@@ -134,12 +125,39 @@ async function HpoAnnot({
     getORPHA(resDir),
     // getOMIMAnnot(res),
   ]);
-  // performance.mark("process_start");
   console.error(`Memory usage: ${fmtBytes(Deno.memoryUsage().heapTotal)}`);
+  return {
+    hpoDisease,
+    hpoPhenotype,
+    hpoTranslate,
+    hpoData,
+    omimTranslate,
+    orpha,
+  };
+}
 
-  let header: string[] | null = null,
+function HpoAnnot({
+  data: {
+    hpoDisease,
+    hpoPhenotype,
+    hpoTranslate,
+    hpoData,
+    omimTranslate,
+    orpha,
+  },
+  samples,
+}: {
+  samples: string[];
+  data: HpoData;
+}) {
+  console.error(`sample: ${samples.join(",")}`);
+
+  // performance.mark("process_start");
+
+  let firstLine = true,
     idColumns: [number, number, number, number] = [-1, -1, -1, -1],
-    GTColumn = -1;
+    GTColumn = -1,
+    GeneColumn = -1;
   const dedupeCols = new Set<number>();
 
   const newColumnsPrepend = {
@@ -148,33 +166,35 @@ async function HpoAnnot({
   const sampleGTColumns = Object.fromEntries(samples.map((k) => [k, ""]));
   return new TransformStream({
     transform(chunk: string[], controller) {
-      if (!header) {
-        GTColumn = chunk.indexOf("GEN[*].GT");
-        if (GTColumn === -1) {
-          throw new Error("Missing required columns: GEN[*].GT");
-        }
-        // remove gt column
-        chunk.splice(GTColumn, 1);
-        header = [
-          ...Object.keys(newColumnsPrepend),
-          ...Object.keys(sampleGTColumns),
-          ...chunk,
-          ...Object.keys(newColumnsAppend),
-        ];
+      if (firstLine) {
+        firstLine = false;
         idColumns = [
           chunk.indexOf("CHROM"),
           chunk.indexOf("POS"),
           chunk.indexOf("REF"),
           chunk.indexOf("ALT"),
         ];
-        dedupeFields.forEach((key) => {
-          dedupeCols.add(chunk.indexOf(key));
-        });
         if (idColumns.some((v) => v === -1)) {
           throw new Error("Missing required columns: CHROM, POS, REF, ALT");
         }
+        dedupeFields.forEach((key) => {
+          dedupeCols.add(chunk.indexOf(key));
+        });
+        GTColumn = chunk.indexOf("GEN[*].GT");
+        if (GTColumn === -1) {
+          throw new Error("Missing required columns: GEN[*].GT");
+        }
+        GeneColumn = chunk.indexOf("ANN[0].GENE");
+        if (GeneColumn === -1) {
+          throw new Error("Missing required columns: ANN[0].GENE");
+        }
 
-        controller.enqueue(header);
+        controller.enqueue([
+          ...Object.keys(newColumnsPrepend),
+          ...Object.keys(sampleGTColumns),
+          ...chunk.filter((_, i) => i !== GTColumn),
+          ...Object.keys(newColumnsAppend),
+        ]);
         return;
       }
 
@@ -194,11 +214,8 @@ async function HpoAnnot({
       GT.forEach((v, i) => {
         sampleGTColumns[samples[i]] = GTMap[v] ?? v;
       });
-      // remove gt[*] column
-      chunk.splice(GTColumn, 1);
-
       const colsAppend = { ...newColumnsAppend };
-      const gene = chunk[header.indexOf("ANN[0].GENE")];
+      const gene = chunk[GeneColumn];
       if (gene && hpoPhenotype[gene]) {
         const ids = hpoPhenotype[gene]!.map((row) => row.hpo_id.substring(3));
         colsAppend.hpo_phenotype = ids.join("|");
@@ -217,15 +234,16 @@ async function HpoAnnot({
           .map((v) => getDisease(v, false))
           .join("|");
       }
+
+      const data = chunk.map((v, i) => {
+        if (dedupeCols.has(i)) v = uniq(v);
+        return v.replace(/\\x3b/g, ";");
+      });
+      data.splice(GTColumn, 1);
       controller.enqueue([
         ...Object.values(colsPrepend),
         ...Object.values(sampleGTColumns),
-        ...chunk.map((v, i) => {
-          if (dedupeCols.has(i)) {
-            v = uniq(v);
-          }
-          return v.replace(/\\x3b/g, ";");
-        }),
+        ...data,
         ...Object.values(colsAppend),
       ]);
     },
