@@ -30,6 +30,11 @@ export default async function tableAnnovar(
     return output;
   }
 
+  if (input.endsWith(".gz")) {
+    await $`gunzip ${input}`;
+    input = input.slice(0, -3);
+  }
+
   const args = [
     ...[input, annovarDataDir],
     ...(options.args ?? []),
@@ -39,6 +44,9 @@ export default async function tableAnnovar(
     ...toAnnovarArgs(options.assembly, database),
   ];
   await $`table_annovar.pl ${args}`;
+
+  await $`bgzip ${input}`;
+
   await finish();
   return output;
 }

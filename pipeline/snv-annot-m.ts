@@ -31,7 +31,7 @@ export default new Command()
       throw new Error("threads must be a positive integer");
     }
 
-    const inputVcf = path.resolve(await orGzip(options.input));
+    const inputVcf = path.resolve(orGzip(options.input));
     const workPath = options.outputDir
       ? path.resolve(options.outputDir)
       : path.dirname(path.resolve(options.input));
@@ -50,10 +50,6 @@ export default new Command()
       inputVcf,
       async (input) => {
         console.info(`annotate ${input} with annovar`);
-        if (input.endsWith(".gz")) {
-          await $`gunzip ${input}`;
-          input = input.slice(0, -3);
-        }
         const annovarOutBase = prefix + "annovar";
         const {
           vcf: vcfAnnovar,
@@ -63,13 +59,15 @@ export default new Command()
           threads,
           assembly: ref,
         });
-        await $`bgzip ${input}`;
         return [avinput, tsvAnnovar, vcfAnnovar];
       },
       async (input) => {
         console.info(`annotate ${input} with vcfanno`);
         const output = prefix + `vcfannot.${ref}.vcf`;
-        await vcfanno(input, output, { threads, config: vcfannoCfg[ref] });
+        await vcfanno(orGzip(input), output, {
+          threads,
+          config: vcfannoCfg[ref],
+        });
         return output;
       }
     );
