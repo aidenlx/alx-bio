@@ -6,7 +6,6 @@ import { CsvStringifyStream, CsvParseStream, fmtBytes } from "../deps.ts";
 import getORPHA from "../database/orpha.ts";
 import getOMIMTranslate from "../database/omim-cn.ts";
 import getHPOData from "../database/hpo-name.ts";
-import { copy } from "https://deno.land/std@0.194.0/bytes/copy.ts";
 // import { Command, fmtDuration } from "../deps.ts";
 
 const separator = "\t";
@@ -48,9 +47,17 @@ export default async function ExtractAndHpoAnnot(
     resDir,
   }: { assembly: string; samples: string[]; resDir: string }
 ) {
-  const fieldList = await Deno.readTextFile(
-    `/genetics/home/stu_liujiyuan/pipeline/vcf-extract-${assembly}.txt`
-  ).then((raw) => raw.split("\n").map((v) => v.trim()));
+  const fieldFile = `/genetics/home/stu_liujiyuan/pipeline/vcf-extract-${assembly}.txt`;
+  const fieldList = await Deno.readTextFile(fieldFile).then((raw) =>
+    raw
+      .trim()
+      .split(/\r?\n/)
+      .map((v) => v.trim())
+      .filter(Boolean)
+  );
+  if (fieldList.length === 0) {
+    throw new Error("fieldList is empty: " + fieldFile);
+  }
 
   const hpoAnnot = await HpoAnnot({
     samples,
@@ -66,7 +73,6 @@ export default async function ExtractAndHpoAnnot(
     stdout: "piped",
     stderr: "piped",
   }).spawn();
-
   const extractFields = new Deno.Command("SnpSift", {
     args: [
       "extractFields",
@@ -79,9 +85,8 @@ export default async function ExtractAndHpoAnnot(
     stdout: "piped",
     stderr: "piped",
   }).spawn();
-  // const pipeerr = extractFields.stderr.pipeTo(Deno.stderr.writable);
-  // bgzip.stderr.pipeTo(Deno.stderr.writable);
-  // Deno.stdin.
+  printStdErr(extractFields.stderr);
+  printStdErr(bgzip.stderr);
 
   const pipea = extractFields.stdout
     .pipeThrough(new TextDecoderStream())
@@ -98,6 +103,14 @@ export default async function ExtractAndHpoAnnot(
   const pipeb = bgzip.stdout.pipeTo(output.writable);
 
   await Promise.all([pipea, pipeb]);
+  const eStatus = await extractFields.status,
+    bStatus = await bgzip.status;
+  if (!eStatus.success) {
+    throw new Error("extractFields failed: " + eStatus.code);
+  }
+  if (!bStatus.success) {
+    throw new Error("bgzip failed: " + bStatus.code);
+  }
 }
 
 async function HpoAnnot({
@@ -250,5 +263,11 @@ async function HpoAnnot({
     return (
       (cn ? hpoTranslate[id]?.name_cn : null) ?? hpoData[id]?.name ?? `HP:${id}`
     );
+  }
+}
+
+async function printStdErr(err: ReadableStream<Uint8Array>) {
+  for await (const chunk of err) {
+    await Deno.stderr.write(chunk);
   }
 }
