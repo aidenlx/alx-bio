@@ -113,6 +113,7 @@ export default new Command()
         outputOptions: {
           outputDirectory,
           outputFileName,
+          outputFormats: ["HTML", "JSON", "TSV_GENE", "TSV_VARIANT", "VCF"],
         },
       }
     );
