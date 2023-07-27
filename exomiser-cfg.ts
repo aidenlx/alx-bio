@@ -7,6 +7,7 @@ import {
   join,
   resolve,
   EnumType,
+  $,
 } from "./deps.ts";
 import merge from "https://esm.sh/lodash@4.17.21/merge";
 
@@ -72,15 +73,35 @@ export default new Command()
     const outputDirectory = join(outputDir, "exomiser");
     const outputFileName = basename(vcf).split(".")[0];
     const genomeAssembly = vcf.includes("hg38") ? "hg38" : "hg19";
+    const { stdout: _sampleIds } =
+      await $`rg '#CHROM' ${options.input} | cut -f10-`;
+    const sampleIds = _sampleIds
+      .split("\t")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (sampleIds.length === 0) {
+      throw new Error("No sample found");
+    }
     const yaml = merge(
+      {
+        sample: {
+          genomeAssembly,
+          vcf,
+          hpoIds,
+          proband: sampleIds.at(0),
+          pedigree: {
+            persons: sampleIds.map((id) => ({
+              individualId: id,
+              affectedStatus: "AFFECTED",
+            })),
+          },
+        },
+      },
       await Deno.readTextFile(
         "/Users/aidenlx/repo/alx-bio/template/exomiser.yml"
       ).then(yamlParse),
       {
         analysis: {
-          genomeAssembly,
-          vcf,
-          hpoIds,
           pathogenicitySources: [
             "CADD",
             "REVEL",
