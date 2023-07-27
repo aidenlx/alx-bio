@@ -119,10 +119,10 @@ export default new Command()
     /** output extra data for exomiser */
     async function exomiserExtra() {
       const exoExtraTsvGz = `${sample}.full.exo-extra.${assembly}.tsv.gz`;
-      await $`SnpSift extractFields \
--s "," -e "." ${fullVcfGz} ${
-        assembly === "hg19" ? exomiserExtraFields : exomiserExtraFieldsHg38
-      } \
+      const extraFields =
+        assembly === "hg19" ? exomiserExtraFields : exomiserExtraFieldsHg38;
+      await $`SnpSift extractFields -s "," -e "." ${fullVcfGz} ${extraFields} \
+| sed '1s/CHROM/#CHROM/' \
 | bgzip > ${exoExtraTsvGz} \
 && tabix -s 1 -b 2 -e 2 ${exoExtraTsvGz}`;
     }
@@ -151,25 +151,6 @@ CADD_PHRED
   .trim()
   .split("\n");
 
-const exomiserExtraFieldsHg38 = `
-CHROM
-POS
-REF
-ALT
-QUAL
-DP
-FS
-MQ
-QD
-gnomad_e211_AF
-gnomad_e211_AF_eas
-gnomad312_AF
-gnomad312_AF_eas
-WBBC_AF
-WBBC_South_AF
-ANN
-GEN[*].GT
-CADD_PHRED
-`
-  .trim()
-  .split("\n");
+const exomiserExtraFieldsHg38 = exomiserExtraFields.map((f) =>
+  f.replace(/gnomad_g211/g, "gnomad312")
+);
