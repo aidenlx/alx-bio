@@ -272,11 +272,11 @@ class Tasks extends Map<string, number> {
         if (this.has(n)) return [this.get(n)!];
         const skip = await new Confirm({
           default: true,
-          message: `Dependency ${n} not found in previous tasks. Skip?`,
+          message: `Dependency ${n} not found in previous tasks. If you're sure that the task is completed, you can skip it. Skip?`,
         }).prompt();
         if (skip) return [];
         const newDepId = await new NumberType({
-          message: `Add job id for ${n}, should be an job array`,
+          message: `Provide the job id of task ${n}, the task should be a job array: `,
           min: 1,
         }).prompt();
         return [newDepId];
