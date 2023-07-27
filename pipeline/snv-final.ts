@@ -109,6 +109,7 @@ export default new Command()
         await tsv2excel(fcTsvGz, fcCsvGz);
       })(),
       (async function noFilter() {
+        console.error(`No filter, extracting full...`);
         const fullTsvGz = `${sample}.full.v2.${assembly}.tsv.gz`,
           fullCsvGz = `${sample}.full.v2.${assembly}.excel.csv.gz`;
         await extract(fullVcfGz, fullTsvGz);
