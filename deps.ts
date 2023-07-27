@@ -50,3 +50,8 @@ export { D, pipe } from "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5";
 export { repeat } from "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5/Array?exports=repeat";
 export { type, scope } from "npm:arktype";
 export { readLines } from "https://deno.land/std@0.194.0/io/read_lines.ts";
+export {
+  Number,
+  Confirm,
+  prompt,
+} from "https://deno.land/x/cliffy@v1.0.0-rc.2/prompt/mod.ts";

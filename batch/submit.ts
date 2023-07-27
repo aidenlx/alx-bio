@@ -7,6 +7,8 @@ import {
   exists,
   dirname,
   readLines,
+  Confirm,
+  Number as NumberType,
 } from "@/deps.ts";
 import type { ProcessOutput, ProcessPromise } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
@@ -228,12 +230,12 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
   const tasks = new Tasks();
 
   let firstRequestedDeps: string[] | undefined;
-  function getDepArgs(depNames: string[]): string[] {
+  async function getDepArgs(depNames: string[]): Promise<string[]> {
     if (!firstRequestedDeps && initDep) {
       return ["--dependency", initDep];
     } else if (firstRequestedDeps && depNames.length > 0) {
       const frDeps = firstRequestedDeps;
-      const taskIds = tasks.getLots(
+      const taskIds = await tasks.getLots(
         ...depNames.filter((n) => !frDeps.includes(n))
       );
       const deps: string[] = [];
@@ -255,7 +257,7 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
       continue;
     }
     const deps = !_deps ? [] : typeof _deps === "string" ? [_deps] : _deps;
-    const depArgs = getDepArgs(deps);
+    const depArgs = await getDepArgs(deps);
     firstRequestedDeps ??= deps;
     const id = toJobId(await run(step.name, depArgs));
     tasks.set(step.name, id);
@@ -264,10 +266,22 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
 }
 
 class Tasks extends Map<string, number> {
-  getLots(...name: string[]) {
-    return name.map((n) => {
-      if (!this.has(n)) throw new Error("Task not found: " + n);
-      return this.get(n)!;
-    });
+  async getLots(...name: string[]) {
+    const ids = await Promise.all(
+      name.map(async (n) => {
+        if (this.has(n)) return [this.get(n)!];
+        const skip = await new Confirm({
+          default: true,
+          message: `Dependency ${n} not found in previous tasks. Skip?`,
+        }).prompt();
+        if (skip) return [];
+        const newDepId = await new NumberType({
+          message: `Add job id for ${n}, should be an job array`,
+          min: 1,
+        }).prompt();
+        return [newDepId];
+      })
+    );
+    return ids.flat();
   }
 }
