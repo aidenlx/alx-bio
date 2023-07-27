@@ -16,6 +16,6 @@ export async function checkDone(output: string) {
   };
 }
 
-function noDupDot(input: string) {
+export function noDupDot(input: string) {
   return input.split(".").filter(Boolean).join(".");
 }

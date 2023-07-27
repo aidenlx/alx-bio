@@ -1,11 +1,11 @@
-import getHPODisease from "../database/hpo-disease.ts";
-import getHPOPhenotype from "../database/hpo-phenotype.ts";
-import getHPOTranslate from "../database/hpo-cn.ts";
-import { CsvStringifyStream, CsvParseStream, fmtBytes } from "../deps.ts";
+import getHPODisease from "@/database/hpo-disease.ts";
+import getHPOPhenotype from "@/database/hpo-phenotype.ts";
+import getHPOTranslate from "@/database/hpo-cn.ts";
+import { CsvStringifyStream, CsvParseStream, fmtBytes } from "@/deps.ts";
 // import getOMIMAnnot from "../database/omim-annot.ts";
-import getORPHA from "../database/orpha.ts";
-import getOMIMTranslate from "../database/omim-cn.ts";
-import getHPOData from "../database/hpo-name.ts";
+import getORPHA from "@/database/orpha.ts";
+import getOMIMTranslate from "@/database/omim-cn.ts";
+import getHPOData from "@/database/hpo-name.ts";
 // import { Command, fmtDuration } from "../deps.ts";
 
 const separator = "\t";
@@ -38,6 +38,9 @@ function uniq(arrStr: string, delimiter = ",") {
   return [...new Set(arr)].join(delimiter);
 }
 
+import hg19FieldList from "./vcf-extract-hg19.json" assert { type: "json" };
+import hg38FieldList from "./vcf-extract-hg38.json" assert { type: "json" };
+
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
   outputTsv: string,
@@ -45,18 +48,11 @@ export default async function ExtractAndHpoAnnot(
     samples,
     assembly,
     resDir,
-  }: { assembly: string; samples: string[]; resDir: string }
+  }: { assembly: "hg19" | "hg38"; samples: string[]; resDir: string }
 ) {
-  const fieldFile = `/genetics/home/stu_liujiyuan/pipeline/vcf-extract-${assembly}.txt`;
-  const fieldList = await Deno.readTextFile(fieldFile).then((raw) =>
-    raw
-      .trim()
-      .split(/\r?\n/)
-      .map((v) => v.trim())
-      .filter(Boolean)
-  );
+  const fieldList = assembly === "hg38" ? hg38FieldList : hg19FieldList;
   if (fieldList.length === 0) {
-    throw new Error("fieldList is empty: " + fieldFile);
+    throw new Error("fieldList is empty: " + fieldList);
   }
 
   const hpoAnnot = await HpoAnnot({

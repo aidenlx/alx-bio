@@ -1,4 +1,3 @@
-import { readLines } from "https://deno.land/std@0.193.0/io/read_lines.ts";
 import {
   $,
   Command,
@@ -7,6 +6,7 @@ import {
   join,
   exists,
   dirname,
+  readLines,
 } from "@/deps.ts";
 import type { ProcessOutput, ProcessPromise } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";

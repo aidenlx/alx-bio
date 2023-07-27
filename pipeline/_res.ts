@@ -261,18 +261,12 @@ const gnomad312GenomeColumns = ColToDef([
   [6, "gnomad312_AF"],
   [16, "gnomad312_AF_eas"],
 ]);
-const dbscsnv11Columns = ColToDef([
-  [6, "dbscSNV_ADA_SCORE"],
-  [7, "dbscSNV_RF_SCORE"],
-]);
 
 const annovar = {
   hg19_gnomad211_exome: gnomad211ExomeColumns,
   hg19_gnomad211_genome: gnomad211GenomeColumns,
-  hg19_dbscsnv11: dbscsnv11Columns,
   hg38_gnomad211_exome: gnomad211ExomeColumns,
   hg38_gnomad312_genome: gnomad312GenomeColumns,
-  hg38_dbscsnv11: dbscsnv11Columns,
 };
 
 export const vcfannoCfg = D.fromPairs(

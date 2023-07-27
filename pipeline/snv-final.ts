@@ -1,6 +1,7 @@
-import { $, Command, exists, tomlStringify, resolve } from "@/deps.ts";
+import { $, Command, exists, resolve } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
-import ExtractAndHpoAnnot from "@/modules/hpo-annot.ts";
+import ExtractAndHpoAnnot from "./module/hpo-annot.ts";
+import vcfanno from "@/pipeline/module/vcfanno.ts";
 
 async function caddAnnot(
   cadd: string,
@@ -15,8 +16,12 @@ async function caddAnnot(
     console.error("Indexing input VCF file...");
     await $`tabix -p vcf ${inputVcfGz}`;
   }
-  const config = {
-    annotation: [
+
+  console.error(`Annotating ${inputVcfGz} with ${cadd}`);
+  await $`[ ! -f ${cadd}.tbi ] && tabix -b 2 -e 2 -s 1 ${cadd} || true`;
+  const output = outputVcfGz.replace(/\.gz$/, "");
+  await vcfanno(inputVcfGz, output, {
+    config: [
       {
         file: resolve(cadd),
         columns: [6],
@@ -24,18 +29,9 @@ async function caddAnnot(
         ops: ["mean"],
       },
     ],
-  };
-  const cfgFile = await Deno.makeTempFile({ suffix: ".toml" });
-  try {
-    await Deno.writeTextFile(cfgFile, tomlStringify(config));
-    console.error(`Annotating ${inputVcfGz} with ${cadd}`);
-    await $`[ ! -f ${cadd}.tbi ] && tabix -b 2 -e 2 -s 1 ${cadd} || true`;
-    await $`vcfanno ${cfgFile} ${inputVcfGz} | bgzip > ${outputVcfGz} && tabix -p vcf ${outputVcfGz}`;
-  } catch (err) {
-    throw err;
-  } finally {
-    await Deno.remove(cfgFile);
-  }
+    threads: 4,
+  });
+  await $`bgzip ${output} && tabix -p vcf ${outputVcfGz}`;
   console.error(`Done, output to ${outputVcfGz}`);
 }
 

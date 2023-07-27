@@ -47,4 +47,6 @@ export { format as fmtBytes } from "https://deno.land/std@0.194.0/fmt/bytes.ts";
 export { format as fmtDuration } from "https://deno.land/std@0.194.0/fmt/duration.ts";
 export { readAll } from "https://deno.land/std@0.194.0/streams/mod.ts";
 export { D, pipe } from "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5";
-export { type, scope,  } from "npm:arktype";
+export { repeat } from "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5/Array?exports=repeat";
+export { type, scope } from "npm:arktype";
+export { readLines } from "https://deno.land/std@0.194.0/io/read_lines.ts";

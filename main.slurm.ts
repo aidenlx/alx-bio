@@ -6,6 +6,7 @@ import strAnnot from "@/pipeline/str-annot.ts";
 import merge from "@/batch/merge.ts";
 import hsStat from "@/pipeline/hs-stat.ts";
 import c from "@/utils/sub-cmd.ts";
+import snvAnnotM from "@/pipeline/snv-annot-m.ts";
 
 await new Command()
   .name("bioa")
@@ -16,6 +17,7 @@ await new Command()
   .command(...c(hsStat))
   .command(...c(snvFinal))
   .command(...c(strAnnot))
+  .command(...c(snvAnnotM))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
