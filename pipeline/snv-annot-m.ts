@@ -75,16 +75,15 @@ export default new Command()
     );
 
     const output = prefix + `m.${ref}.vcf`;
-    // if all intermediate files exist    const intermediate = [vcfSnpeff, vcfDbnsfp, vcfClinvar];
-    if (
-      (await Promise.all(intermediate.map((f) => exists(f)))).every(Boolean)
-    ) {
-      await $`cp ${intermediate.at(-1)} ${output}`;
-      await $`for f in ${[...intermediate, output]}; do bgzip $f; done;`;
-    }
-    if (!(await exists(`${output}.gz`))) {
-      await $`bgzip ${output} && tabix -f -p vcf ${output}.gz`;
-    }
+    await Promise.all(
+      intermediate.map(async (file, i, arr) => {
+        if (!(await exists(file))) return;
+        if (i === arr.length - 1) {
+          await $`bgzip -c ${file} > ${output}.gz && tabix -f -p vcf ${output}.gz`;
+        }
+        await $`bgzip -f ${file}`;
+      })
+    );
 
     console.info(`multithread Annotation finished. Output: ${output}.gz`);
   });

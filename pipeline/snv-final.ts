@@ -31,7 +31,9 @@ async function caddAnnot(
     ],
     threads: 4,
   });
-  await $`bgzip ${output} && tabix -p vcf ${outputVcfGz}`;
+  if (await exists(output)) {
+    await $`bgzip -f ${output} && tabix -p vcf ${outputVcfGz}`;
+  }
   console.error(`Done, output to ${outputVcfGz}`);
 }
 
