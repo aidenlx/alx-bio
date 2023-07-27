@@ -1,6 +1,6 @@
-import { $, Command, exists, tomlStringify, resolve } from "./deps.ts";
-import { genomeAssembly } from "./modules/common.ts";
-import ExtractAndHpoAnnot from "./modules/hpo-annot.ts";
+import { $, Command, exists, tomlStringify, resolve } from "@/deps.ts";
+import { genomeAssembly } from "@/modules/common.ts";
+import ExtractAndHpoAnnot from "@/modules/hpo-annot.ts";
 
 async function caddAnnot(
   cadd: string,

@@ -1,5 +1,5 @@
-import { Command, CsvParseStream, CsvStringifyStream, join } from "./deps.ts";
-import { genomeAssembly } from "./modules/common.ts";
+import { Command, CsvParseStream, CsvStringifyStream, join } from "@/deps.ts";
+import { genomeAssembly } from "@/modules/common.ts";
 import {
   RCSingle,
   RepeatCatalogs,
@@ -7,7 +7,7 @@ import {
   extraColAppend,
   Genotype,
   RepeatCatalogDisease,
-} from "./modules/rc.type.ts";
+} from "@/modules/rc.type.ts";
 
 // const extraColumns = [
 //   "VariantType",

@@ -1,8 +1,8 @@
 import arrSubmit from "@/batch/submit.ts";
 import { Command, CompletionsCommand, HelpCommand } from "@/deps.ts";
 import gen from "@/batch/gen.ts";
-import snvFinal from "@/snv-final.ts";
-import strAnnot from "@/str-annot.ts";
+import snvFinal from "@/pipeline/snv-final.ts";
+import strAnnot from "@/pipeline/str-annot.ts";
 import merge from "@/batch/merge.ts";
 import hsStat from "@/pipeline/hs-stat.ts";
 import c from "@/utils/sub-cmd.ts";
