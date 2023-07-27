@@ -29,7 +29,10 @@ export default new Command()
         } else {
           [R1, R2] = files[0];
         }
-        const name = `${numToFixedLength(i + 1, arr)}-${handleNonAscii(id)}`;
+        const name = `${numToFixedLength(
+          i + 1,
+          arr.length > 10 ? arr.length : 11
+        )}-${handleNonAscii(id)}`;
         return [i + 1, name, R1, R2];
       }
     );

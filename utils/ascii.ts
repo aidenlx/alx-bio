@@ -21,7 +21,7 @@ export function handleNonAscii(id: string) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-export function numToFixedLength<T>(num: number, array: T[]) {
-  const length = Math.ceil(Math.log10(array.length));
+export function numToFixedLength(num: number, size: number) {
+  const length = Math.ceil(Math.log10(size));
   return num.toString().padStart(length, "0"); // convert to string and pad with zeros
 }
