@@ -51,8 +51,6 @@
   "CLNHGVS",
   "CLNVI",
   "CLNDISDB",
-  "dbscSNV_ADA_SCORE",
-  "dbscSNV_RF_SCORE",
   "ANN",
   "ANN[0].ALLELE",
   "ANN[0].GENEID",
