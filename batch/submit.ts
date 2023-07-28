@@ -49,6 +49,7 @@ export default new Command()
   .option("-r, --ref <ref:genomeAssembly>", "reference genome", {
     required: true,
   })
+  .option("--no-cadd-script", "use prescored CADD score in favor of CADD script")
   .option("-b, --bait-intervals <path:file>", "bait intervals BED file")
   .option("--target-intervals <path:file>", "target intervals BED file")
   .option("--pick <task_range:string>", "pick tasks to run")
@@ -56,7 +57,7 @@ export default new Command()
   .arguments("<array_file:file>")
   .action(async (opts, arrayFile) => {
     const job = (name: string) => ["-J", `${opts.jobName}-${name}`];
-
+    const useCADDScript = opts.caddScript;
     if (!(await exists(arrayFile, { isReadable: true, isFile: true }))) {
       throw new Error(
         "Array file does not exist or is not readable: " + arrayFile
@@ -149,6 +150,7 @@ export default new Command()
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "cadd.slurm"
           )} ${arrayFile} ${ref_annot}`,
+        canRun: useCADDScript,
       }),
       annot_s: () => ({
         deps: "merge",
@@ -162,7 +164,7 @@ export default new Command()
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-annot-m.slurm"
-          )} ${arrayFile} ${ref_annot}`,
+          )} ${arrayFile} ${ref_annot} ${useCADDScript ? "--no-cadd" : ""}`,
       }),
       final: () => ({
         deps: ["cadd", "annot_m"],
@@ -254,6 +256,7 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
     const { deps: _deps, run, canRun } = step();
     if (canRun === false) {
       console.log("Skip task: " + step.name);
+      tasks.set(step.name, -1);
       continue;
     }
     const deps = !_deps ? [] : typeof _deps === "string" ? [_deps] : _deps;
@@ -269,7 +272,11 @@ class Tasks extends Map<string, number> {
   async getLots(...name: string[]) {
     const ids = await Promise.all(
       name.map(async (n) => {
-        if (this.has(n)) return [this.get(n)!];
+        if (this.has(n)) {
+          // task cannot run, skip
+          if (this.get(n) === -1) return [];
+          return [this.get(n)!];
+        }
         const skip = await new Confirm({
           default: true,
           message: `Dependency ${n} not found in previous tasks. If you're sure that the task is completed, you can skip it. Skip?`,
