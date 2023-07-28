@@ -234,21 +234,6 @@ const dbnsfpColumns = ColToDef([
   [688, "GTEx_V8_tissue"],
 ] as [number, string, string?][]);
 
-const clinvarColumns = FieldsToDef([
-  ["ALLELEID", "CLN_ALLELEID", "concat"],
-  ["CLNSIG", "CLNSIG"],
-  ["CLNDN", "CLNDN"],
-  ["CLNREVSTAT", "CLNREVSTAT"],
-  ["CLNHGVS", "CLNHGVS"],
-  ["CLNVI", "CLNVI"],
-  ["CLNDISDB", "CLNDISDB"],
-] as [string, string, string?][]);
-
-const wbbcFields = FieldsToDef(
-  [["AF"], ["North_AF"], ["Central_AF"], ["South_AF"], ["Lingnan_AF"]],
-  (field) => `WBBC_${field}`
-);
-
 const gnomad211ExomeColumns = ColToDef([
   [6, "gnomad_e211_AF"],
   [14, "gnomad_e211_AF_eas"],
@@ -269,6 +254,18 @@ const annovar = {
   hg38_gnomad312_genome: gnomad312GenomeColumns,
 };
 
+const CADD = {
+  hg19: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh37_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
+  hg38: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh38_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
+};
+
+export const vcfannoCADD = D.fromPairs(
+  (["hg19", "hg38"] as const).map((ref) => [
+    ref,
+    { file: CADD[ref], names: ["CADD_PHRED"], ops: ["mean"], columns: [5] },
+  ])
+);
+
 export const vcfannoCfg = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => {
     const cfg: {
@@ -284,11 +281,22 @@ export const vcfannoCfg = D.fromPairs(
       },
       {
         file: ClinVar[ref],
-        ...clinvarColumns,
+        ...FieldsToDef([
+          ["ALLELEID", "CLN_ALLELEID", "concat"],
+          ["CLNSIG", "CLNSIG"],
+          ["CLNDN", "CLNDN"],
+          ["CLNREVSTAT", "CLNREVSTAT"],
+          ["CLNHGVS", "CLNHGVS"],
+          ["CLNVI", "CLNVI"],
+          ["CLNDISDB", "CLNDISDB"],
+        ] as [string, string, string?][]),
       },
       {
         file: wbbcDatabase[ref === "hg19" ? "hs37" : ref],
-        ...wbbcFields,
+        ...FieldsToDef(
+          [["AF"], ["North_AF"], ["Central_AF"], ["South_AF"], ["Lingnan_AF"]],
+          (field) => `WBBC_${field}`
+        ),
       },
       ...pipe(
         annovar,
