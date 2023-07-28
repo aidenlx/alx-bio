@@ -28,10 +28,20 @@ const columns = [
 
 export default async function getOMIMGene(res: string) {
   const data = await Deno.readTextFile(join(res, "mim2gene.txt")).then((raw) =>
-    csvParse(raw, { separator: "\t", skipFirstRow: true, columns })
+    csvParse(raw, {
+      separator: "\t",
+      skipFirstRow: false,
+      columns,
+      comment: "#",
+    })
   );
   // group by gene_symbol
-  return Object.fromEntries(
-    data.filter((v) => v.type === "gene").map((v) => [v.hgnc_symbol, v])
-  );
+  return {
+    symbol: Object.fromEntries(
+      data.filter((v) => v.type === "gene").map((v) => [v.hgnc_symbol, v])
+    ),
+    id: Object.fromEntries(
+      data.filter((v) => v.type === "gene").map((v) => [v.ens_gene_id, v])
+    ),
+  };
 }

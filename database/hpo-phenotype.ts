@@ -9,6 +9,7 @@ const columns = [
   "hpo_name",
   "frequency",
   "disease_id",
+  "ensembl_id",
 ] as const;
 
 export default async function getHPOPhenotype(res: string) {
@@ -18,5 +19,8 @@ export default async function getHPOPhenotype(res: string) {
     csvParse(raw, { separator: "\t", skipFirstRow: true, columns })
   );
   // group by gene_symbol
-  return groupBy(data, (row) => row.gene_symbol);
+  return {
+    symbol: groupBy(data, (row) => row.gene_symbol),
+    id: groupBy(data, (row) => row.ensembl_id),
+  };
 }

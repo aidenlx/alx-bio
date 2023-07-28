@@ -3,6 +3,7 @@ import { genomeAssembly } from "@/modules/common.ts";
 import ExtractAndHpoAnnot, { loadHpoData } from "./module/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
+import SnpSiftFilter from "@/pipeline/module/snpsift/filter.ts";
 
 async function caddAnnot(
   cadd: string,
@@ -66,54 +67,35 @@ export default new Command()
     const samples = await getSamples(fullVcfGz, sampleMap);
     const hpoData = await loadHpoData(resDir);
 
-    async function extract(inputVcfGz: string, outputTsvGz: string) {
-      console.error(`Extracting from ${inputVcfGz}...`);
-
-      await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
-        assembly,
-        samples,
-        data: hpoData,
-      });
-      console.error(`Done, output to ${outputTsvGz}`);
-    }
-    async function tsv2excel(inputTsvGz: string, outputCsvGz: string) {
-      console.error(`Converting ${inputTsvGz} to excel csv format...`);
-      // write BOM header (printf "\xEF\xBB\xBF")
-      const outputCsv = outputCsvGz.slice(0, -3);
-      await $`printf "\\xEF\\xBB\\xBF" > ${outputCsv} && \
-zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
-&& bgzip -f ${outputCsv}`;
-      console.error(`Done, output to ${outputCsvGz}`);
-    }
-
     await Promise.all([withFilter(), noFilter(), exomiserExtra()]);
 
     async function withFilter() {
       const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
-        qcTsvGz = `${sample}.full.qc.v2.${assembly}.tsv.gz`,
-        qcCsvGz = `${sample}.full.qc.v2.${assembly}.excel.csv.gz`;
+        qcTsvGz = `${sample}.full.qc.v3.${assembly}.tsv.gz`,
+        qcCsvGz = `${sample}.full.qc.v3.${assembly}.excel.csv.gz`;
       console.error(`Filtering on qc...`);
-      await $`zcat ${fullVcfGz} \
-| SnpSift filter ${getFilterQuery("qual")} \
-| bgzip > ${qcVcfGz}`;
-      await extract(qcVcfGz, qcTsvGz);
-      await tsv2excel(qcTsvGz, qcCsvGz);
+      await SnpSiftFilter(fullVcfGz, getFilterQuery("qual"), qcVcfGz);
 
-      const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
-        fcTsvGz = `${sample}.full.filter.v2.${assembly}.tsv.gz`,
-        fcCsvGz = `${sample}.full.filter.v2.${assembly}.excel.csv.gz`;
-      console.error(`Filtering on effect...`);
-      await $`zcat ${qcVcfGz} \
-| SnpSift filter ${getFilterQuery("effect")} \
-| bgzip > ${fcVcfGz}`;
-      await extract(fcVcfGz, fcTsvGz);
-      await tsv2excel(fcTsvGz, fcCsvGz);
+      await Promise.all([
+        fc(qcVcfGz),
+        extract(qcVcfGz, qcTsvGz).then(() => tsv2excel(qcTsvGz, qcCsvGz)),
+      ]);
+
+      async function fc(inputVcfGz: string) {
+        const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
+          fcTsvGz = `${sample}.full.filter.v3.${assembly}.tsv.gz`,
+          fcCsvGz = `${sample}.full.filter.v3.${assembly}.excel.csv.gz`;
+        console.error(`Filtering on effect...`);
+        await SnpSiftFilter(inputVcfGz, getFilterQuery("effect"), fcVcfGz);
+        await extract(fcVcfGz, fcTsvGz);
+        await tsv2excel(fcTsvGz, fcCsvGz);
+      }
     }
 
     async function noFilter() {
       console.error(`No filter, extracting full...`);
-      const fullTsvGz = `${sample}.full.v2.${assembly}.tsv.gz`,
-        fullCsvGz = `${sample}.full.v2.${assembly}.excel.csv.gz`;
+      const fullTsvGz = `${sample}.full.v3.${assembly}.tsv.gz`,
+        fullCsvGz = `${sample}.full.v3.${assembly}.excel.csv.gz`;
       await extract(fullVcfGz, fullTsvGz);
       await tsv2excel(fullTsvGz, fullCsvGz);
     }
@@ -127,6 +109,26 @@ zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
 | sed '1s/CHROM/#CHROM/' \
 | bgzip > ${exoExtraTsvGz} \
 && tabix -f -s 1 -b 2 -e 2 ${exoExtraTsvGz}`;
+    }
+
+    async function extract(inputVcfGz: string, outputTsvGz: string) {
+      console.error(`Extracting from ${inputVcfGz}...`);
+
+      await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
+        assembly,
+        samples,
+        database: hpoData,
+      });
+      console.error(`Done, output to ${outputTsvGz}`);
+    }
+    async function tsv2excel(inputTsvGz: string, outputCsvGz: string) {
+      console.error(`Converting ${inputTsvGz} to excel csv format...`);
+      // write BOM header (printf "\xEF\xBB\xBF")
+      const outputCsv = outputCsvGz.slice(0, -3);
+      await $`printf "\\xEF\\xBB\\xBF" > ${outputCsv} && \
+zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
+&& bgzip -f ${outputCsv}`;
+      console.error(`Done, output to ${outputCsvGz}`);
     }
   });
 

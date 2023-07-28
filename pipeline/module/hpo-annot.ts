@@ -22,16 +22,31 @@ const GTMap: Record<string, string> = {
   "0|0": "Ref|",
   ".|.": "MIS|",
 };
-const dedupeFields = ["ANN[*].GENE"] as const;
+const GTSymbolMap: Record<string, string> = {
+  Hom: "●",
+  Ref: "◎",
+  Het: "◐",
+  MIS: "○",
+};
+const dedupeFields = new Set(["ANN[*].GENE"]);
 
-const newColumnsAppend = {
-  hpo_disease: "",
+const newColumnsAfterCADD = {
   hpo_disease_cn: "",
-  hpo_disease_en: "",
-  hpo_phenotype: "",
   hpo_phenotype_cn: "",
-  hpo_phenotype_en: "",
-} satisfies Record<string, string>;
+  hpo_disease: "",
+  hpo_phenotype: "",
+  HOM_COUNT: -1,
+  HET_COUNT: -1,
+} satisfies Record<string, string | number>;
+const newColumnsPrepend = {
+  ID: "",
+  GT_SYMBOL: "",
+  HOM_PCT: -1,
+  HET_PCT: -1,
+} satisfies Record<string, string | number>;
+const newColumnsAfterGene = {
+  gene_omim: "",
+} satisfies Record<string, string | number>;
 
 function uniq(arrStr: string, delimiter = ",") {
   const arr = arrStr.split(delimiter);
@@ -39,7 +54,7 @@ function uniq(arrStr: string, delimiter = ",") {
 }
 
 import hg19FieldList from "./vcf-extract-hg19.json" assert { type: "json" };
-import hg38FieldList from "./vcf-extract-hg38.json" assert { type: "json" };
+import getOMIMGene from "@/database/mim2gene.ts";
 
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
@@ -47,15 +62,18 @@ export default async function ExtractAndHpoAnnot(
   {
     samples,
     assembly,
-    data,
-  }: { assembly: "hg19" | "hg38"; samples: string[]; data: HpoData }
+    database,
+  }: { assembly: "hg19" | "hg38"; samples: string[]; database: HpoData }
 ) {
-  const fieldList = assembly === "hg38" ? hg38FieldList : hg19FieldList;
+  const fieldList =
+    assembly === "hg38"
+      ? hg19FieldList.map((v) => v.replace("gnomad_g211_", "gnomad312_"))
+      : hg19FieldList;
   if (fieldList.length === 0) {
     throw new Error("fieldList is empty: " + fieldList);
   }
 
-  const hpoAnnot = await HpoAnnot({ samples, data });
+  const hpoAnnot = HpoAnnot({ samples, database });
   const output = await Deno.open(outputTsv, {
     create: true,
     write: true,
@@ -115,6 +133,7 @@ export async function loadHpoData(resDir: string) {
     hpoData,
     omimTranslate,
     orpha,
+    mim2gene,
     // omimAnnot,
   ] = await Promise.all([
     getHPODisease(resDir),
@@ -123,6 +142,7 @@ export async function loadHpoData(resDir: string) {
     getHPOData(resDir),
     getOMIMTranslate(resDir),
     getORPHA(resDir),
+    getOMIMGene(resDir),
     // getOMIMAnnot(res),
   ]);
   console.error(`Memory usage: ${fmtBytes(Deno.memoryUsage().heapTotal)}`);
@@ -133,118 +153,164 @@ export async function loadHpoData(resDir: string) {
     hpoData,
     omimTranslate,
     orpha,
+    mim2gene,
   };
 }
 
 function HpoAnnot({
-  data: {
+  database: {
     hpoDisease,
     hpoPhenotype,
     hpoTranslate,
     hpoData,
     omimTranslate,
     orpha,
+    mim2gene,
   },
   samples,
 }: {
   samples: string[];
-  data: HpoData;
+  database: HpoData;
 }) {
   console.error(`sample: ${samples.join(",")}`);
 
   // performance.mark("process_start");
 
-  let firstLine = true,
-    idColumns: [number, number, number, number] = [-1, -1, -1, -1],
-    GTColumn = -1,
-    GeneColumn = -1;
-  const dedupeCols = new Set<number>();
+  let header: string[] | undefined;
 
-  const newColumnsPrepend = {
-    ID: "",
-  };
   const sampleGTColumns = Object.fromEntries(samples.map((k) => [k, ""]));
+  const idColumns = ["CHROM", "POS", "REF", "ALT"];
+  const gtCol = "GEN[*].GT",
+    geneCol = "ANN[0].GENE",
+    geneIdCol = "ANN[0].GENEID",
+    CADDCol = "CADD_PHRED";
+  const excludeCols = new Set([...idColumns, gtCol]);
   return new TransformStream({
     transform(chunk: string[], controller) {
-      if (firstLine) {
-        firstLine = false;
-        idColumns = [
-          chunk.indexOf("CHROM"),
-          chunk.indexOf("POS"),
-          chunk.indexOf("REF"),
-          chunk.indexOf("ALT"),
-        ];
-        if (idColumns.some((v) => v === -1)) {
-          throw new Error("Missing required columns: CHROM, POS, REF, ALT");
-        }
-        dedupeFields.forEach((key) => {
-          dedupeCols.add(chunk.indexOf(key));
+      if (!header) {
+        header = chunk;
+        [...idColumns, gtCol, geneCol, geneIdCol, CADDCol].forEach((v) => {
+          if (!chunk.includes(v)) {
+            throw new Error(`Missing required columns ${v}: ${chunk}`);
+          }
         });
-        GTColumn = chunk.indexOf("GEN[*].GT");
-        if (GTColumn === -1) {
-          throw new Error("Missing required columns: GEN[*].GT");
-        }
-        GeneColumn = chunk.indexOf("ANN[0].GENE");
-        if (GeneColumn === -1) {
-          throw new Error("Missing required columns: ANN[0].GENE");
-        }
 
         controller.enqueue([
+          ...idColumns.map((v, i) => (i === 0 ? `#${v}` : v)),
           ...Object.keys(newColumnsPrepend),
+          ...chunk
+            .slice(0, chunk.indexOf(geneCol) + 1)
+            .filter((c) => !excludeCols.has(c)),
+          ...Object.keys(newColumnsAfterGene),
+          ...chunk
+            .slice(chunk.indexOf(geneCol) + 1, chunk.indexOf(CADDCol) + 1)
+            .filter((c) => !excludeCols.has(c)),
+          ...Object.keys(newColumnsAfterCADD),
+          ...chunk
+            .slice(chunk.indexOf(CADDCol) + 1)
+            .filter((c) => !excludeCols.has(c)),
           ...Object.keys(sampleGTColumns),
-          ...chunk.filter((_, i) => i !== GTColumn),
-          ...Object.keys(newColumnsAppend),
         ]);
         return;
       }
+      const data = Object.fromEntries(header.map((k, i) => [k, chunk[i]]));
 
       const colsPrepend = { ...newColumnsPrepend };
+      const colsAfterCADD = { ...newColumnsAfterCADD };
+      const colsAfterGene = { ...newColumnsAfterGene };
       colsPrepend.ID = idColumns
-        .map((i) => chunk[i])
+        .map((key) => data[key])
         .join("-")
         .replace(/^chr/, "");
-      const GT = chunk[GTColumn].split(",");
+      const GT = data[gtCol].split(",");
       if (GT.length !== samples.length) {
         throw new Error(
-          `GT length not match, expected ${samples}(${samples.length}), got ${
-            GT.length
-          }: ${chunk.join(",")}`
+          `GT length not match, expected ${samples}(${samples.length}), got ${GT.length}: ${GT}`
         );
       }
+      const homCount = GT.map((v) => GTMap[v]).filter((v) =>
+        v.startsWith("Hom")
+      ).length;
+      colsAfterCADD.HOM_COUNT = homCount;
+      colsPrepend.HOM_PCT = homCount / GT.length;
+      // `${homCount}/${GT.length}~${homCount / GT.length}`;
+      const hetCount = GT.map((v) => GTMap[v]).filter((v) =>
+        v.startsWith("Het")
+      ).length;
+      colsAfterCADD.HET_COUNT = hetCount;
+      colsPrepend.HET_PCT = hetCount / GT.length;
+      // `${hetCount}/${GT.length}~${hetCount / GT.length}`;
+      colsPrepend.GT_SYMBOL = GT.map((v) =>
+        GTMap[v] ? GTSymbolMap[GTMap[v].slice(0, -1)] : "?"
+      ).join("");
       GT.forEach((v, i) => {
         sampleGTColumns[samples[i]] = GTMap[v] ?? v;
       });
-      const colsAppend = { ...newColumnsAppend };
-      const gene = chunk[GeneColumn];
-      if (gene && hpoPhenotype[gene]) {
-        const ids = hpoPhenotype[gene]!.map((row) => row.hpo_id.substring(3));
-        colsAppend.hpo_phenotype = ids.join("|");
-        colsAppend.hpo_phenotype_cn = ids
-          .map((id) => getHPOPhenotypeName(id))
-          .join("|");
-        colsAppend.hpo_phenotype_en = ids
-          .map((id) => getHPOPhenotypeName(id, false))
-          .join("|");
-      }
-      if (gene && hpoDisease[gene]) {
-        const ids = hpoDisease[gene]!.map((row) => row.disease_id);
-        colsAppend.hpo_disease = ids.join(",");
-        colsAppend.hpo_disease_cn = ids.map((v) => getDisease(v)).join("|");
-        colsAppend.hpo_disease_en = ids
-          .map((v) => getDisease(v, false))
-          .join("|");
+
+      const gene = data[geneCol],
+        geneID = data[geneIdCol];
+      if (geneID && mim2gene.id[geneID]) {
+        colsAfterGene.gene_omim = mim2gene.id[geneID].mim_num;
+        // colsAppend.gene_omim_type = mim2gene.id[geneID].type;
+      } else if (gene && mim2gene.symbol[gene]) {
+        colsAfterGene.gene_omim = mim2gene.symbol[gene].mim_num;
+        // colsAppend.gene_omim_type = mim2gene.symbol[gene].type;
       }
 
-      const data = chunk.map((v, i) => {
-        if (dedupeCols.has(i)) v = uniq(v);
+      const phenoSource = geneID
+        ? hpoPhenotype.id[geneID]
+        : gene
+        ? hpoPhenotype.symbol[gene]
+        : null;
+      if (phenoSource) {
+        const ids = phenoSource.map((row) => row.hpo_id.substring(3));
+        colsAfterCADD.hpo_phenotype = ids.join("|");
+        colsAfterCADD.hpo_phenotype_cn = ids
+          .map((id) => getHPOPhenotypeName(id))
+          .join("|");
+        // colsAppend.hpo_phenotype_en = ids
+        //   .map((id) => getHPOPhenotypeName(id, false))
+        //   .join("|");
+      }
+
+      const diseaseSource = geneID
+        ? hpoDisease.id[geneID]
+        : gene
+        ? hpoDisease.symbol[gene]
+        : null;
+      if (diseaseSource) {
+        const ids = diseaseSource.map((row) => row.disease_id);
+        colsAfterCADD.hpo_disease = ids.join(",");
+        colsAfterCADD.hpo_disease_cn = ids.map((v) => getDisease(v)).join("|");
+        // colsAppend.hpo_disease_en = ids
+        //   .map((v) => getDisease(v, false))
+        //   .join("|");
+      }
+
+      const processValue = ([key, v]: [key: string, v: string]) => {
+        if (dedupeFields.has(key)) v = uniq(v);
         return v.replace(/\\x3b/g, ";");
-      });
-      data.splice(GTColumn, 1);
+      };
+      const geneColIdx = header.indexOf(geneCol),
+        CADDColIdx = header.indexOf(CADDCol);
       controller.enqueue([
+        ...idColumns.map((key) => data[key]),
         ...Object.values(colsPrepend),
+        ...Object.entries(data)
+          .slice(0, geneColIdx + 1)
+          .filter(([k]) => !excludeCols.has(k))
+          .map(processValue),
+        ...Object.values(colsAfterGene),
+        ...Object.entries(data)
+          .slice(geneColIdx + 1, CADDColIdx + 1)
+          .filter(([k]) => !excludeCols.has(k))
+          .map(processValue),
+        ...Object.values(colsAfterCADD),
+        ...Object.entries(data)
+          .slice(CADDColIdx + 1)
+          .filter(([k]) => !excludeCols.has(k))
+          .map(processValue),
         ...Object.values(sampleGTColumns),
-        ...data,
-        ...Object.values(colsAppend),
       ]);
     },
   });

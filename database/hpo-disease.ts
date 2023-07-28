@@ -8,6 +8,7 @@ const columns = [
   "association_type",
   "disease_id",
   "source",
+  "ensembl_id",
 ] as const;
 
 export default async function getHPODisease(res: string) {
@@ -15,5 +16,8 @@ export default async function getHPODisease(res: string) {
     (raw) => csvParse(raw, { separator: "\t", skipFirstRow: true, columns })
   );
   // group by gene_symbol
-  return groupBy(data, (row) => row.gene_symbol);
+  return {
+    symbol: groupBy(data, (row) => row.gene_symbol),
+    id: groupBy(data, (row) => row.ensembl_id),
+  };
 }
