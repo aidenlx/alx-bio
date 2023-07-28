@@ -69,10 +69,7 @@ export default new Command()
           const output = prefix + `vcfannot.${ref}.vcf`;
           await vcfanno(orGzip(input), output, {
             threads,
-            config: [
-              ...vcfannoCfg[ref],
-              ...(options.cadd ? [vcfannoCADD] : []),
-            ],
+            config: [...vcfannoCfg[ref], options.cadd && vcfannoCADD[ref]],
           });
           return output;
         }

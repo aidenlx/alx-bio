@@ -1,12 +1,26 @@
 import { $, tomlStringify } from "@/deps.ts";
 import { checkDone } from "@/utils/check-done.ts";
 
+interface VcfAnnoConfigBase {
+  file: string;
+  names: string[];
+  ops: string[];
+}
+export interface VcfAnnoConfigCol extends VcfAnnoConfigBase {
+  columns: number[];
+}
+
+export interface VcfAnnoConfigField extends VcfAnnoConfigBase {
+  fields: string[];
+}
+
+export type VcfAnnoConfig = VcfAnnoConfigCol | VcfAnnoConfigField;
+
 export default async function vcfanno(
   input: string,
   output: string,
   options: {
-    // deno-lint-ignore no-explicit-any
-    config: any[];
+    config: (VcfAnnoConfig | false)[];
     threads: number;
     args?: string[];
   }
@@ -19,7 +33,9 @@ export default async function vcfanno(
 
   const cfgFile = await Deno.makeTempFile({ suffix: ".toml" });
 
-  const config = { annotation: options.config };
+  const config = {
+    annotation: options.config.filter((v): v is VcfAnnoConfig => v !== false),
+  };
   await Deno.writeTextFile(cfgFile, tomlStringify(config));
   const args = [
     ...["-p", options.threads],

@@ -4,6 +4,7 @@ export type SupportAssembly = "hg38" | "hs37" | "hg19";
 import { normalizeVcfKey } from "@/utils/vcf-key.ts";
 import { D, pipe, path } from "@/deps.ts";
 import { vaildBedPath } from "@/utils/vaildate.ts";
+import { VcfAnnoConfig } from "@/pipeline/module/vcfanno.ts";
 
 export const getMarkDupBam = (sample: string, assembly: string) =>
   `${sample}.markdup.${assembly}.bam`;
@@ -268,13 +269,7 @@ export const vcfannoCADD = D.fromPairs(
 
 export const vcfannoCfg = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => {
-    const cfg: {
-      file: string;
-      names: string[];
-      ops: string[];
-      columns?: number[];
-      fields?: string[];
-    }[] = [
+    const cfg: VcfAnnoConfig[] = [
       {
         file: dbnsfpSnpSift[ref],
         ...dbnsfpColumns,
