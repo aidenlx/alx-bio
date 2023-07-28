@@ -49,7 +49,10 @@ export default new Command()
   .option("-r, --ref <ref:genomeAssembly>", "reference genome", {
     required: true,
   })
-  .option("--no-cadd-script", "use prescored CADD score in favor of CADD script")
+  .option(
+    "--no-cadd-script",
+    "use prescored CADD score in favor of CADD script"
+  )
   .option("-b, --bait-intervals <path:file>", "bait intervals BED file")
   .option("--target-intervals <path:file>", "target intervals BED file")
   .option("--pick <task_range:string>", "pick tasks to run")
@@ -171,7 +174,9 @@ export default new Command()
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-final.slurm"
-          )} ${arrayFile} ${ref_annot}`,
+          )} ${arrayFile} ${ref_annot} ${
+            !useCADDScript ? "--no-cadd-script" : ""
+          }`,
       }),
     } satisfies Record<string, Task>;
 

@@ -57,80 +57,97 @@ export default new Command()
   .option("--resource <dir:string>", "Path to Resource", {
     default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
   })
+  .option(
+    "--no-cadd-script",
+    "use prescored CADD score in favor of CADD script"
+  )
   .option("-s, --sample <name:string>", "Sample name", { required: true })
   .option("--sample-map <file:string>", "Sample name mapping file")
-  .action(async ({ ref: assembly, sample, sampleMap, resource: resDir }) => {
-    const inputVcfGz = `${sample}.m.${assembly}.vcf.gz`;
-    const fullVcfGz = `${sample}.full.${assembly}.vcf.gz`;
-    const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
-    await caddAnnot(caddData, inputVcfGz, fullVcfGz);
-    const samples = await getSamples(fullVcfGz, sampleMap);
-    const hpoData = await loadHpoData(resDir);
-
-    await Promise.all([withFilter(), noFilter(), exomiserExtra()]);
-
-    async function withFilter() {
-      const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
-        qcTsvGz = `${sample}.full.qc.v3.${assembly}.tsv.gz`,
-        qcCsvGz = `${sample}.full.qc.v3.${assembly}.excel.csv.gz`;
-      console.error(`Filtering on qc...`);
-      await SnpSiftFilter(fullVcfGz, getFilterQuery("qual"), qcVcfGz);
-
-      await Promise.all([
-        fc(qcVcfGz),
-        extract(qcVcfGz, qcTsvGz).then(() => tsv2excel(qcTsvGz, qcCsvGz)),
-      ]);
-
-      async function fc(inputVcfGz: string) {
-        const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
-          fcTsvGz = `${sample}.full.filter.v3.${assembly}.tsv.gz`,
-          fcCsvGz = `${sample}.full.filter.v3.${assembly}.excel.csv.gz`;
-        console.error(`Filtering on effect...`);
-        await SnpSiftFilter(inputVcfGz, getFilterQuery("effect"), fcVcfGz);
-        await extract(fcVcfGz, fcTsvGz);
-        await tsv2excel(fcTsvGz, fcCsvGz);
+  .action(
+    async ({
+      ref: assembly,
+      sample,
+      sampleMap,
+      resource: resDir,
+      caddScript,
+    }) => {
+      const inputVcfGz = `${sample}.m.${assembly}.vcf.gz`;
+      const fullVcfGz = `${sample}.full.${assembly}.vcf.gz`;
+      const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
+      if (caddScript) {
+        await caddAnnot(caddData, inputVcfGz, fullVcfGz);
+      } else {
+        console.info(`CADD script gen disabled, skipping CADD annotation...`);
+        await Deno.symlink(inputVcfGz, fullVcfGz, { type: "file" });
       }
-    }
+      const samples = await getSamples(fullVcfGz, sampleMap);
+      const hpoData = await loadHpoData(resDir);
 
-    async function noFilter() {
-      console.error(`No filter, extracting full...`);
-      const fullTsvGz = `${sample}.full.v3.${assembly}.tsv.gz`,
-        fullCsvGz = `${sample}.full.v3.${assembly}.excel.csv.gz`;
-      await extract(fullVcfGz, fullTsvGz);
-      await tsv2excel(fullTsvGz, fullCsvGz);
-    }
+      await Promise.all([withFilter(), noFilter(), exomiserExtra()]);
 
-    /** output extra data for exomiser */
-    async function exomiserExtra() {
-      const exoExtraTsvGz = `${sample}.full.exo-extra.${assembly}.tsv.gz`;
-      const extraFields =
-        assembly === "hg19" ? exomiserExtraFields : exomiserExtraFieldsHg38;
-      await $`SnpSift extractFields -s "," -e "." ${fullVcfGz} ${extraFields} \
+      async function withFilter() {
+        const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
+          qcTsvGz = `${sample}.full.qc.v3.${assembly}.tsv.gz`,
+          qcCsvGz = `${sample}.full.qc.v3.${assembly}.excel.csv.gz`;
+        console.error(`Filtering on qc...`);
+        await SnpSiftFilter(fullVcfGz, getFilterQuery("qual"), qcVcfGz);
+
+        await Promise.all([
+          fc(qcVcfGz),
+          extract(qcVcfGz, qcTsvGz).then(() => tsv2excel(qcTsvGz, qcCsvGz)),
+        ]);
+
+        async function fc(inputVcfGz: string) {
+          const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
+            fcTsvGz = `${sample}.full.filter.v3.${assembly}.tsv.gz`,
+            fcCsvGz = `${sample}.full.filter.v3.${assembly}.excel.csv.gz`;
+          console.error(`Filtering on effect...`);
+          await SnpSiftFilter(inputVcfGz, getFilterQuery("effect"), fcVcfGz);
+          await extract(fcVcfGz, fcTsvGz);
+          await tsv2excel(fcTsvGz, fcCsvGz);
+        }
+      }
+
+      async function noFilter() {
+        console.error(`No filter, extracting full...`);
+        const fullTsvGz = `${sample}.full.v3.${assembly}.tsv.gz`,
+          fullCsvGz = `${sample}.full.v3.${assembly}.excel.csv.gz`;
+        await extract(fullVcfGz, fullTsvGz);
+        await tsv2excel(fullTsvGz, fullCsvGz);
+      }
+
+      /** output extra data for exomiser */
+      async function exomiserExtra() {
+        const exoExtraTsvGz = `${sample}.full.exo-extra.${assembly}.tsv.gz`;
+        const extraFields =
+          assembly === "hg19" ? exomiserExtraFields : exomiserExtraFieldsHg38;
+        await $`SnpSift extractFields -s "," -e "." ${fullVcfGz} ${extraFields} \
 | sed '1s/CHROM/#CHROM/' \
 | bgzip > ${exoExtraTsvGz} \
 && tabix -f -s 1 -b 2 -e 2 ${exoExtraTsvGz}`;
-    }
+      }
 
-    async function extract(inputVcfGz: string, outputTsvGz: string) {
-      console.error(`Extracting from ${inputVcfGz}...`);
+      async function extract(inputVcfGz: string, outputTsvGz: string) {
+        console.error(`Extracting from ${inputVcfGz}...`);
 
-      await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
-        assembly,
-        samples,
-        database: hpoData,
-      });
-      console.error(`Done, output to ${outputTsvGz}`);
-    }
-    async function tsv2excel(inputTsvGz: string, outputCsvGz: string) {
-      console.error(`Converting ${inputTsvGz} to excel csv format...`);
-      // write BOM header (printf "\xEF\xBB\xBF")
-      const outputCsv = outputCsvGz.slice(0, -3);
-      await $`printf "\\xEF\\xBB\\xBF" > ${outputCsv} && \
+        await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
+          assembly,
+          samples,
+          database: hpoData,
+        });
+        console.error(`Done, output to ${outputTsvGz}`);
+      }
+      async function tsv2excel(inputTsvGz: string, outputCsvGz: string) {
+        console.error(`Converting ${inputTsvGz} to excel csv format...`);
+        // write BOM header (printf "\xEF\xBB\xBF")
+        const outputCsv = outputCsvGz.slice(0, -3);
+        await $`printf "\\xEF\\xBB\\xBF" > ${outputCsv} && \
 zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
 && bgzip -f ${outputCsv}`;
-      console.error(`Done, output to ${outputCsvGz}`);
+        console.error(`Done, output to ${outputCsvGz}`);
+      }
     }
-  });
+  );
 
 const exomiserExtraFields = `
 CHROM
