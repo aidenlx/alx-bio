@@ -280,7 +280,7 @@ function HpoAnnot({
         : null;
       if (diseaseSource) {
         const ids = diseaseSource.map((row) => row.disease_id);
-        colsAfterCADD.hpo_disease = ids.join(",");
+        colsAfterCADD.hpo_disease = ids.join("|");
         colsAfterCADD.hpo_disease_cn = ids.map((v) => getDisease(v)).join("|");
         // colsAppend.hpo_disease_en = ids
         //   .map((v) => getDisease(v, false))
