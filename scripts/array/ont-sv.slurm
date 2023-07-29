@@ -6,6 +6,7 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+conda_init conda
 
 INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.sort.hg38.bam"
 

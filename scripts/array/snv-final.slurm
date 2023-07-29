@@ -5,6 +5,7 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+conda_init conda
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 shift;shift

@@ -4,6 +4,7 @@
 #SBATCH --cpus-per-task 6
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+conda_init conda
 
 PATH=/cluster/home/jiyuan/res/CADD-scripts:$PATH
 

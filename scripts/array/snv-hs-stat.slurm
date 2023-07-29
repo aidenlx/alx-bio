@@ -5,11 +5,12 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+conda_init mamba
 
 ASSEMBLY=$(validate_input ${2,,} hs37)
 shift;shift
 
-conda activate hs37-WES
+conda activate ngs-call
 
 MARKDUP=$SAMPLE_ID/bamfile/$SAMPLE_ID.markdup.$ASSEMBLY.bam
 BQSR=$SAMPLE_ID/bamfile/$SAMPLE_ID.bqsr.$ASSEMBLY.bam

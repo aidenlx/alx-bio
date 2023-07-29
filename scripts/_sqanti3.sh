@@ -2,7 +2,9 @@
 
 # set -eo pipefail
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_mamba.sh
+export CONDA_PREFIX=/cluster/home/jiyuan/mambaforge
+export MAMBA_EXE=/cluster/home/jiyuan/mambaforge/bin/mamba
+export CONDA_EXE=/cluster/home/jiyuan/mambaforge/bin/conda
 
 THREADS=${SLURM_CPUS_PER_TASK:-8}
 

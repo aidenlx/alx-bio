@@ -4,6 +4,7 @@
 #SBATCH --cpus-per-task=3
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+conda_init conda
 
 conda activate annotsv
 

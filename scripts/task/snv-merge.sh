@@ -12,7 +12,8 @@
 # && printf "1\t$MERGED" > fam.txt
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+conda_init mamba
 
-conda activate "hs37-WES"
+conda activate ngs-call
 $PIPELINE \
   "snv.merge" "$@"

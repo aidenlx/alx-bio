@@ -3,7 +3,7 @@
 #SBATCH -N 1
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_mamba.sh
+conda_init mamba
 
 conda activate expansionhunter
 

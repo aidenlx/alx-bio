@@ -1,14 +1,31 @@
 #!/bin/bash
+
+# prevent multiple sourcing
+if [ -n "$_ALX_BASE_CONFIGED" ]; then
+  return
+fi
+_ALX_BASE_CONFIGED=1
+
 set -eo pipefail
 
 PIPELINE=/genetics/home/stu_liujiyuan/.local/share/pnpm/pipeline
 
-export CONDA_EXE=/genetics/home/stu_liujiyuan/miniconda3/bin/conda
-export CONDA_PREFIX=/genetics/home/stu_liujiyuan/miniconda3
+function conda_init() {
+  if [ $1 == "conda" ]; then
+    export CONDA_EXE=/genetics/home/stu_liujiyuan/miniconda3/bin/conda
+    export CONDA_PREFIX=/genetics/home/stu_liujiyuan/miniconda3
+  elif [ $1 == "mamba" ]; then
+    export CONDA_PREFIX=/cluster/home/jiyuan/mambaforge
+    export MAMBA_EXE=/cluster/home/jiyuan/mambaforge/bin/mamba
+    export CONDA_EXE=/cluster/home/jiyuan/mambaforge/bin/conda
+  else
+    echo "Error: CONDA env should be conda or mamba, got $1"
+    exit 1
+  fi
+  eval "$($CONDA_EXE shell.bash hook)"
+}
 
 THREADS=${SLURM_CPUS_PER_TASK:-8}
-
-eval "$($CONDA_EXE shell.bash hook)"
 
 echoerr() { echo "$@" 1>&2; }
 

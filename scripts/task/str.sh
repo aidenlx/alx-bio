@@ -6,6 +6,7 @@
 # sbatch -J $name-str --array=1-24%4 ../run.slurm */bamfile/*.sort.hg38.bam */str ;
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+conda_init conda
 
 conda activate nanorepeat
 

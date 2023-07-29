@@ -6,6 +6,7 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+conda_init mamba
 
 ASSEMBLY=$(validate_input ${2,,} hs37 hg38)
 TYPE=$(validate_input ${3^^} WGS WES)
@@ -17,7 +18,7 @@ if [ $TYPE == "WES" ]; then
   BAIT_INTERVALS="--bait-intervals"
 fi
 
-conda activate "hs37-$TYPE"
+conda activate ngs-call
 $PIPELINE \
   "snv.bam" $BAIT_INTERVALS \
   -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"

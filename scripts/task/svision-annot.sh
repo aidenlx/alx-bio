@@ -1,6 +1,7 @@
 #/bin/bash
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+conda_init conda
 
 INPUT=$1
 FIXED=$(mktemp --suffix ".vcf")

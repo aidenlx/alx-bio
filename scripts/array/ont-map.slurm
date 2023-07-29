@@ -6,6 +6,7 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+conda_init conda
 
 eval "$(conda shell.bash hook)"
 conda activate /cluster/home/jiyuan/mambaforge/envs/ont-map

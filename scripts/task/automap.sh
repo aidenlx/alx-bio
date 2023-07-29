@@ -3,7 +3,7 @@
 #SBATCH -N 1
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_mamba.sh
+conda_init mamba
 
 EXEC_BIN=/cluster/home/jiyuan/res/AutoMap/AutoMap_v1.2.sh
 
