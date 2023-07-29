@@ -9,6 +9,7 @@ import c from "@/utils/sub-cmd.ts";
 import snvAnnotM from "@/pipeline/snv-annot-m.ts";
 import snvAnnotS from "@/pipeline/snv-annot-s.ts";
 import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
+import snvMerge from "@/pipeline/snv-merge.ts";
 
 await new Command()
   .name("bioa")
@@ -17,10 +18,11 @@ await new Command()
   .command(...c(gen))
   .command(...c(merge))
   .command(...c(hsStat))
-  .command(...c(snvFinal))
-  .command(...c(strAnnot))
+  .command(...c(snvMerge))
   .command(...c(snvAnnotM))
   .command(...c(snvAnnotS))
+  .command(...c(snvFinal))
+  .command(...c(strAnnot))
   .command(...c(vcfFilterQuery))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())

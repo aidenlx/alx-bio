@@ -12,6 +12,5 @@ ASSEMBLY=$(validate_input ${2,,} hs37 hg38)
 shift;shift;
 
 conda activate ngs-call
-$PIPELINE \
-  "snv.merge" -o "$SAMPLE_ID/vcf/$SAMPLE_ID." -r $ASSEMBLY \
+bioa snv.merge -o "$SAMPLE_ID/vcf/$SAMPLE_ID." -r $ASSEMBLY \
   "$SAMPLE_ID/vcf/$SAMPLE_ID.g.$ASSEMBLY.vcf.gz" "$@"

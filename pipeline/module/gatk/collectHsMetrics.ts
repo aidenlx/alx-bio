@@ -1,10 +1,5 @@
 import { checkDoneV2 } from "@/utils/check-done.ts";
-import {
-  GATKOptions,
-  gatkTempDir,
-  gatkTempDirJava,
-  toJavaOptions,
-} from "./_common.ts";
+import { GATKOptions, gatkTempDir, gatkTempDirJava, java } from "./_common.ts";
 import { $ } from "@/deps.ts";
 
 export { required } from "./_common.ts";
@@ -12,7 +7,7 @@ export { required } from "./_common.ts";
 export default async function GATKCollectHsMetrics(
   inputBam: string,
   output: string,
-  options: GATKOptions & {
+  opts: GATKOptions & {
     baitIntervals: string;
     targetIntervals: string;
     ref: string;
@@ -24,17 +19,17 @@ export default async function GATKCollectHsMetrics(
     return;
   }
 
-  options.javaOptions = [...(options.javaOptions ?? []), gatkTempDirJava()];
+  opts.javaOptions = [...(opts.javaOptions ?? []), gatkTempDirJava()];
 
-  const args = options.args ?? [
+  const args = opts.args ?? [
     ...gatkTempDir(true),
-    ...["-R", options.ref],
-    ...["--BAIT_INTERVALS", options.baitIntervals],
-    ...["--TARGET_INTERVALS", options.targetIntervals],
+    ...["-R", opts.ref],
+    ...["--BAIT_INTERVALS", opts.baitIntervals],
+    ...["--TARGET_INTERVALS", opts.targetIntervals],
   ];
 
-  await $`gatk ${toJavaOptions(
-    options
+  await $`gatk ${java(
+    opts
   )} CollectHsMetrics -I ${inputBam} -O ${output} ${args}`;
   await finish();
 }

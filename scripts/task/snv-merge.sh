@@ -15,5 +15,4 @@ source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
 conda_init mamba
 
 conda activate ngs-call
-$PIPELINE \
-  "snv.merge" "$@"
+bioa snv.merge "$@"

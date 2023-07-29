@@ -55,3 +55,5 @@ export {
   Confirm,
   prompt,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.2/prompt/mod.ts";
+
+export { default as pLimit } from "https://esm.sh/p-limit@4.0.0";
