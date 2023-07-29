@@ -45,7 +45,7 @@ export default new Command()
     const output = await toFinalOutput(
       pipe(inputVcf, async (input) => {
         console.info(`annotate ${input} with snpEff`);
-        const output = prefix + `snpeff.${ref}.vcf`;
+        const output = prefix + `snpeff.${ref}.vcf.gz`;
         await snpEff(input, output, {
           memory: "20G",
           assembly: snpeff_assembly[ref],
@@ -55,5 +55,5 @@ export default new Command()
       prefix + `s.${ref}.vcf`
     );
 
-    console.info(`single thread Annotation finished. Output: ${output}.gz`);
+    console.info(`single thread Annotation finished. Output: ${output}`);
   });

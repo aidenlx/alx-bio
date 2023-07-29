@@ -1,4 +1,4 @@
-import { checkDone } from "@/utils/check-done.ts";
+import { checkDoneV2 } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
 
 export const required = ["SnpSift"];
@@ -13,7 +13,11 @@ export default async function SnpSiftFilter(
     javaOptions?: string[];
   } = {}
 ) {
-  const { done, finish } = await checkDone(outputTsvGz);
+  const { done, finish } = await checkDoneV2(
+    outputTsvGz,
+    inputVcf,
+    outputTsvGz
+  );
   if (done) {
     console.info(`Skipping SnpSift Filter: ${outputTsvGz}`);
     return;

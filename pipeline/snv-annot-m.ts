@@ -66,7 +66,7 @@ export default new Command()
         },
         async (input) => {
           console.info(`annotate ${input} with vcfanno`);
-          const output = prefix + `vcfannot.${ref}.vcf`;
+          const output = prefix + `vcfannot.${ref}.vcf.gz`;
           await vcfanno(orGzip(input), output, {
             threads,
             config: [...vcfannoCfg[ref], options.cadd && vcfannoCADD[ref]],

@@ -1,4 +1,4 @@
-import { checkDone } from "@/utils/check-done.ts";
+import { checkDoneV2 } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
 
 export const required = ["snpEff"];
@@ -14,7 +14,11 @@ export default async function snpEff(
     javaOptions?: string[];
   }
 ) {
-  const { done, finish } = await checkDone(output);
+  const { done, finish } = await checkDoneV2(
+    output,
+    input,
+    output.replace(/\.gz$/, "")
+  );
   if (done) {
     console.info("Skipping snpEff");
     return;
@@ -25,6 +29,11 @@ export default async function snpEff(
     ...(options.threads ? ["-t", options.threads] : []),
   ];
 
-  await $`snpEff ${javaOptions} ${args} ${options.assembly} ${input} > ${output}`;
+  if (output.endsWith(".gz")) {
+    await $`snpEff ${javaOptions} ${args} ${options.assembly} ${input} | bgzip > ${output} && tabix -f -p vcf ${output}`;
+  } else {
+    await $`snpEff ${javaOptions} ${args} ${options.assembly} ${input} > ${output}`;
+  }
+
   await finish();
 }

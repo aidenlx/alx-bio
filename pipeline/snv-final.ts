@@ -20,8 +20,7 @@ async function caddAnnot(
   }
 
   console.error(`Annotating ${inputVcfGz} with ${cadd}`);
-  const output = outputVcfGz.replace(/\.gz$/, "");
-  await vcfanno(inputVcfGz, output, {
+  await vcfanno(inputVcfGz, outputVcfGz, {
     config: [
       {
         file: resolve(cadd),
@@ -32,9 +31,6 @@ async function caddAnnot(
     ],
     threads: 4,
   });
-  if (await exists(output)) {
-    await $`bgzip -f ${output} && tabix -f -p vcf ${outputVcfGz}`;
-  }
   console.error(`Done, output to ${outputVcfGz}`);
 }
 
@@ -78,7 +74,7 @@ export default new Command()
         await caddAnnot(caddData, inputVcfGz, fullVcfGz);
       } else {
         console.info(`CADD script gen disabled, skipping CADD annotation...`);
-        await $`ln -sf ${inputVcfGz} ${fullVcfGz}`
+        await $`ln -sf ${inputVcfGz} ${fullVcfGz}`;
       }
       const samples = await getSamples(fullVcfGz, sampleMap);
       const hpoData = await loadHpoData(resDir);

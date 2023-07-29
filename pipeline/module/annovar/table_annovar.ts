@@ -3,7 +3,7 @@ import {
   annovarDataDir,
   annovarDatabase,
 } from "@/pipeline/_res.ts";
-import { checkDone, noDupDot } from "@/utils/check-done.ts";
+import { checkDoneV2, noDupDot } from "@/utils/check-done.ts";
 import { $, repeat } from "@/deps.ts";
 
 export default async function tableAnnovar(
@@ -15,7 +15,6 @@ export default async function tableAnnovar(
     args?: string[];
   }
 ) {
-  const { done, finish } = await checkDone(outBase);
   const database = annovarDatabase[options.assembly];
   const output = {
     vcf: noDupDot(`${outBase}.${options.assembly}_multianno.vcf`),
@@ -23,6 +22,12 @@ export default async function tableAnnovar(
     avinput: noDupDot(`${outBase}.avinput`),
     fields: database,
   };
+  const { done, finish } = await checkDoneV2(
+    output.vcf + ".gz",
+    input,
+    outBase
+  );
+
   console.info("annovar output: " + outBase);
 
   if (done) {
@@ -30,25 +35,41 @@ export default async function tableAnnovar(
     return output;
   }
 
+  let cleanup: (() => Promise<void>) | undefined;
   if (input.endsWith(".gz")) {
-    await $`gunzip ${input}`;
-    input = input.slice(0, -3);
+    const tempVcf = await Deno.makeTempFile({ suffix: ".vcf" });
+    await $`zcat ${input} > ${tempVcf}`;
+    input = tempVcf;
+    cleanup = async () => {
+      await Deno.remove(tempVcf);
+    };
   }
 
-  const args = [
-    ...[input, annovarDataDir],
-    ...(options.args ?? []),
-    ...["--vcfinput", "-outfile", outBase.replace(/\.+$/, "")],
-    ...["-nastring", "."],
-    ...["-remove", "-dot2underline", "-thread", options.threads],
-    ...toAnnovarArgs(options.assembly, database),
-  ];
-  await $`table_annovar.pl ${args}`;
-
-  await $`bgzip ${input}`;
-
-  await finish();
-  return output;
+  try {
+    const args = [
+      ...[input, annovarDataDir],
+      ...(options.args ?? []),
+      ...["--vcfinput", "-outfile", outBase.replace(/\.+$/, "")],
+      ...["-nastring", "."],
+      ...["-remove", "-dot2underline", "-thread", options.threads],
+      ...toAnnovarArgs(options.assembly, database),
+    ];
+    await $`table_annovar.pl ${args}`;
+    await Promise.all([
+      $`bgzip -f ${output.vcf} && tabix -f -p vcf ${output.vcf}.gz`,
+      $`bgzip -f ${output.tsv}`,
+      $`bgzip -f ${output.avinput}`,
+    ]);
+    await finish();
+    return {
+      avinput: output.avinput + ".gz",
+      vcf: output.vcf + ".gz",
+      tsv: output.tsv + ".gz",
+      fields: output.fields,
+    } satisfies typeof output;
+  } finally {
+    cleanup?.();
+  }
 }
 
 function toAnnovarArgs(

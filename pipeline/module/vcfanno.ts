@@ -1,5 +1,5 @@
 import { $, tomlStringify } from "@/deps.ts";
-import { checkDone } from "@/utils/check-done.ts";
+import { checkDoneV2 } from "@/utils/check-done.ts";
 
 interface VcfAnnoConfigBase {
   file: string;
@@ -25,7 +25,11 @@ export default async function vcfanno(
     args?: string[];
   }
 ) {
-  const { done, finish } = await checkDone(output);
+  const { done, finish } = await checkDoneV2(
+    output,
+    input,
+    output.replace(/\.gz$/, "")
+  );
   if (done) {
     console.info("Skipping vcfanno");
     return output;
@@ -43,7 +47,11 @@ export default async function vcfanno(
     ...[cfgFile, input],
   ];
   try {
-    await $`vcfanno ${args} > ${output}`;
+    if (output.endsWith(".gz")) {
+      await $`vcfanno ${args} | bgzip > ${output} && tabix -f -p vcf ${output}`;
+    } else {
+      await $`vcfanno ${args} > ${output}`;
+    }
   } catch (error) {
     console.error("Failed to run vcfanno, config: ");
     console.error(tomlStringify(config));

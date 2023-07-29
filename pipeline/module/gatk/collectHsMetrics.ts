@@ -1,4 +1,4 @@
-import { checkDone } from "@/utils/check-done.ts";
+import { checkDoneV2 } from "@/utils/check-done.ts";
 import {
   GATKOptions,
   gatkTempDir,
@@ -18,7 +18,7 @@ export default async function GATKCollectHsMetrics(
     ref: string;
   }
 ) {
-  const { done, finish } = await checkDone(output);
+  const { done, finish } = await checkDoneV2(output, inputBam, output);
   if (done) {
     console.info("Skipping CollectHsMetrics");
     return;

@@ -1,4 +1,4 @@
-import { exists, $ } from "@/deps.ts";
+import { $ } from "@/deps.ts";
 
 export async function pipe(
   input: string,
@@ -20,16 +20,13 @@ export async function toFinalOutput(
   intermediate: Promise<string[]> | string[],
   output: string
 ) {
-  await Promise.all(
-    (
-      await intermediate
-    ).map(async (file, i, arr) => {
-      if (!(await exists(file))) return;
-      if (i === arr.length - 1) {
-        await $`bgzip -c ${file} > ${output}.gz && tabix -f -p vcf ${output}.gz`;
-      }
-      await $`bgzip -f ${file}`;
-    })
-  );
+  output = output.replace(/\.gz$/, "");
+  const final = (await intermediate).at(-1);
+  if (!final) throw new Error("no final output");
+  if (final.endsWith(".gz")) {
+    output = output + ".gz";
+    await $`ln -sf ${final} ${output}`;
+    await $`[ -f "${final}.tbi" ] && ln -sf ${final}.tbi ${output}.tbi || true`;
+  }
   return output;
 }
