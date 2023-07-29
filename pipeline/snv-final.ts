@@ -78,7 +78,7 @@ export default new Command()
         await caddAnnot(caddData, inputVcfGz, fullVcfGz);
       } else {
         console.info(`CADD script gen disabled, skipping CADD annotation...`);
-        await Deno.symlink(inputVcfGz, fullVcfGz, { type: "file" });
+        await $`ln -sf ${inputVcfGz} ${fullVcfGz}`
       }
       const samples = await getSamples(fullVcfGz, sampleMap);
       const hpoData = await loadHpoData(resDir);
