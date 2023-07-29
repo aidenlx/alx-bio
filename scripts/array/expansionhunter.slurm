@@ -8,10 +8,8 @@ source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 if [ $ASSEMBLY == "hg19" ]; then
-  REF=$(get_ref hs37)
   INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.bqsr.hs37.bam"
 elif [ $ASSEMBLY == "hg38" ]; then
-  REF=$(get_ref hg38)
   INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.bqsr.hg38.bam"
 fi
 

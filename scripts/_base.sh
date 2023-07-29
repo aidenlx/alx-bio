@@ -50,7 +50,8 @@ function validate_input () {
 }
 
 function get_ref () {
-  if [ -z "$1" ]; then
+  ASSEMBLY=$1
+  if [ -z "$ASSEMBLY" ]; then
     echoerr "Error: missing ASSEMBLY"
     exit 1
   elif [ $ASSEMBLY == "hs37" ]; then
