@@ -8,6 +8,7 @@ import bcftoolsNorm from "@/pipeline/module/bcftools/norm.ts";
 
 export default new Command()
   .name("snv.merge")
+  .description("Pipeline to consolidate GVCFs and perform joint genotyping")
   .type("genomeAssembly", genomeAssemblyHs37)
   .option("-o, --output <path>", "output vcf prefix", { required: true })
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
