@@ -9,6 +9,7 @@ import {
 
 export default new Command()
   .name("pl.merge")
+  .description("Merge fastq files from different runs")
   .option("-f, --found <file>", "found.yaml path", { default: "found.yaml" })
   .env("PL_MERGE_OUT_DIR=<dir:string>", "output directory", {
     prefix: "PL_MERGE_",

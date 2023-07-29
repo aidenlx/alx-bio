@@ -7,6 +7,7 @@ import { toFinalOutput, pipe } from "./pipe.ts";
 
 export default new Command()
   .name("snv.annot.m")
+  .description("Multi-thread vcf annotation pipeline")
   .option("-t, --threads <count:integer>", "Threads", { default: 4 })
   .type("genomeAssembly", new EnumType(D.keys(snpeff_assembly)))
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {

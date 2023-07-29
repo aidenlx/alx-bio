@@ -3,6 +3,7 @@ import { outputQuery, getFilterQuery } from "./module/filter.ts";
 
 export default new Command()
   .name("vcf.filter-q")
+  .description("Generate filter query for SnpSift filter")
   .option(
     "-f, --frequency-required <threshold:number>",
     "freq threshold for filter",

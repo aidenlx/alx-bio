@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { Command, CsvParseStream, CsvStringifyStream, join } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
 import {
@@ -18,6 +19,7 @@ import {
 
 export default new Command()
   .name("str.annot")
+  .description("Annotate straglr STR outputs with repeat catalogs")
   .type("genomeAssembly", genomeAssembly)
   .option("-r, --ref <ref:genomeAssembly>", "reference genome", {
     required: true,

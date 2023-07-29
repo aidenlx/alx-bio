@@ -46,6 +46,9 @@ async function getSamples(inputVcfGz: string, sampleMap?: string) {
 
 export default new Command()
   .name("snv.final")
+  .description(
+    "Annotate HPO phenotypes and disease, filter with preset rules and output tab-delimited table and Excel ready table"
+  )
   .type("genomeAssembly", genomeAssembly)
   .option("-r, --ref <genome:genomeAssembly>", "Genome assembly", {
     required: true,

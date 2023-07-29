@@ -34,7 +34,7 @@ const toJobId = (resp: ProcessOutput) => {
 
 export default new Command()
   .name("pl.submit")
-  .description("Inspect a list of variant calls in a BAM file")
+  .description("Pipeline batch submission helper")
   .option("-a, --array <array:string>", "job array index values")
   .option("--dependency <deps:string>", "job dependency")
   .option("-p, --partition <partition:string>", "partition")

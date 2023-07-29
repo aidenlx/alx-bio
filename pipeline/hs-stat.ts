@@ -5,6 +5,7 @@ import GATKCollectHsMetrics from "@/pipeline/module/gatk/collectHsMetrics.ts";
 
 export default new Command()
   .name("snv.hs-stat")
+  .description("Collect Hs Metrics for given WES probes")
   .type("genomeAssembly", new EnumType(["hs37"]))
   .option("-r, --ref <assembly:genomeAssembly>", "reference genome", {
     required: true,

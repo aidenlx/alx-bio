@@ -6,6 +6,7 @@ import { toFinalOutput, pipe } from "@/pipeline/pipe.ts";
 
 export default new Command()
   .name("snv.annot.s")
+  .description("Single thread vcf annotation pipeline")
   .type("genomeAssembly", new EnumType(D.keys(snpeff_assembly)))
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
     required: true,

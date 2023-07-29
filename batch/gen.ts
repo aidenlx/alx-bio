@@ -10,6 +10,7 @@ import { handleNonAscii, numToFixedLength } from "@/utils/ascii.ts";
 
 export default new Command()
   .name("pl.gen")
+  .description("Generate batch task list")
   .arguments("<found...>")
   .option("--skip-check", "skip file existence check")
   .env("PL_MERGE_OUT_DIR=<dir:string>", "output directory", {
