@@ -35,13 +35,33 @@ export default async function getOMIMGene(res: string) {
       comment: "#",
     })
   );
+  const index: Partial<
+    Record<
+      "id" | "symbol" | "ncbi_id" | "omim_id",
+      Record<string, (typeof data)[number]>
+    >
+  > = {};
   // group by gene_symbol
   return {
-    symbol: Object.fromEntries(
-      data.filter((v) => v.type === "gene").map((v) => [v.hgnc_symbol, v])
-    ),
-    id: Object.fromEntries(
-      data.filter((v) => v.type === "gene").map((v) => [v.ens_gene_id, v])
-    ),
+    get symbol() {
+      return (index.symbol ??= Object.fromEntries(
+        data.filter((v) => v.type === "gene").map((v) => [v.hgnc_symbol, v])
+      ));
+    },
+    get id() {
+      return (index.id ??= Object.fromEntries(
+        data.filter((v) => v.type === "gene").map((v) => [v.ens_gene_id, v])
+      ));
+    },
+    get ncbi_id() {
+      return (index.ncbi_id ??= Object.fromEntries(
+        data.filter((v) => v.type === "gene").map((v) => [v.ncbi_gene_id, v])
+      ));
+    },
+    get omim_id() {
+      return (index.ncbi_id ??= Object.fromEntries(
+        data.filter((v) => v.type === "gene").map((v) => [v.mim_num, v])
+      ));
+    },
   };
 }
