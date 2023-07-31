@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { GATKOptions, java } from "./_common.ts";
 import { $ } from "@/deps.ts";
 
@@ -9,7 +9,7 @@ export default async function GATKGatherBQSRReports(
   output: string,
   options: GATKOptions
 ) {
-  const { done, finish } = await checkDoneV2(output, inputs, output);
+  const { done, finish } = await checkDone(output, inputs, true);
   if (done) {
     console.info("Skipping GatherBQSRReports");
     return;

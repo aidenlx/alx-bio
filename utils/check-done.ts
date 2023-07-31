@@ -1,6 +1,6 @@
 import { D, exists, path, type } from "@/deps.ts";
 
-export async function checkDone(output: string) {
+async function checkDoneV1(output: string) {
   const doneFile = path.resolve(noDupDot(`${output}.done`));
   if (await exists(doneFile)) {
     console.debug(`skipping, found ${doneFile}`);
@@ -23,10 +23,10 @@ export function noDupDot(input: string) {
 const date = type("parsedDate");
 const object = type("object");
 
-export async function checkDoneV2(
+export async function checkDone(
   name: string,
   _input: string | string[],
-  v1Output?: string
+  v1Output: string | true = true
 ) {
   const doneFile = path.resolve(noDupDot(`${name}.done`));
   const done = {
@@ -75,7 +75,7 @@ export async function checkDoneV2(
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) {
       if (v1Output) {
-        const result = await checkDone(v1Output);
+        const result = await checkDoneV1(v1Output === true ? name : v1Output);
         if (result.done) return done;
       }
       console.debug(`continue, done file not found: ${error.message}`);

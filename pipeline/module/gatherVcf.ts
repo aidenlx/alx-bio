@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
 
 export default async function gatherVCF(
@@ -10,7 +10,7 @@ export default async function gatherVCF(
 ) {
   const hcOutputs = inputs;
   const gVcf = output;
-  const { done, finish } = await checkDoneV2(gVcf, inputs);
+  const { done, finish } = await checkDone(gVcf, inputs);
   if (done) {
     console.info("Skipping mergeVCF");
     return;

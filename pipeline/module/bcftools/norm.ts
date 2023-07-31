@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
 
 export { required } from "./_common.ts";
@@ -13,7 +13,7 @@ export default async function bcftoolsNorm(
     args?: string[];
   } = {}
 ) {
-  const { done, finish } = await checkDoneV2(output, input, output);
+  const { done, finish } = await checkDone(output, input, true);
   if (done) {
     console.info("Skipping samtools norm");
     return output;

@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { $, basename } from "@/deps.ts";
 
 export const required = ["fastp"];
@@ -12,10 +12,10 @@ export default async function fastp(
   }
 ) {
   const doneFile = `${basename(iForward)}.fastqc`;
-  const { done, finish } = await checkDoneV2(
+  const { done, finish } = await checkDone(
     doneFile,
     [iForward, iReverse],
-    doneFile
+    true
   );
   if (done) {
     console.info("Skipping fastp");

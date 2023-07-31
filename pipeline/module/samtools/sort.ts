@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { samtoolsTemp } from "@/pipeline/module/samtools/_common.ts";
 import { $ } from "@/deps.ts";
 
@@ -14,7 +14,7 @@ export default async function samtoolsSort(
     args?: string[];
   }
 ) {
-  const { done, finish } = await checkDoneV2(output, input, output);
+  const { done, finish } = await checkDone(output, input, true);
   if (done) {
     console.info("Skipping samtools sort");
     return;

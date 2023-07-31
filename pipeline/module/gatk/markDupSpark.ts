@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { GATKOptions, gatkTempDir, gatkTempDirJava, java } from "./_common.ts";
 import { $ } from "@/deps.ts";
 
@@ -13,7 +13,7 @@ export default async function GATKMarkDuplicatesSpark(
     removeSequencingDuplicates?: boolean;
   }
 ) {
-  const { done, finish } = await checkDoneV2(bam, input, bam);
+  const { done, finish } = await checkDone(bam, input, true);
   if (done) {
     console.info("Skipping MarkDuplicates");
     return;

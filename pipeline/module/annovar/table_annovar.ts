@@ -3,7 +3,7 @@ import {
   annovarDataDir,
   annovarDatabase,
 } from "@/pipeline/_res.ts";
-import { checkDoneV2, noDupDot } from "@/utils/check-done.ts";
+import { checkDone, noDupDot } from "@/utils/check-done.ts";
 import { $, repeat } from "@/deps.ts";
 
 export default async function tableAnnovar(
@@ -22,7 +22,7 @@ export default async function tableAnnovar(
     avinput: noDupDot(`${outBase}.avinput`),
     fields: database,
   };
-  const { done, finish } = await checkDoneV2(
+  const { done, finish } = await checkDone(
     output.vcf + ".gz",
     input,
     outBase

@@ -1,5 +1,5 @@
 import { $, tomlStringify } from "@/deps.ts";
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 
 interface VcfAnnoConfigBase {
   file: string;
@@ -25,7 +25,7 @@ export default async function vcfanno(
     args?: string[];
   }
 ) {
-  const { done, finish } = await checkDoneV2(
+  const { done, finish } = await checkDone(
     output,
     input,
     output.replace(/\.gz$/, "")

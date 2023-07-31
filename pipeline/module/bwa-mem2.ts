@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
 
 export const required = ["bwa-mem2", "samtools"];
@@ -15,11 +15,7 @@ export default async function bwaMem2(
     fixmate?: boolean;
   }
 ) {
-  const { done, finish } = await checkDoneV2(
-    output,
-    [forward, reverse],
-    output
-  );
+  const { done, finish } = await checkDone(output, [forward, reverse], true);
   if (done) {
     console.info("Skipping bwa mem");
     return;

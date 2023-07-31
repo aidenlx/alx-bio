@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { GATKOptions, gatkTempDir, gatkTempDirJava, java } from "./_common.ts";
 import { $ } from "@/deps.ts";
 
@@ -11,7 +11,7 @@ export default async function GATKApplyBQSR(
     reference: string;
   }
 ) {
-  const { done, finish } = await checkDoneV2(output, [bam, bqsr], output);
+  const { done, finish } = await checkDone(output, [bam, bqsr], true);
   if (done) {
     console.info("Skipping ApplyBQSR");
     return;

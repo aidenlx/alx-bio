@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { GATKOptions, gatkTempDirJava, java } from "./_common.ts";
 import { $ } from "@/deps.ts";
 
@@ -15,7 +15,7 @@ export default async function GATKBaseRecalibrator(
     quiet?: boolean;
   }
 ) {
-  const { done, finish } = await checkDoneV2(output, input, output);
+  const { done, finish } = await checkDone(output, input, true);
   if (done) {
     console.info(`Skipping BaseRecalibrator ${output}`);
     return;

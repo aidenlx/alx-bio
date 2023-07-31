@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import {
   GATKOptions,
   gatkTempDir,
@@ -16,7 +16,7 @@ export default async function GATKCombineGVCFs(
     reference: string;
   }
 ) {
-  const { done, finish } = await checkDoneV2(output, inputs, output);
+  const { done, finish } = await checkDone(output, inputs, true);
   if (done) {
     console.info("Skipping CombineGVCFs");
     return;

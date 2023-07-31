@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import {
   GATKOptions,
   gatkTempDir,
@@ -17,7 +17,7 @@ export default async function GATKGenotypeGVCFs(
     reference: string;
   }
 ) {
-  const { done, finish } = await checkDoneV2(output, input, output);
+  const { done, finish } = await checkDone(output, input, true);
   if (done) {
     console.info("Skipping GenotypeGVCFs");
     return;

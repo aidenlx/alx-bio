@@ -1,4 +1,4 @@
-import { checkDoneV2 } from "@/utils/check-done.ts";
+import { checkDone } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
 
 export const required = ["snpEff"];
@@ -14,7 +14,7 @@ export default async function snpEff(
     javaOptions?: string[];
   }
 ) {
-  const { done, finish } = await checkDoneV2(
+  const { done, finish } = await checkDone(
     output,
     input,
     output.replace(/\.gz$/, "")
