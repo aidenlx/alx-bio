@@ -17,6 +17,5 @@ if [ $TYPE == "WES" ]; then
 fi
 
 conda activate ngs-call
-$PIPELINE \
-  "snv.vcf" $BAIT_INTERVALS \
+bioa snv.vcf $BAIT_INTERVALS \
   -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"

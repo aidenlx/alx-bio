@@ -12,6 +12,5 @@ ASSEMBLY=$(validate_input ${2,,} hs37 hg38)
 shift;shift;
 
 conda activate ngs-call
-$PIPELINE \
-  "snv.align" --fq1 "$FASTQ1" --fq2 "$FASTQ2" \
+bioa snv.align --fq1 "$FASTQ1" --fq2 "$FASTQ2" \
   -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"

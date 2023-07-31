@@ -10,9 +10,9 @@ import snvAnnotM from "@/pipeline/snv-annot-m.ts";
 import snvAnnotS from "@/pipeline/snv-annot-s.ts";
 import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
 import snvMerge from "@/pipeline/snv-merge.ts";
-import snvAlign from "@/pipeline/snv-align.ts";
-import snvBam from "@/pipeline/snv-bam.ts";
-import snvVcf from "@/pipeline/snv-vcf.ts";
+import snvAlign from "@/pipeline/ngs-call/snv-align.ts";
+import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
+import snvVcf from "@/pipeline/ngs-call/snv-vcf.ts";
 
 await new Command()
   .name("bioa")

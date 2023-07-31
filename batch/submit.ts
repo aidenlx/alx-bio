@@ -116,7 +116,7 @@ export default new Command()
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-align.slurm"
-          )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup}`,
+          )} ${arrayFile} ${ref_call} ${cleanup}`,
       }),
       hs_stat: () => ({
         deps: "align",

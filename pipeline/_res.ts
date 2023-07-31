@@ -11,8 +11,6 @@ export const getMarkDupBam = (sample: string, assembly: string) =>
 export const getBqsrBam = (sample: string, assembly: string) =>
   `${sample}.bqsr.${assembly}.bam`;
 
-export const defaultIntervalPadding = 50;
-
 // conda create -y -c conda-forge -c bioconda -n hs37-WGS fastqc trim-galore bwa-mem2 samtools gatk4 ncurses
 export const Res = {
   hg38: {
@@ -367,6 +365,3 @@ export function parseIntevals(
   }
   return [intervalsOpt, false];
 }
-
-export const toIntervalScatter = (sample: string, assembly: SupportAssembly) =>
-  `${sample}.${assembly}.interval_scatter`;
