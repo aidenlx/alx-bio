@@ -20,7 +20,9 @@ const commonOptions = [
   "log-%A-%x_%a.err",
 ];
 
-const currTime = formatDate(new Date(), "M-d-Hm");
+const defaultArrayLimit = 4;
+
+const currTime = formatDate(new Date(), "M-d-HHmm");
 
 const script = (file: string) =>
   join("/genetics/home/stu_liujiyuan/pipeline/scripts/array", file);
@@ -79,12 +81,15 @@ export default new Command()
       }
     }
 
-    let array = `1-${lineCount}%4`;
+    let array = `1-${lineCount}%${defaultArrayLimit}`;
     if (opts.array) {
       if (opts.array.startsWith("%")) {
         array = `1-${lineCount}` + opts.array;
-      } else {
+      } else if (opts.array.includes("%")) {
         array = opts.array;
+      } else {
+        // apply default array limit
+        array = `${opts.array}%${defaultArrayLimit}`;
       }
     }
     console.log(`Array file line count: ${lineCount}`);
