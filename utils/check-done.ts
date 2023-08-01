@@ -23,6 +23,18 @@ export function noDupDot(input: string) {
 const date = type("parsedDate");
 const object = type("object");
 
+function parseMtimeDone(data: string) {
+  try {
+    const map = JSON.parse(data) as unknown;
+    if (!object.allows(map) || Object.values(map).some((v) => !date.allows(v)))
+      return null;
+    return D.map(map, (v) => new Date(v)) as Record<string, Date>;
+  } catch (error) {
+    console.error("Failed to parse mtime done: ", error);
+    return null;
+  }
+}
+
 export async function checkDone(
   name: string,
   _input: string | string[],
@@ -35,18 +47,19 @@ export async function checkDone(
   };
   const inputs = Array.isArray(_input) ? _input : [_input];
 
-  try {
-    const mtimeDone = await Deno.readTextFile(doneFile)
-      .then(JSON.parse)
-      .then((map: unknown) => {
-        if (
-          !object.allows(map) ||
-          Object.values(map).some((v) => !date.allows(v))
-        )
-          return null;
-        return D.map(map, (v) => new Date(v)) as Record<string, Date>;
-      });
-    // if from previous version
+  const mtimeDoneFile = await Deno.readTextFile(doneFile).catch((err) => {
+    if (err instanceof Deno.errors.NotFound) return null;
+    throw err;
+  });
+  if (mtimeDoneFile === null) {
+    if (v1Output) {
+      const result = await checkDoneV1(v1Output === true ? name : v1Output);
+      if (result.done) return done;
+    }
+    console.debug(`continue, done file not found: ${doneFile}`);
+  } else {
+    const mtimeDone = parseMtimeDone(mtimeDoneFile);
+    // if parse failed or from previous version, assume done
     if (mtimeDone === null) return done;
 
     const results = await Promise.all(
@@ -71,16 +84,6 @@ export async function checkDone(
       return done;
     } else {
       results.forEach((v, i) => v || console.log(`${inputs[i]} not done`));
-    }
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      if (v1Output) {
-        const result = await checkDoneV1(v1Output === true ? name : v1Output);
-        if (result.done) return done;
-      }
-      console.debug(`continue, done file not found: ${error.message}`);
-    } else {
-      throw error;
     }
   }
 

@@ -39,7 +39,15 @@ export async function vaildateOptions(opts: {
     cleanup: opts.cleanup
       ? async (...files: string[]) => {
           console.error("cleaning up: ", files);
-          await Promise.all(files.map((f) => Deno.remove(f)));
+          await Promise.all(
+            files.map((f) =>
+              Deno.remove(f).catch((e) => {
+                // ignore file not found error
+                if (e instanceof Deno.errors.NotFound) return;
+                throw e;
+              })
+            )
+          );
         }
       : () => void 0,
   };
