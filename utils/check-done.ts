@@ -63,21 +63,23 @@ export async function checkDone(
     if (mtimeDone === null) return done;
 
     const results = await Promise.all(
-      inputs.map(async (path) => {
-        const stat = await Deno.stat(path).catch((err) => {
+      inputs.map(async (inputPath) => {
+        const stat = await Deno.stat(inputPath).catch((err) => {
           if (err instanceof Deno.errors.NotFound) return null;
           throw err;
         });
         if (!stat) {
-          console.log(`${path} not found, assume done`);
+          console.log(`${inputPath} not found, assume done`);
           return true;
         }
-        if (!mtimeDone[path]) {
-          console.log(`mtimeDone[${path}] not found, assume not done`);
+        const prevMtime =
+          mtimeDone[path.resolve(inputPath)] ?? mtimeDone[inputPath];
+        if (!prevMtime) {
+          console.log(`mtimeDone[${inputPath}] not found, assume not done`);
           return false;
         }
         if (!stat.mtime) throw new Error(`Cannot get mtime of ${name}`);
-        return stat.mtime.getTime() <= mtimeDone[path].getTime();
+        return stat.mtime.getTime() <= prevMtime.getTime();
       })
     );
     if (results.every((v) => v)) {
@@ -91,12 +93,13 @@ export async function checkDone(
     done: false,
     finish: async () => {
       const stats = await Promise.all(
-        inputs.map(async (path) => {
-          const { mtime } = await Deno.stat(path);
+        inputs.map(async (inputPath) => {
+          inputPath = path.resolve(inputPath);
+          const { mtime } = await Deno.stat(inputPath);
           if (!mtime) {
             throw new Error(`Cannot get mtime of ${name}`);
           }
-          return [path, mtime.toISOString()] as const;
+          return [inputPath, mtime.toISOString()] as const;
         })
       );
 
