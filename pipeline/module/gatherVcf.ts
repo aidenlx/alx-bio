@@ -8,6 +8,9 @@ export default async function gatherVCF(
     memory?: string;
   } = {}
 ) {
+  if (inputs.length === 0) {
+    throw new Error("No inputs provided to gatherVCF");
+  }
   const hcOutputs = inputs;
   const gVcf = output;
   const { done, finish } = await checkDone(gVcf, inputs);

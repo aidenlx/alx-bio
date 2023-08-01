@@ -75,7 +75,6 @@ export default new Command()
           vcf_dir,
           toIntervalScatter(sample, assembly)
         );
-        intervals = await getIntervals(interval_scatter);
 
         console.info(`SPLIT TAG_REGION using ${baitIntervals}`);
 
@@ -85,6 +84,8 @@ export default new Command()
           threads,
           quiet: true,
         });
+
+        intervals = await getIntervals(interval_scatter);
       }
 
       console.info("TASK: HaplotypeCaller");
