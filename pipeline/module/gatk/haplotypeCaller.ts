@@ -18,7 +18,11 @@ export default async function GATKHaplotypeCaller(
     quiet?: boolean;
   }
 ) {
-  const { done, finish } = await checkDone(output, input, true);
+  const { done, finish } = await checkDone(
+    output,
+    input,
+    output.replace(/\.gz$/, "")
+  );
   if (done) {
     console.info(`Skipping HaplotypeCaller ${output}`);
     return;

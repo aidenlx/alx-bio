@@ -16,7 +16,11 @@ export default async function GATKCombineGVCFs(
     reference: string;
   }
 ) {
-  const { done, finish } = await checkDone(output, inputs, true);
+  const { done, finish } = await checkDone(
+    output,
+    inputs,
+    output.replace(/\.gz$/, "")
+  );
   if (done) {
     console.info("Skipping CombineGVCFs");
     return;
