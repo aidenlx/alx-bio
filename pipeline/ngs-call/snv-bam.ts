@@ -20,7 +20,8 @@ export default new Command()
   .option("-t, --threads <count:integer>", "Threads", { default: 4 })
   .option(
     "--bait-intervals [path]",
-    "bed file for WESeq capture region, run in WGS mode if not present"
+    "bed file for WESeq capture region, run in WGS mode if not present",
+    { collect: true }
   )
   .option("-o, --out-dir <path>", "output directory", { default: "." })
   .option("--no-cleanup", "skip cleanup, keep intermedia files")
