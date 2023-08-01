@@ -55,6 +55,7 @@ function uniq(arrStr: string, delimiter = ",") {
 
 import hg19FieldList from "./vcf-extract-hg19.json" assert { type: "json" };
 import getOMIMGene from "@/database/mim2gene.ts";
+import printStdErr from "@/utils/print-stderr.ts";
 
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
@@ -343,11 +344,5 @@ function HpoAnnot({
     return (
       (cn ? hpoTranslate[id]?.name_cn : null) ?? hpoData[id]?.name ?? `HP:${id}`
     );
-  }
-}
-
-async function printStdErr(err: ReadableStream<Uint8Array>) {
-  for await (const chunk of err) {
-    await Deno.stderr.write(chunk);
   }
 }
