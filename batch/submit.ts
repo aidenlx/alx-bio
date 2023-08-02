@@ -145,11 +145,25 @@ export default new Command()
             "snv-vcf.slurm"
           )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
       }),
+      eh: ()=>({
+        deps: "bam",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "expansionhunter.slurm"
+          )} ${arrayFile} ${ref_call}`,
+      }),
       merge: () => ({
         deps: "vcf",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-merge.slurm"
+          )} ${arrayFile} ${ref_call}`,
+      }),
+      automap: () => ({
+        deps: "merge",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
+            "automap.slurm"
           )} ${arrayFile} ${ref_call}`,
       }),
       cadd: () => ({
