@@ -1,5 +1,6 @@
 import { $, tomlStringify } from "@/deps.ts";
 import { checkDone } from "@/utils/check-done.ts";
+import { overrideSymlink } from "./overrideSymlink.ts";
 
 interface VcfAnnoConfigBase {
   file: string;
@@ -46,7 +47,11 @@ export default async function vcfanno(
     ...(options.args ?? []),
     ...[cfgFile, input],
   ];
+
   try {
+    // avoid writing into symlinked source file
+    await overrideSymlink(output, output + ".tbi");
+    console.error("vcfanno config: ", tomlStringify(config));
     if (output.endsWith(".gz")) {
       await $`vcfanno ${args} | bgzip > ${output} && tabix -f -p vcf ${output}`;
     } else {

@@ -4,6 +4,7 @@ import ExtractAndHpoAnnot, { loadHpoData } from "./module/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
 import SnpSiftFilter from "@/pipeline/module/snpsift/filter.ts";
+import { vcfannoCADD } from "@/pipeline/_res.ts";
 
 async function caddAnnot(
   cadd: string,
@@ -20,6 +21,7 @@ async function caddAnnot(
   }
 
   console.error(`Annotating ${inputVcfGz} with ${cadd}`);
+
   await vcfanno(inputVcfGz, outputVcfGz, {
     config: [
       {
@@ -76,8 +78,18 @@ export default new Command()
       if (caddScript) {
         await caddAnnot(caddData, inputVcfGz, fullVcfGz);
       } else {
-        console.info(`CADD script gen disabled, skipping CADD annotation...`);
-        await $`ln -sf ${inputVcfGz} ${fullVcfGz}`;
+        const result =
+          await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`;
+        if (result.exitCode === 0) {
+          console.info(`CADD script gen disabled, skipping CADD annotation...`);
+          await $`ln -sf ${inputVcfGz} ${fullVcfGz}`;
+        } else {
+          console.info(`no CADD annot found in ${inputVcfGz}, annot...`);
+          await vcfanno(inputVcfGz, fullVcfGz, {
+            threads: 4,
+            config: [vcfannoCADD[assembly]],
+          });
+        }
       }
       const samples = await getSamples(fullVcfGz, sampleMap);
       const hpoData = await loadHpoData(resDir);
