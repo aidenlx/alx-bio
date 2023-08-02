@@ -1,4 +1,4 @@
-import { Command, path, ensureDir, cd } from "@/deps.ts";
+import { Command, path, ensureDir, cd, assert } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import {
   getMarkDupBam,
@@ -37,16 +37,30 @@ export default new Command()
 
     const bam_dir = "bamfile";
 
-    const fastqRaw = parseFastqOption(options);
-    const fastq = await createLocalFastq(fastqRaw);
     const clean_dir = "clean";
     await ensureDir(clean_dir);
     const fastqTrimmed = ["1_val_1.fq.gz", "2_val_2.fq.gz"].map((p) =>
       path.join(clean_dir, p)
     ) as [string, string];
 
-    console.info("TASK: Running fastp");
-    await fastp(fastq, fastqTrimmed, { threads });
+    const cleanFastqSymlinked = (
+      await Promise.all(
+        fastqTrimmed.map((f) =>
+          Deno.lstat(f)
+            .then((s) => s.isSymlink)
+            .catch((e) => assert(e instanceof Deno.errors.NotFound))
+        )
+      )
+    ).every(Boolean);
+
+    if (cleanFastqSymlinked) {
+      console.info("Symlinked clean fastq, skip fastp");
+    } else {
+      console.info("TASK: Running fastp");
+      const fastqRaw = parseFastqOption(options);
+      const fastq = await createLocalFastq(fastqRaw);
+      await fastp(fastq, fastqTrimmed, { threads });
+    }
 
     await ensureDir(bam_dir);
 

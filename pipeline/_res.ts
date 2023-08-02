@@ -162,10 +162,13 @@ export function parseFastqOption({
   fq1,
   fq2,
 }: {
-  fq1?: string;
-  fq2?: string;
+  fq1?: string | true;
+  fq2?: string | true;
 }): [string, string] {
   const { resolve } = path;
+  if (fq1 === true || fq2 === true) {
+    throw new Error("Must specify both fq1 and fq2");
+  }
   if (fq1 && fq2) {
     return [resolve(fq1), resolve(fq2)];
   }
