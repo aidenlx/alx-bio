@@ -1,7 +1,7 @@
 import { ensureDir, join, path } from "@/deps.ts";
 import { nonAscii } from "@/utils/ascii.ts";
 import { Res, SupportAssembly } from "@/pipeline/_res.ts";
-import glob from "@/utils/glob.ts";
+import { globby as glob } from "npm:globby";
 
 export async function vaildateOptions(opts: {
   threads: number;
@@ -60,7 +60,5 @@ export const defaultIntervalPadding = 50;
 
 export const getIntervals = async (interval_scatter: string) => {
   await ensureDir(interval_scatter);
-  return (await glob(join(interval_scatter, "*.interval_list")))
-    .filter((v) => v.isFile || v.isSymlink)
-    .map((v) => v.path);
+  return await glob(join(interval_scatter, "*.interval_list"));
 };
