@@ -5,8 +5,9 @@ import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
 import SnpSiftFilter from "@/pipeline/module/snpsift/filter.ts";
 import { vcfannoCADD } from "@/pipeline/_res.ts";
+import { mVersion } from "@/pipeline/snv-annot-m.ts";
 
-const version = "v3_1";
+const finalVersion = "." + "v3_1";
 
 async function caddAnnot(
   cadd: string,
@@ -50,6 +51,7 @@ async function getSamples(inputVcfGz: string, sampleMap?: string) {
 
 export default new Command()
   .name("snv.final")
+  .version(finalVersion.substring(1))
   .description(
     "Annotate HPO phenotypes and disease, filter with preset rules and output tab-delimited table and Excel ready table"
   )
@@ -74,8 +76,8 @@ export default new Command()
       resource: resDir,
       caddScript,
     }) => {
-      const inputVcfGz = `${sample}.m.${assembly}.vcf.gz`;
-      const fullVcfGz = `${sample}.full.${assembly}.vcf.gz`;
+      const inputVcfGz = `${sample}.m${mVersion}.${assembly}.vcf.gz`;
+      const fullVcfGz = `${sample}.full${finalVersion}.${assembly}.vcf.gz`;
       const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
       if (caddScript) {
         await caddAnnot(caddData, inputVcfGz, fullVcfGz);
@@ -100,8 +102,8 @@ export default new Command()
 
       async function withFilter() {
         const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
-          qcTsvGz = `${sample}.full.qc.${version}.${assembly}.tsv.gz`,
-          qcCsvGz = `${sample}.full.qc.${version}.${assembly}.excel.csv.gz`;
+          qcTsvGz = `${sample}.full.qc${finalVersion}.${assembly}.tsv.gz`,
+          qcCsvGz = `${sample}.full.qc${finalVersion}.${assembly}.excel.csv.gz`;
         console.error(`Filtering on qc...`);
         await SnpSiftFilter(fullVcfGz, getFilterQuery("qual"), qcVcfGz);
 
@@ -112,8 +114,8 @@ export default new Command()
 
         async function fc(inputVcfGz: string) {
           const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
-            fcTsvGz = `${sample}.full.filter.${version}.${assembly}.tsv.gz`,
-            fcCsvGz = `${sample}.full.filter.${version}.${assembly}.excel.csv.gz`;
+            fcTsvGz = `${sample}.full.filter${finalVersion}.${assembly}.tsv.gz`,
+            fcCsvGz = `${sample}.full.filter${finalVersion}.${assembly}.excel.csv.gz`;
           console.error(`Filtering on effect...`);
           await SnpSiftFilter(inputVcfGz, getFilterQuery("effect"), fcVcfGz);
           await extract(fcVcfGz, fcTsvGz);
@@ -123,8 +125,8 @@ export default new Command()
 
       async function noFilter() {
         console.error(`No filter, extracting full...`);
-        const fullTsvGz = `${sample}.full.${version}.${assembly}.tsv.gz`,
-          fullCsvGz = `${sample}.full.${version}.${assembly}.excel.csv.gz`;
+        const fullTsvGz = `${sample}.full${finalVersion}.${assembly}.tsv.gz`,
+          fullCsvGz = `${sample}.full${finalVersion}.${assembly}.excel.csv.gz`;
         await extract(fullVcfGz, fullTsvGz);
         await tsv2excel(fullTsvGz, fullCsvGz);
       }

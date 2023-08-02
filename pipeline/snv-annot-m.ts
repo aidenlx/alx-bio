@@ -5,8 +5,11 @@ import vcfanno from "./module/vcfanno.ts";
 import tableAnnovar from "./module/annovar/table_annovar.ts";
 import { toFinalOutput, pipe } from "./pipe.ts";
 
+export const mVersion = "." + "v2";
+
 export default new Command()
   .name("snv.annot.m")
+  .version(mVersion.substring(1))
   .description("Multi-thread vcf annotation pipeline")
   .option("-t, --threads <count:integer>", "Threads", { default: 4 })
   .type("genomeAssembly", new EnumType(D.keys(snpeff_assembly)))
@@ -67,7 +70,7 @@ export default new Command()
         },
         async (input) => {
           console.info(`annotate ${input} with vcfanno`);
-          const output = prefix + `vcfannot.${ref}.vcf.gz`;
+          const output = prefix + `vcfannot${mVersion}.${ref}.vcf.gz`;
           await vcfanno(orGzip(input), output, {
             threads,
             config: [...vcfannoCfg[ref], options.cadd && vcfannoCADD[ref]],
@@ -75,7 +78,7 @@ export default new Command()
           return output;
         }
       ),
-      prefix + `m.${ref}.vcf`
+      prefix + `m${mVersion}.${ref}.vcf`
     );
 
     console.info(`multithread Annotation finished. Output: ${output}.gz`);

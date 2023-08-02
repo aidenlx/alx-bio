@@ -4,8 +4,11 @@ import { orGzip } from "@/utils/or-gzip.ts";
 import snpEff from "./module/snpeff.ts";
 import { toFinalOutput, pipe } from "@/pipeline/pipe.ts";
 
+export const sVersoin = "." + "";
+
 export default new Command()
   .name("snv.annot.s")
+  .version(sVersoin.substring(1))
   .description("Single thread vcf annotation pipeline")
   .type("genomeAssembly", new EnumType(D.keys(snpeff_assembly)))
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
@@ -53,7 +56,7 @@ export default new Command()
         });
         return output;
       }),
-      prefix + `s.${ref}.vcf`
+      prefix + `s${sVersoin}.${ref}.vcf`
     );
 
     console.info(`single thread Annotation finished. Output: ${output}`);
