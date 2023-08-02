@@ -273,6 +273,16 @@ export const vcfannoCADD = D.fromPairs(
 export const localAC = `FJMUN_AC`,
   localAF = `FJMUN_AF`;
 
+export const vcfannoLocal = D.fromPairs(
+  (["hg19", "hg38"] as const).map((ref) => [
+    ref,
+    ref === "hg38" && {
+      file: localDatabase.hs37,
+      ...FieldsToDef([[localAC], [localAF]]),
+    },
+  ])
+);
+
 export const vcfannoCfg = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => {
     const cfg: VcfAnnoConfig[] = [
@@ -299,14 +309,6 @@ export const vcfannoCfg = D.fromPairs(
           (field) => `WBBC_${field}`
         ),
       },
-      ...(ref === "hg19"
-        ? [
-            {
-              file: localDatabase.hs37,
-              ...FieldsToDef([[localAC], [localAF]]),
-            },
-          ]
-        : []),
       ...pipe(
         annovar,
         D.filterWithKey((k) => k.startsWith(`${ref}_`)),

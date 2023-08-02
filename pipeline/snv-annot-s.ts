@@ -14,6 +14,7 @@ export default new Command()
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
     required: true,
   })
+  .option("--no-stats", "Disable stats in snpEff")
   .option(
     "-i, --input <vcf>",
     "Input vcf, should be handled by bcftools norm -m -both",
@@ -53,6 +54,7 @@ export default new Command()
         await snpEff(input, output, {
           memory: "20G",
           assembly: snpeff_assembly[ref],
+          args: options.stats ? ["-noStats"] : [],
         });
         return output;
       }),

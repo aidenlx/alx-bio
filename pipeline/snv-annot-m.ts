@@ -1,5 +1,10 @@
 import { Command, D, EnumType, path, cd } from "@/deps.ts";
-import { snpeff_assembly, vcfannoCADD, vcfannoCfg } from "./_res.ts";
+import {
+  snpeff_assembly,
+  vcfannoCADD,
+  vcfannoCfg,
+  vcfannoLocal,
+} from "./_res.ts";
 import { orGzip } from "@/utils/or-gzip.ts";
 import vcfanno from "./module/vcfanno.ts";
 import tableAnnovar from "./module/annovar/table_annovar.ts";
@@ -17,6 +22,7 @@ export default new Command()
     required: true,
   })
   .option("--no-cadd", "Skip using prescored CADD annotation")
+  .option("--no-local", "Skip local database annotation")
   .option(
     "-i, --input <vcf>",
     "Input vcf, should be handled by bcftools norm -m -both",
@@ -73,7 +79,11 @@ export default new Command()
           const output = prefix + `vcfannot${mVersion}.${ref}.vcf.gz`;
           await vcfanno(orGzip(input), output, {
             threads,
-            config: [...vcfannoCfg[ref], options.cadd && vcfannoCADD[ref]],
+            config: [
+              ...vcfannoCfg[ref],
+              options.local && vcfannoLocal[ref],
+              options.cadd && vcfannoCADD[ref],
+            ],
           });
           return output;
         }
