@@ -57,6 +57,7 @@ import hg19FieldList from "./vcf-extract-hg19.json" assert { type: "json" };
 import getOMIMGene from "@/database/mim2gene.ts";
 import printStdErr from "@/utils/print-stderr.ts";
 import { localAC, localAF } from "@/pipeline/_res.ts";
+import { checkDone } from "@/utils/check-done.ts";
 
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
@@ -67,6 +68,12 @@ export default async function ExtractAndHpoAnnot(
     database,
   }: { assembly: "hg19" | "hg38"; samples: string[]; database: HpoData }
 ) {
+  const { done, finish } = await checkDone(outputTsv, inputVcf);
+  if (done) {
+    console.info("Skipping hpo annot");
+    return;
+  }
+  console.error(`Extracting from ${inputVcf}...`);
   const localFreq = new Set([localAC, localAF]);
   const fieldList =
     assembly === "hg38"
@@ -127,6 +134,7 @@ export default async function ExtractAndHpoAnnot(
   if (!bStatus.success) {
     throw new Error("bgzip failed: " + bStatus.code);
   }
+  await finish();
 }
 
 type HpoData = Awaited<ReturnType<typeof loadHpoData>>;

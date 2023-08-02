@@ -6,6 +6,7 @@ import { getFilterQuery } from "@/pipeline/module/filter.ts";
 import SnpSiftFilter from "@/pipeline/module/snpsift/filter.ts";
 import { vcfannoCADD } from "@/pipeline/_res.ts";
 import { mVersion } from "@/pipeline/snv-annot-m.ts";
+import { checkDone } from "@/utils/check-done.ts";
 
 const finalVersion = "." + "v3_1";
 
@@ -101,7 +102,7 @@ export default new Command()
       await Promise.all([withFilter(), noFilter(), exomiserExtra()]);
 
       async function withFilter() {
-        const qcVcfGz = `${sample}.full.qc.${assembly}.vcf.gz`,
+        const qcVcfGz = `${sample}.full.qc${finalVersion}.${assembly}.vcf.gz`,
           qcTsvGz = `${sample}.full.qc${finalVersion}.${assembly}.tsv.gz`,
           qcCsvGz = `${sample}.full.qc${finalVersion}.${assembly}.excel.csv.gz`;
         console.error(`Filtering on qc...`);
@@ -113,7 +114,7 @@ export default new Command()
         ]);
 
         async function fc(inputVcfGz: string) {
-          const fcVcfGz = `${sample}.full.filter.${assembly}.vcf.gz`,
+          const fcVcfGz = `${sample}.full.filter${finalVersion}.${assembly}.vcf.gz`,
             fcTsvGz = `${sample}.full.filter${finalVersion}.${assembly}.tsv.gz`,
             fcCsvGz = `${sample}.full.filter${finalVersion}.${assembly}.excel.csv.gz`;
           console.error(`Filtering on effect...`);
@@ -133,7 +134,7 @@ export default new Command()
 
       /** output extra data for exomiser */
       async function exomiserExtra() {
-        const exoExtraTsvGz = `${sample}.full.exo-extra.${assembly}.tsv.gz`;
+        const exoExtraTsvGz = `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`;
         const extraFields =
           assembly === "hg19" ? exomiserExtraFields : exomiserExtraFieldsHg38;
         await $`SnpSift extractFields -s "," -e "." ${fullVcfGz} ${extraFields} \
@@ -143,8 +144,6 @@ export default new Command()
       }
 
       async function extract(inputVcfGz: string, outputTsvGz: string) {
-        console.error(`Extracting from ${inputVcfGz}...`);
-
         await ExtractAndHpoAnnot(inputVcfGz, outputTsvGz, {
           assembly,
           samples,
@@ -153,6 +152,11 @@ export default new Command()
         console.error(`Done, output to ${outputTsvGz}`);
       }
       async function tsv2excel(inputTsvGz: string, outputCsvGz: string) {
+        const { done, finish } = await checkDone(outputCsvGz, inputTsvGz);
+        if (done) {
+          console.error(`Skip converting ${inputTsvGz} to excel csv format...`);
+          return;
+        }
         console.error(`Converting ${inputTsvGz} to excel csv format...`);
         // write BOM header (printf "\xEF\xBB\xBF")
         const outputCsv = outputCsvGz.slice(0, -3);
@@ -160,6 +164,7 @@ export default new Command()
 zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
 && bgzip -f ${outputCsv}`;
         console.error(`Done, output to ${outputCsvGz}`);
+        await finish();
       }
     }
   );
@@ -180,9 +185,11 @@ gnomad_g211_AF
 gnomad_g211_AF_eas
 WBBC_AF
 WBBC_South_AF
+FJMUN_AF
 ANN
 GEN[*].GT
 CADD_PHRED
+FJMUN_AC
 `
   .trim()
   .split("\n");

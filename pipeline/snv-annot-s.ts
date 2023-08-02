@@ -4,7 +4,8 @@ import { orGzip } from "@/utils/or-gzip.ts";
 import snpEff from "./module/snpeff.ts";
 import { toFinalOutput, pipe } from "@/pipeline/pipe.ts";
 
-export const sVersoin = "." + "";
+export const sVersoin = "";
+// export const sVersoin = "." + "v2";
 
 export default new Command()
   .name("snv.annot.s")

@@ -30,7 +30,7 @@ function parseMtimeDone(data: string) {
       return null;
     return D.map(map, (v) => new Date(v)) as Record<string, Date>;
   } catch (error) {
-    console.error("Failed to parse mtime done: ", error);
+    console.warn("Failed to parse mtime done: " + error.message, data);
     return null;
   }
 }
