@@ -57,24 +57,36 @@ export default new Command()
         bam_dir,
         toIntervalScatter(sample, assembly)
       );
-      const toHcOutput = (list: string) =>
-        list.replace(/\.interval_list$/, ".g.vcf.gz");
+      const toHcOutputLegacy = (list: string) =>
+        list.replace(/\.interval_list$/, ".g.vcf");
 
-      let intervals = await getIntervals(interval_scatter_legacy);
+      const intervalsLegacy = await getIntervals(interval_scatter_legacy);
+      const hcOutputsLegacy = intervalsLegacy.map(toHcOutputLegacy);
 
+      const allGvcfLegacyExists = await Promise.all(
+        hcOutputsLegacy.map((p) => exists(p))
+      ).then((r) => r.every(Boolean));
+      const allGvcfLegacyDone = await Promise.all(
+        hcOutputsLegacy.map((i) => i + ".done").map((p) => exists(p))
+      ).then((r) => r.every(Boolean));
+
+      let intervals, toHcOutput: typeof toHcOutputLegacy, hcOutputs: string[];
       if (
-        !(
-          intervals.length > 0 &&
-          // if all gvcf exists
-          (await Promise.all(
-            intervals.map(toHcOutput).map((p) => exists(p))
-          ).then((r) => r.every(Boolean)))
-        )
+        intervalsLegacy.length > 0 &&
+        (allGvcfLegacyExists || allGvcfLegacyDone)
       ) {
+        intervals = intervalsLegacy;
+        toHcOutput = toHcOutputLegacy;
+        hcOutputs = hcOutputsLegacy;
+      } else {
         const interval_scatter = path.join(
           vcf_dir,
           toIntervalScatter(sample, assembly)
         );
+        intervals = await getIntervals(interval_scatter);
+        toHcOutput = (list: string) =>
+          list.replace(/\.interval_list$/, ".g.vcf.gz");
+        hcOutputs = intervals.map(toHcOutput);
 
         console.info(`SPLIT TAG_REGION using ${baitIntervals}`);
 
@@ -84,12 +96,8 @@ export default new Command()
           threads,
           quiet: true,
         });
-
-        intervals = await getIntervals(interval_scatter);
       }
-
       console.info("TASK: HaplotypeCaller");
-
       const hcTasks = intervals.map((list) =>
         limit(() =>
           GATKHaplotypeCaller(bam_bqsr, toHcOutput(list), {
@@ -105,14 +113,8 @@ export default new Command()
         )
       );
       await Promise.all(hcTasks);
-
       console.info("MERGE GVCF");
-      const hcOutputs = intervals.map(toHcOutput);
-
       await gatherVCF(hcOutputs, gVcfGz);
-      // await GATKGatherVcfs(intervals.map(toHcOutput), unsortedGVcf, {
-      //   args: ["--QUIET"],
-      // });
       await cleanup(...hcOutputs);
     } else {
       await GATKHaplotypeCaller(bam_bqsr, gVcfGz, {
