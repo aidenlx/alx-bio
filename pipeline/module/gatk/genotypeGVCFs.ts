@@ -15,8 +15,13 @@ export default async function GATKGenotypeGVCFs(
   output: string,
   opts: GATKOptions & {
     reference: string;
+    standardMinConfidenceThresholdForCalling?: number;
   }
 ) {
+  /**
+   * @see https://gatk.broadinstitute.org/hc/en-us/articles/360037057852-GenotypeGVCFs#--standard-min-confidence-threshold-for-calling
+   */
+  const standCallConf = opts.standardMinConfidenceThresholdForCalling ?? 0;
   const { done, finish } = await checkDone(
     output,
     input,
@@ -42,6 +47,7 @@ export default async function GATKGenotypeGVCFs(
     ...(opts.args ?? []),
     ...gatkTempDir(),
     ...["--reference", opts.reference],
+    ...["-stand-call-conf", standCallConf],
     ...["--variant", input, "--output", output],
   ];
   if (output.endsWith(".gz")) {
