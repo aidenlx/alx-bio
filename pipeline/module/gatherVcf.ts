@@ -12,8 +12,11 @@ export default async function gatherVCF(
     throw new Error("No inputs provided to gatherVCF");
   }
   const hcOutputs = inputs;
-  const gVcf = output;
-  const { done, finish } = await checkDone(gVcf, inputs);
+  const { done, finish } = await checkDone(
+    output,
+    inputs,
+    output.replace(/\.gz$/, "")
+  );
   if (done) {
     console.info("Skipping mergeVCF");
     return;

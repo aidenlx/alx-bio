@@ -25,6 +25,7 @@ const object = type("object");
 
 function parseMtimeDone(data: string) {
   try {
+    if (!data) return null;
     const map = JSON.parse(data) as unknown;
     if (!object.allows(map) || Object.values(map).some((v) => !date.allows(v)))
       return null;

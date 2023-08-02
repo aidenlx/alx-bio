@@ -83,19 +83,17 @@ export default new Command()
           vcf_dir,
           toIntervalScatter(sample, assembly)
         );
-        intervals = await getIntervals(interval_scatter);
-        toHcOutput = (list: string) =>
-          list.replace(/\.interval_list$/, ".g.vcf.gz");
-        hcOutputs = intervals.map(toHcOutput);
-
         console.info(`SPLIT TAG_REGION using ${baitIntervals}`);
-
         await GATKSplitIntervals(baitIntervals, interval_scatter, {
           reference,
           intervalPadding: options.intervalPadding,
           threads,
           quiet: true,
         });
+        intervals = await getIntervals(interval_scatter);
+        toHcOutput = (list: string) =>
+          list.replace(/\.interval_list$/, ".g.vcf.gz");
+        hcOutputs = intervals.map(toHcOutput);
       }
       console.info("TASK: HaplotypeCaller");
       const hcTasks = intervals.map((list) =>

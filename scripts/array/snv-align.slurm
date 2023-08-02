@@ -12,5 +12,14 @@ ASSEMBLY=$(validate_input ${2,,} hs37 hg38)
 shift;shift;
 
 conda activate ngs-call
-bioa snv.align --fq1 "$FASTQ1" --fq2 "$FASTQ2" \
+# if missing $FASTQ1 or $FASTQ2
+if [ -z $FASTQ1 ] || [ -z $FASTQ2 ]; then
+  bioa snv.align \
+    -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+else
+  bioa snv.align --fq1 "$FASTQ1" --fq2 "$FASTQ2" \
   -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+fi
+
+
+
