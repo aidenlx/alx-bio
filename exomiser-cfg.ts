@@ -74,7 +74,7 @@ export default new Command()
     const outputFileName = basename(vcf).split(".")[0];
     const genomeAssembly = vcf.includes("hg38") ? "hg38" : "hg19";
     const { stdout: _sampleIds } =
-      await $`rg '#CHROM' ${options.input} | cut -f10-`;
+      await $`zcat -f ${options.input} | rg '#CHROM' | cut -f10-`;
     const sampleIds = _sampleIds
       .split("\t")
       .map((s) => s.trim())
