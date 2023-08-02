@@ -16,15 +16,15 @@ FILTER='^([1-9]|1[0-9]|2[0-2]|[XY])\t|^#'
 
 if [ $ASSEMBLY == "hg19" ]; then
   ASSEMBLY_CADD="GRCh37"
-  SRC_VCF="$SAMPLE_ID.norm.hs37.vcf"
-  INPUT_VCF="$SAMPLE_ID.norm.hs37.no-chr.vcf"
+  SRC_VCF="$SAMPLE_ID.norm.hs37.vcf.gz"
+  INPUT_VCF="$SAMPLE_ID.norm.hs37.no-chr.vcf.gz"
   # exclude those variants not in CADD
-  rg $FILTER $SRC_VCF > $INPUT_VCF
+  zcat_safe $SRC_VCF | rg $FILTER > $INPUT_VCF
 elif [ $ASSEMBLY == "hg38" ]; then
   ASSEMBLY_CADD="GRCh38"
-  SRC_VCF="$SAMPLE_ID.norm.hg38.vcf"
-  INPUT_VCF="$SAMPLE_ID.norm.hg38.no-chr.vcf"
-  sed 's/^chr//' $SRC_VCF | rg $FILTER > $INPUT_VCF
+  SRC_VCF="$SAMPLE_ID.norm.hg38.vcf.gz"
+  INPUT_VCF="$SAMPLE_ID.norm.hg38.no-chr.vcf.gz"
+  zcat_safe $SRC_VCF | sed 's/^chr//' | rg $FILTER > $INPUT_VCF
 fi
 
 OUTPUT=$SAMPLE_ID.cadd.$ASSEMBLY.tsv.gz
