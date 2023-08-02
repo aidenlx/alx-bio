@@ -4,7 +4,10 @@
 #SBATCH --cpus-per-task 6
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
-conda_init conda
+conda_init mamba
+
+# mamba create -y -c conda-forge -c bioconda -n cadd-initial ripgrep tabix snakemake    
+conda activate cadd-initial
 
 PATH=/cluster/home/jiyuan/res/CADD-scripts:$PATH
 
@@ -19,19 +22,17 @@ if [ $ASSEMBLY == "hg19" ]; then
   SRC_VCF="$SAMPLE_ID.norm.hs37.vcf.gz"
   INPUT_VCF="$SAMPLE_ID.norm.hs37.no-chr.vcf.gz"
   # exclude those variants not in CADD
-  zcat_safe $SRC_VCF | rg $FILTER > $INPUT_VCF
+  zcat_safe $SRC_VCF | rg $FILTER | bgzip > $INPUT_VCF
 elif [ $ASSEMBLY == "hg38" ]; then
   ASSEMBLY_CADD="GRCh38"
   SRC_VCF="$SAMPLE_ID.norm.hg38.vcf.gz"
   INPUT_VCF="$SAMPLE_ID.norm.hg38.no-chr.vcf.gz"
-  zcat_safe $SRC_VCF | sed 's/^chr//' | rg $FILTER > $INPUT_VCF
+  zcat_safe $SRC_VCF | sed 's/^chr//' | rg $FILTER | bgzip > $INPUT_VCF
 fi
 
 OUTPUT=$SAMPLE_ID.cadd.$ASSEMBLY.tsv.gz
 
 CADD.sh -g $ASSEMBLY_CADD -o "$OUTPUT" -c $SLURM_CPUS_PER_TASK $INPUT_VCF
-
-conda activate hs37-WES
 
 echo indexing "$OUTPUT"
 tabix -b 2 -e 2 "$OUTPUT"

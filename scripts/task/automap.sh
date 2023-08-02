@@ -16,8 +16,12 @@ if [ -f $OUT_DIR/automap.done ]; then
 fi
 
 ASSEMBLY=$(validate_input $1 hg19 hg38)
-INPUT_VCF=$2
+INPUT_VCF_GZ=$2
+INPUT_VCF=$(mktemp --suffix ".vcf")
+trap "rm -f $INPUT_VCF" EXIT
 OUT_DIR=${3:-.}
+
+zcat_safe $INPUT_VCF_GZ > $INPUT_VCF
 
 # AutoMap for single individual
 # The main script AutoMap_v1.0.sh takes as input a VCF file which needs to contain GT (genotype) and AD (or AO) (allelic depths for the ref and alt alleles) or DP4 (number of high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases) fields for variants. The output is a text file containing the detected ROHs and a pdf file with the ROHs graphical representation. It is called with bash:
