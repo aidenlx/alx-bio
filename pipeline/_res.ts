@@ -154,6 +154,9 @@ export const wbbcDatabase = {
   hs37: "/cluster/home/jiyuan/res/wbbc/WBBC.hs37.vcf.gz",
   hg38: "/cluster/home/jiyuan/res/wbbc/WBBC.hg38.vcf.gz",
 };
+export const localDatabase = {
+  hs37: "/cluster/home/jiyuan/res/fjmun/fjmun-230802.hg19.vcf.gz",
+};
 
 export function parseFastqOption({
   fq1,
@@ -267,6 +270,9 @@ export const vcfannoCADD = D.fromPairs(
   ])
 );
 
+export const localAC = `FJMUN_AC`,
+  localAF = `FJMUN_AF`;
+
 export const vcfannoCfg = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => {
     const cfg: VcfAnnoConfig[] = [
@@ -293,6 +299,14 @@ export const vcfannoCfg = D.fromPairs(
           (field) => `WBBC_${field}`
         ),
       },
+      ...(ref === "hg19"
+        ? [
+            {
+              file: localDatabase.hs37,
+              ...FieldsToDef([[localAC], [localAF]]),
+            },
+          ]
+        : []),
       ...pipe(
         annovar,
         D.filterWithKey((k) => k.startsWith(`${ref}_`)),

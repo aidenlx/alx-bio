@@ -56,6 +56,7 @@ function uniq(arrStr: string, delimiter = ",") {
 import hg19FieldList from "./vcf-extract-hg19.json" assert { type: "json" };
 import getOMIMGene from "@/database/mim2gene.ts";
 import printStdErr from "@/utils/print-stderr.ts";
+import { localAC, localAF } from "@/pipeline/_res.ts";
 
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
@@ -66,9 +67,12 @@ export default async function ExtractAndHpoAnnot(
     database,
   }: { assembly: "hg19" | "hg38"; samples: string[]; database: HpoData }
 ) {
+  const localFreq = new Set([localAC, localAF]);
   const fieldList =
     assembly === "hg38"
-      ? hg19FieldList.map((v) => v.replace("gnomad_g211_", "gnomad312_"))
+      ? hg19FieldList
+          .map((v) => v.replace("gnomad_g211_", "gnomad312_"))
+          .filter((k) => !localFreq.has(k))
       : hg19FieldList;
   if (fieldList.length === 0) {
     throw new Error("fieldList is empty: " + fieldList);
