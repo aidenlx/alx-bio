@@ -17,18 +17,16 @@ export const Res = {
     // https://lh3.github.io/2017/11/13/which-human-reference-genome-to-use
     refFa:
       "/cluster/home/jiyuan/res/hg38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
-    dbsnp:
-      "/huawei-genetics/project/shiyan/Call_snp_data/database/dbsnp_146.hg38.vcf",
+    dbsnp: "/cluster/home/jiyuan/res/dbsnp/dbsnp156.hg38.vcf.gz",
   },
   /** hs37 (1-22,X,Y) vs hg19 (chr1-chr22,chrX,chrY) */
   hs37: {
     refFa: "/cluster/home/jiyuan/res/hg19/hs37d5.fa",
-    dbsnp:
-      "/genetics/home/shiyan/bin/Database/hg19/db/GRCh37/dbSnp/dbSnp_v149.20161122.vcf.gz",
+    dbsnp: "/cluster/home/jiyuan/res/dbsnp/dbsnp156.hs37.vcf.gz",
   },
   hg19: {
     refFa: "/cluster/apps/humandb/hg19/hg19.chr.fa",
-    dbsnp: "/cluster/apps/humandb/GATK4/hg19/dbsnp_138.hg19.vcf",
+    dbsnp: "/cluster/home/jiyuan/res/dbsnp/dbsnp156.hg19.vcf.gz",
   },
 } satisfies Record<SupportAssembly, any>;
 
