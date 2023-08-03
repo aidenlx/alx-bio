@@ -9,6 +9,7 @@ import { orGzip } from "@/utils/or-gzip.ts";
 import vcfanno from "./module/vcfanno.ts";
 import tableAnnovar from "./module/annovar/table_annovar.ts";
 import { toFinalOutput, pipe } from "./pipe.ts";
+import { positiveIntType } from "@/utils/validate.ts";
 
 export const mVersion = "." + "v2";
 
@@ -16,7 +17,8 @@ export default new Command()
   .name("snv.annot.m")
   .version(mVersion.substring(1))
   .description("Multi-thread vcf annotation pipeline")
-  .option("-t, --threads <count:integer>", "Threads", { default: 4 })
+  .type("positiveInt", positiveIntType)
+  .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .type("genomeAssembly", new EnumType(D.keys(snpeff_assembly)))
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
     required: true,
@@ -38,13 +40,10 @@ export default new Command()
   )
   .option("-s, --sample <name>", "Sample Name", { required: true })
   .action(async (options) => {
-    const threads = options.threads;
-    if (threads <= 0) {
-      throw new Error("threads must be a positive integer");
-    }
     console.error(`snv.annot.m${mVersion}`);
     console.error(`Options:\n` + tomlStringify(options));
 
+    const { threads } = options;
     const inputVcf = path.resolve(orGzip(options.input));
     const workPath = options.outputDir
       ? path.resolve(options.outputDir)

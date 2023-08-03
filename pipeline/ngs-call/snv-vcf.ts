@@ -11,11 +11,13 @@ import gatherVCF from "@/pipeline/module/gatherVcf.ts";
 import { parseBaitIntevals } from "@/pipeline/ngs-call/parseBaitIntevals.ts";
 import GATKSplitIntervals from "@/pipeline/module/gatk/splitIntervals.ts";
 import GATKHaplotypeCaller from "@/pipeline/module/gatk/haplotypeCaller.ts";
+import { positiveIntType } from "@/utils/validate.ts";
 
 export default new Command()
   .name("snv.vcf")
   .description("Per-sample variant calling pipeline")
-  .option("-t, --threads <count:integer>", "Threads", { default: 4 })
+  .type("positiveInt", positiveIntType)
+  .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .option(
     "--bait-intervals [path]",
     "bed file for WESeq capture region, run in WGS mode if not present",
@@ -34,8 +36,9 @@ export default new Command()
     default: defaultIntervalPadding,
   })
   .action(async (options) => {
-    const { sample, threads, workPath, assembly, cleanup, reference } =
+    const { sample, workPath, assembly, cleanup, reference } =
       await validateOptions(options);
+    const { threads } = options;
 
     cd(workPath);
 

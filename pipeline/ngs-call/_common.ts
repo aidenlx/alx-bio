@@ -4,17 +4,11 @@ import { Res, SupportAssembly } from "@/pipeline/_res.ts";
 import { globby as glob } from "npm:globby";
 
 export async function validateOptions(opts: {
-  threads: number;
   outDir: string;
   sample: string;
   ref: SupportAssembly;
   cleanup?: boolean;
 }) {
-  const threads = opts.threads;
-  if (threads <= 0) {
-    throw new Error("threads must be a positive integer");
-  }
-
   const workPath = path.resolve(opts.outDir),
     sample = opts.sample;
   if (nonAscii.test(workPath)) {
@@ -31,7 +25,6 @@ export async function validateOptions(opts: {
   await ensureDir(workPath);
 
   return {
-    threads,
     workPath,
     sample,
     assembly: opts.ref,

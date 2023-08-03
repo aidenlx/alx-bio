@@ -13,11 +13,13 @@ import GATKBaseRecalibrator from "@/pipeline/module/gatk/baseRecal.ts";
 import GATKGatherBQSRReports from "@/pipeline/module/gatk/gatherBQSRReports.ts";
 import GATKApplyBQSR from "@/pipeline/module/gatk/applyBQSR.ts";
 import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
+import { positiveIntType } from "@/utils/validate.ts";
 
 export default new Command()
   .name("snv.bam")
   .description("Prepare raw mapped bam reads for varinat calling")
-  .option("-t, --threads <count:integer>", "Threads", { default: 4 })
+  .type("positiveInt", positiveIntType)
+  .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .option(
     "--bait-intervals [path]",
     "bed file for WESeq capture region, run in WGS mode if not present",
@@ -36,8 +38,9 @@ export default new Command()
     default: defaultIntervalPadding,
   })
   .action(async (options) => {
-    const { sample, threads, workPath, assembly, cleanup, reference } =
+    const { sample, workPath, assembly, cleanup, reference } =
       await validateOptions(options);
+    const { threads } = options;
     cd(workPath);
 
     const baitIntervals = parseBaitIntevals(options.baitIntervals, assembly);
