@@ -61,7 +61,7 @@ export default new Command()
             return true;
           })
       );
-      if (fileCheckResults.some((vaild) => !vaild)) {
+      if (fileCheckResults.some((valid) => !valid)) {
         Deno.exit(1);
       }
     }

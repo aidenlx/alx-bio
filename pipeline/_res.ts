@@ -3,7 +3,7 @@ export type SupportAssembly = "hg38" | "hs37" | "hg19";
 
 import { normalizeVcfKey } from "@/utils/vcf-key.ts";
 import { D, pipe, path } from "@/deps.ts";
-import { vaildBedPath } from "@/utils/vaildate.ts";
+import { validBedPath } from "@/utils/validate.ts";
 import { VcfAnnoConfig } from "@/pipeline/module/vcfanno.ts";
 
 export const getMarkDupBam = (sample: string, assembly: string) =>
@@ -379,7 +379,7 @@ export function parseIntevals(
       );
     return [bait, true];
   }
-  if (!vaildBedPath.allows(intervalsOpt)) {
+  if (!validBedPath.allows(intervalsOpt)) {
     throw new Error(`Bait Intervals file ${intervalsOpt} not found`);
   }
   return [intervalsOpt, false];

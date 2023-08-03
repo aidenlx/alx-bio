@@ -3,7 +3,7 @@ import { nonAscii } from "@/utils/ascii.ts";
 import { Res, SupportAssembly } from "@/pipeline/_res.ts";
 import { globby as glob } from "npm:globby";
 
-export async function vaildateOptions(opts: {
+export async function validateOptions(opts: {
   threads: number;
   outDir: string;
   sample: string;

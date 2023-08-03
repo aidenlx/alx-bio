@@ -6,7 +6,7 @@ import {
   readGroupNGS,
 } from "@/pipeline/_res.ts";
 import { createLocalFastq } from "@/utils/ln-fastq.ts";
-import { vaildateOptions } from "@/pipeline/ngs-call/_common.ts";
+import { validateOptions } from "@/pipeline/ngs-call/_common.ts";
 import fastp from "@/pipeline/module/fastp.ts";
 import bwaMem2 from "@/pipeline/module/bwa-mem2.ts";
 import samtoolsSort from "@/pipeline/module/samtools/sort.ts";
@@ -32,7 +32,7 @@ export default new Command()
   .option("--spark", "Spark")
   .action(async (options) => {
     const { sample, threads, workPath, assembly, cleanup, reference } =
-      await vaildateOptions(options);
+      await validateOptions(options);
     cd(workPath);
 
     const bam_dir = "bamfile";

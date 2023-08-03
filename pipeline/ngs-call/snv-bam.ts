@@ -5,7 +5,7 @@ import {
   defaultIntervalPadding,
   getIntervals,
   toIntervalScatter,
-  vaildateOptions,
+  validateOptions,
 } from "@/pipeline/ngs-call/_common.ts";
 import { parseBaitIntevals } from "@/pipeline/ngs-call/parseBaitIntevals.ts";
 import GATKSplitIntervals from "@/pipeline/module/gatk/splitIntervals.ts";
@@ -37,7 +37,7 @@ export default new Command()
   })
   .action(async (options) => {
     const { sample, threads, workPath, assembly, cleanup, reference } =
-      await vaildateOptions(options);
+      await validateOptions(options);
     cd(workPath);
 
     const baitIntervals = parseBaitIntevals(options.baitIntervals, assembly);

@@ -16,7 +16,7 @@ export default new Command()
   .action((opts) => {
     if (opts.frequencyRequired > 1 || opts.frequencyRequired < 0) {
       throw new Error(
-        "frequencyRequired must be a vaild frequency, got " +
+        "frequencyRequired must be a valid frequency, got " +
           opts.frequencyRequired
       );
     }

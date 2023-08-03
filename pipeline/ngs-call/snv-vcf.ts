@@ -3,7 +3,7 @@ import { Res } from "@/pipeline/_res.ts";
 import { Command, cd, ensureDir, exists, pLimit, path } from "@/deps.ts";
 import {
   toIntervalScatter,
-  vaildateOptions,
+  validateOptions,
   defaultIntervalPadding,
   getIntervals,
 } from "@/pipeline/ngs-call/_common.ts";
@@ -35,7 +35,7 @@ export default new Command()
   })
   .action(async (options) => {
     const { sample, threads, workPath, assembly, cleanup, reference } =
-      await vaildateOptions(options);
+      await validateOptions(options);
 
     cd(workPath);
 
