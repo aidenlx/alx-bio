@@ -279,7 +279,7 @@ export const localAC = `FJMUN_AC`,
 export const vcfannoLocal = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => [
     ref,
-    ref === "hg38" && {
+    ref === "hg19" && {
       file: localDatabase.hs37,
       ...FieldsToDef([[localAC], [localAF]]),
     },

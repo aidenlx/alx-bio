@@ -1,4 +1,4 @@
-import { Command, D, EnumType, path, cd } from "@/deps.ts";
+import { Command, D, EnumType, path, cd, tomlStringify } from "@/deps.ts";
 import {
   snpeff_assembly,
   vcfannoCADD,
@@ -42,6 +42,8 @@ export default new Command()
     if (threads <= 0) {
       throw new Error("threads must be a positive integer");
     }
+    console.error(`snv.annot.m${mVersion}`);
+    console.error(`Options:\n` + tomlStringify(options));
 
     const inputVcf = path.resolve(orGzip(options.input));
     const workPath = options.outputDir
