@@ -56,7 +56,7 @@ function uniq(arrStr: string, delimiter = ",") {
 import getOMIMGene from "@/database/mim2gene.ts";
 import printStdErr from "@/utils/print-stderr.ts";
 import { checkDone } from "@/utils/check-done.ts";
-import { getFieldList } from "@/pipeline/final/fields.ts";
+import { ExtractOptions, getFieldList } from "@/pipeline/final/fields.ts";
 
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
@@ -65,13 +65,12 @@ export default async function ExtractAndHpoAnnot(
     samples,
     assembly,
     database,
-    local = true,
+    ...extractOpts
   }: {
     assembly: "hg19" | "hg38";
     samples: string[];
     database: HpoData;
-    local?: boolean;
-  }
+  } & ExtractOptions
 ) {
   const { done, finish } = await checkDone(outputTsvGz, inputVcf);
   if (done) {
@@ -80,7 +79,7 @@ export default async function ExtractAndHpoAnnot(
   }
   console.error(`Extracting from ${inputVcf}...`);
 
-  const fieldList = getFieldList(assembly, { local });
+  const fieldList = getFieldList(assembly, extractOpts);
   const hpoAnnot = HpoAnnot({ samples, database });
   const output = await Deno.open(outputTsvGz, {
     create: true,

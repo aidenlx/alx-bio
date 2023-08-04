@@ -66,5 +66,5 @@ slivar compound-hets -v "$EXPR_OUT" \
 
 conda activate snv-final
 
-bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT "$@"
-bioa snv.extract -r $ASSEMBLY -i $CH_OUT "$@"
+bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT --slivar "$@"
+bioa snv.extract -r $ASSEMBLY -i $CH_OUT --slivar "$@"

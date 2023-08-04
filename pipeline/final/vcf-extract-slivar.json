@@ -1,0 +1,20 @@
+[
+  "gnomad_popmax_af",
+  "gnomad_popmax_af_filter",
+  "gnomad_nhomalt",
+  "gnomad_nhomalt_filter",
+  "gnomad_popmax_af_controls",
+  "gnomad_popmax_af_controls_filter",
+  "gnomad_nhomalt_controls",
+  "gnomad_nhomalt_controls_filter",
+  "comphet_side",
+  "denovo",
+  "dominant",
+  "recessive",
+  "x_denovo",
+  "x_recessive",
+  "x_dominant",
+  "impactful",
+  "genic",
+  "highest_impact_order"
+]

@@ -17,11 +17,22 @@ export default new Command()
     default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
   })
   .option("--no-local", "Do not extract local database")
+  .option("--slivar", "Extract slivar fields")
+  .option("--slivar-ch", "Extract slivar fields from result of compound-hets")
   .option("-i, --input <vcf:string>", "Input full.*.vcf.gz", { required: true })
   .option("-o, --output-base <base:string>", "Output base name")
   .option("--sample-map <file:string>", "Sample name mapping file")
   .action(
-    async ({ input, resource: resDir, ref, outputBase, sampleMap, local }) => {
+    async ({
+      input,
+      resource: resDir,
+      ref,
+      outputBase,
+      sampleMap,
+      local,
+      slivar,
+      slivarCh,
+    }) => {
       outputBase = outputBase || input.replace(/\.vcf(\.gz)?$/, "");
       const outCsvGz = `${outputBase}.${ref}.excel.csv.gz`,
         outTsvGz = `${outputBase}.${ref}.tsv.gz`;
@@ -30,6 +41,7 @@ export default new Command()
         samples: await getSamples(input, sampleMap),
         database: await loadHpoData(resDir),
         local,
+        slivar: slivarCh ? "compound-hets" : slivar ? "expr" : undefined,
       }).then((input) => tsv2excel(input, outCsvGz));
 
       console.error(`Done, output to ${outCsvGz} and ${outTsvGz}`);

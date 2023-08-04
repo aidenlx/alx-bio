@@ -4,6 +4,7 @@
   "POS",
   "REF",
   "ALT",
+  "#SLIVAR#",
   "ANN[0].EFFECT",
   "ANN[0].IMPACT",
   "ANN[0].GENE",
