@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=12
 
 # sbatch -J $name-str --array=1-24%4 ../run.slurm */bamfile/*.sort.hg38.bam */str ;
 
@@ -35,17 +35,23 @@ else
   OUT_BASE=$(sed -r "s/\.+$//g" <<< $OUT_BASE)
 fi
 
-EXPR_OUT="$OUT_BASE.slivar.vcf"
+EXPR_OUT="$OUT_BASE.slivar.$ASSEMBLY.vcf.gz"
+CH_OUT="$OUT_BASE.ch.$ASSEMBLY.vcf.gz"
 shift; shift; shift; shift
 
-rm "$EXPR_OUT"* "$CH_OUT"*
+if [ $ASSEMBLY == "hg19" ]; then
+  REF=$(get_ref hs37)
+elif [ $ASSEMBLY == "hg38" ]; then
+  REF=$(get_ref hg38)
+fi
+
+rm "$OUT_BASE.slivar."* "$OUT_BASE.ch."*
 
 echo --expr--
-slivar expr \
-  --vcf "$VCF" \
-  --ped "$PED" \
-  -o "$EXPR_OUT" \
+pslivar expr --processes $THREADS \
+  --vcf "$VCF" --ped "$PED" \
   --pass-only \
+  --fasta "$REF" \
   -g /cluster/home/jiyuan/res/slivar/gnomad.hg37.zip \
   --js /genetics/home/stu_liujiyuan/alx-bio/scripts/slivar-functions.js \
   --info 'INFO.impactful && INFO.gnomad_popmax_af < 0.01 && variant.FILTER == "PASS" && variant.ALT[0] != "*"' \
@@ -55,19 +61,26 @@ slivar expr \
   --family-expr 'x_denovo:(variant.CHROM == "X" || variant.CHROM == "chrX") && fam.every(segregating_denovo_x) && !freq_exceed(INFO, 0.001)' \
   --family-expr 'x_recessive:(variant.CHROM == "X" || variant.CHROM == "chrX") && fam.every(segregating_recessive_x)' \
   --family-expr 'x_dominant:(variant.CHROM == "X" || variant.CHROM == "chrX") && fam.every(segregating_dominant_x)' \
-  --trio 'comphet_side:comphet_side(kid, mom, dad) && INFO.gnomad_nhomalt < 10'
+  --trio 'comphet_side:comphet_side(kid, mom, dad) && INFO.gnomad_nhomalt < 10' \
+  | bgzip \
+  > "$EXPR_OUT"
 
 echo --compound-hets--
-
-CH_OUT="$OUT_BASE.ch.vcf"
 
 slivar compound-hets -v "$EXPR_OUT" \
     --sample-field comphet_side \
     --sample-field denovo \
-    -p "$PED" > "$CH_OUT"
+    -p "$PED" | bgzip > "$CH_OUT"
 
 conda activate snv-final
 
-bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT --slivar "$@" &
-bioa snv.extract -r $ASSEMBLY -i $CH_OUT --slivar "$@" &
+EXPR_OUT_SNV="$OUT_BASE.slivar.snv.$ASSEMBLY.vcf.gz"
+EXPR_OUT_INDEL="$OUT_BASE.slivar.indel.$ASSEMBLY.vcf.gz"
+
+bcftools view -i 'TYPE="snp"' $EXPR_OUT -Oz > $EXPR_OUT_SNV
+bcftools view -i 'TYPE="indel"' $EXPR_OUT -Oz > $EXPR_OUT_INDEL
+
+bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT_SNV --slivar "$@" &
+bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT_INDEL --slivar "$@" &
+bioa snv.extract -r $ASSEMBLY -i $CH_OUT --slivar-ch "$@" &
 wait

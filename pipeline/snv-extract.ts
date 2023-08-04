@@ -33,7 +33,10 @@ export default new Command()
       slivar,
       slivarCh,
     }) => {
-      outputBase = outputBase || input.replace(/\.vcf(\.gz)?$/, "");
+      /** should replace .vcf or .vcf.gz, also replace .$ref before extension if present */
+      outputBase =
+        outputBase ||
+        input.replace(new RegExp(`(\\.${ref})?\\.vcf(\\.gz)?$`), "");
       const outCsvGz = `${outputBase}.${ref}.excel.csv.gz`,
         outTsvGz = `${outputBase}.${ref}.tsv.gz`;
       await extract(input, outTsvGz, {
