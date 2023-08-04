@@ -1,23 +1,5 @@
 import { Command, CsvParseStream, CsvStringifyStream } from "@/deps.ts";
-
-const freq = {
-  global: [
-    "gnomad_e211_AF",
-    "gnomad_g211_AF",
-    "_1000Gp3_AF",
-    "ExAC_AF",
-    "ALFA_Total_AF",
-  ],
-  eas: [
-    "gnomad_e211_AF_eas",
-    "gnomad_g211_AF_eas",
-    "WBBC_AF",
-    "WBBC_South_AF",
-    "_1000Gp3_EAS_AF",
-    "ExAC_EAS_AF",
-    "ALFA_East_Asian_AF",
-  ],
-};
+import { freqSource } from "@/pipeline/_freq.ts";
 
 export default new Command()
   .name("tsv.filter")
@@ -26,6 +8,8 @@ export default new Command()
   })
   .action(async ({ freq: threshold }) => {
     let _header: string[] | undefined;
+    const freq = freqSource.global.concat(freqSource.eas);
+
     await Deno.stdin.readable
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(new CsvParseStream({ skipFirstRow: false, separator: "\t" }))
@@ -42,12 +26,8 @@ export default new Command()
               const data = row[header.indexOf(col)];
               return data && Number.parseFloat(data) >= threshold;
             };
-            if (
-              freq.global.some(exceedThreshold) ||
-              freq.eas.some(exceedThreshold)
-            ) {
-              return;
-            }
+            if (freq.some(exceedThreshold)) return;
+
             controller.enqueue(row);
           },
         })

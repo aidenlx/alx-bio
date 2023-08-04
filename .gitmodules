@@ -1,3 +1,6 @@
 [submodule "deno-csv"]
 	path = deno-csv
 	url = https://github.com/aidenlx/deno-csv
+[submodule "slivar/repo"]
+	path = slivar/repo
+	url = https://github.com/brentp/slivar
