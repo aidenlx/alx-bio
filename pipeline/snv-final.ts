@@ -122,7 +122,7 @@ export default new Command()
         extract(fullVcfGz, fullTsvGz, eOpts)
           .then((input) => tsv2excel(input, fullCsvGz))
           .then(() => console.error(`No filter, extracted full...`)),
-        exomiserExtra(fullCsvGz, exoExtraTsvGz, assembly),
+        exomiserExtra(fullVcfGz, exoExtraTsvGz, assembly),
       ]);
     }
   );
