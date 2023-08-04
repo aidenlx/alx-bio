@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=2
 
 # sbatch -J $name-str --array=1-24%4 ../run.slurm */bamfile/*.sort.hg38.bam */str ;
 
@@ -38,6 +38,8 @@ fi
 EXPR_OUT="$OUT_BASE.slivar.vcf"
 shift; shift; shift; shift
 
+rm "$EXPR_OUT"* "$CH_OUT"*
+
 echo --expr--
 slivar expr \
   --vcf "$VCF" \
@@ -66,5 +68,6 @@ slivar compound-hets -v "$EXPR_OUT" \
 
 conda activate snv-final
 
-bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT --slivar "$@"
-bioa snv.extract -r $ASSEMBLY -i $CH_OUT --slivar "$@"
+bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT --slivar "$@" &
+bioa snv.extract -r $ASSEMBLY -i $CH_OUT --slivar "$@" &
+wait
