@@ -1,6 +1,6 @@
 import { type, existsSync, ArgumentValue, ValidationError } from "@/deps.ts";
 
-export const positiveInt = type(["integer", "=>", (n) => n > 0]);
+export const positiveIntStr = type(["parsedInteger", "=>", (n) => +n > 0]);
 
 export const validBedPath = type([
   "string",
@@ -9,7 +9,9 @@ export const validBedPath = type([
 ]);
 
 export function positiveIntType({ value }: ArgumentValue) {
-  const num = +value;
-  if (!positiveInt.allows(num)) return num;
-  throw new ValidationError(`value should be a positive integer: ${num}`);
+  const { data, problems } = positiveIntStr(value);
+  if (data !== undefined) return +data;
+  throw new ValidationError(
+    `value should be a positive integer: ${value}: ${problems}`
+  );
 }
