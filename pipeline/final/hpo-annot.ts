@@ -53,40 +53,36 @@ function uniq(arrStr: string, delimiter = ",") {
   return [...new Set(arr)].join(delimiter);
 }
 
-import hg19FieldList from "./vcf-extract-hg19.json" assert { type: "json" };
 import getOMIMGene from "@/database/mim2gene.ts";
 import printStdErr from "@/utils/print-stderr.ts";
-import { localAC, localAF } from "@/pipeline/_res.ts";
 import { checkDone } from "@/utils/check-done.ts";
+import { getFieldList } from "@/pipeline/final/fields.ts";
 
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
-  outputTsv: string,
+  outputTsvGz: string,
   {
     samples,
     assembly,
     database,
-  }: { assembly: "hg19" | "hg38"; samples: string[]; database: HpoData }
+    local = true,
+  }: {
+    assembly: "hg19" | "hg38";
+    samples: string[];
+    database: HpoData;
+    local?: boolean;
+  }
 ) {
-  const { done, finish } = await checkDone(outputTsv, inputVcf);
+  const { done, finish } = await checkDone(outputTsvGz, inputVcf);
   if (done) {
     console.info("Skipping hpo annot");
-    return;
+    return outputTsvGz;
   }
   console.error(`Extracting from ${inputVcf}...`);
-  const localFreq = new Set([localAC, localAF]);
-  const fieldList =
-    assembly === "hg38"
-      ? hg19FieldList
-          .map((v) => v.replace("gnomad_g211_", "gnomad312_"))
-          .filter((k) => !localFreq.has(k))
-      : hg19FieldList;
-  if (fieldList.length === 0) {
-    throw new Error("fieldList is empty: " + fieldList);
-  }
 
+  const fieldList = getFieldList(assembly, { local });
   const hpoAnnot = HpoAnnot({ samples, database });
-  const output = await Deno.open(outputTsv, {
+  const output = await Deno.open(outputTsvGz, {
     create: true,
     write: true,
     truncate: true,
@@ -135,6 +131,7 @@ export default async function ExtractAndHpoAnnot(
     throw new Error("bgzip failed: " + bStatus.code);
   }
   await finish();
+  return outputTsvGz;
 }
 
 type HpoData = Awaited<ReturnType<typeof loadHpoData>>;

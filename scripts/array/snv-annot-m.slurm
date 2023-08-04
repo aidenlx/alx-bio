@@ -6,12 +6,12 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
-conda_init conda
+conda_init mamba
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 shift;shift
 
 export PATH=/cluster/home/jiyuan/res/annovar:$PATH
-conda activate snpeff-java
+conda activate snv-final
 bioa snv.annot.m -t $THREADS -r $ASSEMBLY --normed \
   -i "$SAMPLE_ID/vcf/$SAMPLE_ID.s.$ASSEMBLY.vcf" -s "$SAMPLE_ID" "$@"

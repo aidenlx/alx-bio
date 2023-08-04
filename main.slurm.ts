@@ -14,6 +14,7 @@ import snvAlign from "@/pipeline/ngs-call/snv-align.ts";
 import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
 import snvVcf from "@/pipeline/ngs-call/snv-vcf.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
+import snvExtract from "@/pipeline/snv-extract.ts";
 
 await new Command()
   .name("bioa")
@@ -29,6 +30,7 @@ await new Command()
   .command(...c(snvAnnotM))
   .command(...c(snvAnnotS))
   .command(...c(snvFinal))
+  .command(...c(snvExtract))
   .command(...c(strAnnot))
   .command(...c(tsvFilter))
   .command(...c(vcfFilterQuery))

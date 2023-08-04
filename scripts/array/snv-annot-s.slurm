@@ -5,7 +5,7 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
-conda_init conda
+conda_init mamba
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 shift;shift
@@ -17,6 +17,6 @@ elif [ $ASSEMBLY == "hg38" ]; then
 fi
 
 export PATH=/cluster/home/jiyuan/res/annovar:$PATH
-conda activate snpeff-java
+conda activate snv-final
 bioa snv.annot.s -r $ASSEMBLY \
   -i "$SAMPLE_ID/vcf/$INPUT_VCF" -s "$SAMPLE_ID" "$@"

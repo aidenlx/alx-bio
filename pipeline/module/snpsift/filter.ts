@@ -4,19 +4,19 @@ import { $ } from "@/deps.ts";
 export const required = ["SnpSift"];
 
 export default async function SnpSiftFilter(
-  inputVcf: string,
+  input: string,
   query: string,
-  outputTsvGz: string,
+  outputVcfGz: string,
   options: {
     memory?: string;
     args?: string[];
     javaOptions?: string[];
   } = {}
 ) {
-  const { done, finish } = await checkDone(outputTsvGz, inputVcf, true);
+  const { done, finish } = await checkDone(outputVcfGz, input, true);
   if (done) {
-    console.info(`Skipping SnpSift Filter: ${outputTsvGz}`);
-    return;
+    console.info(`Skipping SnpSift Filter: ${outputVcfGz}`);
+    return outputVcfGz;
   }
 
   const javaOptions = [
@@ -25,6 +25,7 @@ export default async function SnpSiftFilter(
   ];
   const args = options.args ?? [];
 
-  await $`zcat -f ${inputVcf} | SnpSift ${javaOptions} filter ${args} ${query} | bgzip > ${outputTsvGz}`;
+  await $`zcat -f ${input} | SnpSift ${javaOptions} filter ${args} ${query} | bgzip > ${outputVcfGz}`;
   await finish();
+  return outputVcfGz;
 }

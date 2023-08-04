@@ -5,12 +5,12 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
-conda_init conda
+conda_init mamba
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 shift;shift
 
-conda activate snpeff-java
+conda activate snv-final
 
 cd "$SAMPLE_ID/vcf"
 
