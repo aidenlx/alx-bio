@@ -1,0 +1,70 @@
+#!/bin/bash
+#SBATCH -p normal
+#SBATCH -N 1
+#SBATCH --cpus-per-task=4
+
+# sbatch -J $name-str --array=1-24%4 ../run.slurm */bamfile/*.sort.hg38.bam */str ;
+
+source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+conda_init mamba
+conda activate slivar
+
+VCF=$1
+PED=$2
+
+if [ -z "$VCF" ] || [ -z "$PED" ]; then
+  echo "Usage: $0 <vcf> <ped> <hg19/hg38> [out_base]"
+  exit 1
+fi
+# check if vcf or ped exists
+if [ ! -f "$VCF" ]; then
+  echo "VCF file $VCF does not exist"
+  exit 1
+fi
+if [ ! -f "$PED" ]; then
+  echo "PED file $PED does not exist"
+  exit 1
+fi
+
+ASSEMBLY=$(validate_input $3 hg19 hg38)
+OUT_BASE=$4
+if [ -z $OUT_BASE ]; then
+  OUT_BASE=$(sed -r "s/\.+vcf(\.gz)?$//g" <<< $VCF)
+else
+  # remove trailing dots
+  OUT_BASE=$(sed -r "s/\.+$//g" <<< $OUT_BASE)
+fi
+
+EXPR_OUT="$OUT_BASE.slivar.vcf"
+shift; shift; shift; shift
+
+echo --expr--
+slivar expr \
+  --vcf "$VCF" \
+  --ped "$PED" \
+  -o "$EXPR_OUT" \
+  --pass-only \
+  -g /cluster/home/jiyuan/res/slivar/gnomad.hg37.zip \
+  --js /genetics/home/stu_liujiyuan/alx-bio/scripts/slivar-functions.js \
+  --info 'INFO.impactful && INFO.gnomad_popmax_af < 0.01 && variant.FILTER == "PASS" && variant.ALT[0] != "*"' \
+  --family-expr 'denovo:fam.every(segregating_denovo) && !freq_exceed(INFO, 0.001)' \
+  --family-expr 'dominant:fam.every(segregating_dominant)' \
+  --family-expr 'recessive:fam.every(segregating_recessive)' \
+  --family-expr 'x_denovo:(variant.CHROM == "X" || variant.CHROM == "chrX") && fam.every(segregating_denovo_x) && !freq_exceed(INFO, 0.001)' \
+  --family-expr 'x_recessive:(variant.CHROM == "X" || variant.CHROM == "chrX") && fam.every(segregating_recessive_x)' \
+  --family-expr 'x_dominant:(variant.CHROM == "X" || variant.CHROM == "chrX") && fam.every(segregating_dominant_x)' \
+  --trio 'comphet_side:comphet_side(kid, mom, dad) && INFO.gnomad_nhomalt < 10'
+
+echo --compound-hets--
+
+CH_OUT="$OUT_BASE.ch.vcf"
+
+slivar compound-hets -v "$EXPR_OUT" \
+    --sample-field comphet_side \
+    --sample-field denovo \
+    -p "$PED" > "$CH_OUT"
+
+conda activate snv-final
+
+bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT "$@"
+bioa snv.extract -r $ASSEMBLY -i $CH_OUT "$@"
