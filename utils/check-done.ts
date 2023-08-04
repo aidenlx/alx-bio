@@ -1,7 +1,7 @@
 import { D, exists, path, type } from "@/deps.ts";
 
 async function checkDoneV1(output: string) {
-  const doneFile = path.resolve(noDupDot(`${output}.done`));
+  const doneFile = path.resolve(noTrailingDots(`${output}.done`));
   if (await exists(doneFile)) {
     console.debug(`skipping, found ${doneFile}`);
     return {
@@ -16,8 +16,8 @@ async function checkDoneV1(output: string) {
   };
 }
 
-export function noDupDot(input: string) {
-  return input.split(".").filter(Boolean).join(".");
+export function noTrailingDots(input: string) {
+  return input.replace(/\.+$/, "");
 }
 
 const date = type("parsedDate");
@@ -41,7 +41,7 @@ export async function checkDone(
   _input: string | string[],
   v1Output: string | true = true
 ) {
-  const doneFile = path.resolve(noDupDot(`${name}.done`));
+  const doneFile = path.resolve(noTrailingDots(`${name}.done`));
   const done = {
     done: true,
     finish: () => Promise.resolve(),

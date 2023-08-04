@@ -3,7 +3,7 @@ import {
   annovarDataDir,
   annovarDatabase,
 } from "@/pipeline/_res.ts";
-import { checkDone, noDupDot } from "@/utils/check-done.ts";
+import { checkDone, noTrailingDots } from "@/utils/check-done.ts";
 import { $, repeat } from "@/deps.ts";
 
 export default async function tableAnnovar(
@@ -17,16 +17,12 @@ export default async function tableAnnovar(
 ) {
   const database = annovarDatabase[options.assembly];
   const output = {
-    vcf: noDupDot(`${outBase}.${options.assembly}_multianno.vcf`),
-    tsv: noDupDot(`${outBase}.${options.assembly}_multianno.txt`),
-    avinput: noDupDot(`${outBase}.avinput`),
+    vcf: `${noTrailingDots(outBase)}.${options.assembly}_multianno.vcf`,
+    tsv: `${noTrailingDots(outBase)}.${options.assembly}_multianno.txt`,
+    avinput: `${noTrailingDots(outBase)}.avinput`,
     fields: database,
   };
-  const { done, finish } = await checkDone(
-    output.vcf + ".gz",
-    input,
-    outBase
-  );
+  const { done, finish } = await checkDone(output.vcf + ".gz", input, outBase);
 
   console.info("annovar output: " + outBase);
 
