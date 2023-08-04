@@ -105,7 +105,7 @@ export default new Command()
         fullCsvGz = `${sample}.full${finalVersion}.${assembly}.excel.csv.gz`;
       const exoExtraTsvGz = `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`;
 
-      console.error("Filtering...");
+      console.error("Filtering & extracting...");
       await Promise.all([
         SnpSiftFilter(fullVcfGz, getFilterQuery("qual"), qcVcfGz).then(
           (input) =>
@@ -113,15 +113,15 @@ export default new Command()
               SnpSiftFilter(input, getFilterQuery("effect"), funcVcfGz)
                 .then((input) => extract(input, funcTsvGz, eOpts))
                 .then((input) => tsv2excel(input, funcCsvGz))
-                .then(() => console.error("Filtered on effects")),
+                .then(() => console.error("Impactful variants hard-filtered and extracted")),
               extract(qcVcfGz, qcTsvGz, eOpts)
                 .then((input) => tsv2excel(input, qcCsvGz))
-                .then(() => console.error("Filtered on qc")),
+                .then(() => console.error("Hard-filtered and extracted")),
             ])
         ),
         extract(fullVcfGz, fullTsvGz, eOpts)
           .then((input) => tsv2excel(input, fullCsvGz))
-          .then(() => console.error(`No filter, extracted full...`)),
+          .then(() => console.error(`Extracted full without filters`)),
         exomiserExtra(fullVcfGz, exoExtraTsvGz, assembly),
       ]);
     }
