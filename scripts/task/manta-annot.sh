@@ -28,6 +28,7 @@ function addFILTER () {
 }
 
 function annot () {
+  trap "rm -f $1" EXIT
   AnnotSV -SVinputFile $1 -outputFile $(basename $1 .raw.vcf) -genomeBuild $ASSEMBLY
 }
 
