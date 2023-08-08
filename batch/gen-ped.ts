@@ -33,8 +33,8 @@ export default new Command()
             .map(({ famId: _, indId, patId, matId, ...rest }) => ({
               famId: handleNonAscii(famId),
               indId: ids[indId],
-              patId: ids[patId] ?? "-1",
-              matId: ids[matId] ?? "-1",
+              patId: ids[patId] ?? "0", // patId.replace(/^\?*/, "?"),
+              matId: ids[matId] ?? "0", // matId.replace(/^\?*/, "?"),
               ...rest,
             }))
         )

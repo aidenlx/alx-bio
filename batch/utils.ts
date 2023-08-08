@@ -43,9 +43,9 @@ export async function getFound(
 }
 
 export function flatFounds(yaml: FoundYamlPed): FoundYamlWithPedInfo[] {
-  return Object.values(yaml).filter(
-    (v): v is FoundYaml => typeof v !== "string"
-  );
+  return Object.values(yaml)
+    .filter((v): v is FoundYamlWithPedInfo => typeof v !== "string")
+    .map(({ __ped__, ...rest }) => rest);
 }
 
 export function extractPed(
