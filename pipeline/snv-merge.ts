@@ -37,7 +37,7 @@ export default new Command()
 
     if (gvcfInputs.length > 1) {
       console.error(
-        `Merging ${gvcfInputs.length} gvcfs: \n${gvcfInputs.join("\n")}}`
+        `Merging ${gvcfInputs.length} gvcfs: \n${gvcfInputs.join("\n")}`
       );
       await GATKCombineGVCFs(gvcfInputs, gVcfGz, { reference });
       console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));

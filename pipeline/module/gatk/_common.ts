@@ -1,5 +1,4 @@
 import { getTempDir } from "@/utils/tmp-dir.ts";
-import { exists } from "https://deno.land/std@0.194.0/fs/exists.ts";
 import { $, pLimit } from "@/deps.ts";
 
 export const required = ["gatk"];
@@ -28,8 +27,8 @@ export async function indexVcfGz(...inputs: string[]) {
   await Promise.all(
     inputs.map((vcf) =>
       limit(async function index() {
-        if (!vcf.endsWith(".gz") || (await exists(`${vcf}.tbi`))) return;
-        await $`tabix -p vcf ${vcf}`;
+        if (!vcf.endsWith(".gz")) return;
+        await $`[ ! -f ${vcf}.tbi ] && tabix -p vcf ${vcf} || true`;
       })
     )
   );
