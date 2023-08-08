@@ -12,8 +12,10 @@ import { handleNonAscii } from "@/utils/ascii.ts";
 export default new Command()
   .name("pl.gen.ped")
   .description("Generate ped file from found yaml")
+  .option("--full", "Include all members even if no data available")
+  .option("--keep-missing", "Output missing members in favor of placeholder 0")
   .arguments("<found>")
-  .action(async (_opts, found) => {
+  .action(async (opts, found) => {
     const data = await getFound(found);
     if (!isFoundYamlPed(data)) {
       throw new Error("Not a found yaml with pedigree");
@@ -28,15 +30,17 @@ export default new Command()
     console.log(
       stringifyPedFile(
         pedigrees.flatMap(([famId, ped]) =>
-          ped
-            .filter((v) => ids[v.indId])
-            .map(({ famId: _, indId, patId, matId, ...rest }) => ({
+          (opts.full ? ped : ped.filter((v) => ids[v.indId])).map(
+            ({ famId: _, indId, patId, matId, ...rest }) => ({
               famId: handleNonAscii(famId),
-              indId: ids[indId],
-              patId: ids[patId] ?? "0", // patId.replace(/^\?*/, "?"),
-              matId: ids[matId] ?? "0", // matId.replace(/^\?*/, "?"),
+              indId: ids[indId] ?? indId,
+              patId:
+                ids[patId] ?? (opts.full || opts.keepMissing ? patId : "0"), // patId.replace(/^\?*/, "?"),
+              matId:
+                ids[matId] ?? (opts.full || opts.keepMissing ? matId : "0"), // matId.replace(/^\?*/, "?"),
               ...rest,
-            }))
+            })
+          )
         )
       ).trim()
     );
