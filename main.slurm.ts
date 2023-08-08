@@ -15,12 +15,14 @@ import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
 import snvVcf from "@/pipeline/ngs-call/snv-vcf.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
 import snvExtract from "@/pipeline/snv-extract.ts";
+import genPed from "@/batch/gen-ped.ts";
 
 await new Command()
   .name("bioa")
   .version("0.4.0")
   .command(...c(arrSubmit))
   .command(...c(gen))
+  .command(...c(genPed))
   .command(...c(merge))
   .command(...c(hsStat))
   .command(...c(snvAlign))

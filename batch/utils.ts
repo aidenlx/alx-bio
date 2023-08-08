@@ -1,5 +1,7 @@
 import { readAll, yamlParse } from "@/deps.ts";
 import { scope } from "@/deps.ts";
+import { Pedigree, parsePedFile } from "@/batch/ped.ts";
+import { handleNonAscii, numToFixedLength } from "@/utils/ascii.ts";
 
 export async function ArrayfromAsync<T>(gen: AsyncIterable<T>): Promise<T[]> {
   const out: T[] = [];
@@ -40,10 +42,26 @@ export async function getFound(
   throw new Error(`Invalid found file: ${foundFile}`);
 }
 
-export function flatFounds(yaml: FoundYamlPed): FoundYaml[] {
+export function flatFounds(yaml: FoundYamlPed): FoundYamlWithPedInfo[] {
   return Object.values(yaml).filter(
     (v): v is FoundYaml => typeof v !== "string"
   );
+}
+
+export function extractPed(
+  yaml: FoundYamlPed
+): [string, (typeof Pedigree.infer)[]][] {
+  return Object.entries(yaml).flatMap(([k, v]) => {
+    if (typeof v === "string" || !v.__ped__) return [];
+    return [[k, parsePedFile(v.__ped__)]];
+  });
+}
+
+export function getSampleId(id: string, i: number, length: number) {
+  return `${numToFixedLength(
+    i + 1,
+    length > 10 ? length : 11
+  )}-${handleNonAscii(id)}`;
 }
 
 const { fqPairs, versionPed } = scope({
@@ -55,7 +73,11 @@ const { fqPairs, versionPed } = scope({
 }).compile();
 
 export type FoundYaml = Record<string, typeof fqPairs.infer>;
-export type FoundYamlPed = Record<string, FoundYaml> & { __version__: "ped" };
+export type FoundYamlWithPedInfo = FoundYaml &
+  Partial<Record<"__ped__", string>>;
+export type FoundYamlPed = Record<string, FoundYamlWithPedInfo> & {
+  __version__: "ped";
+};
 
 export function isFoundYaml(data: unknown): data is FoundYaml {
   return (
@@ -69,15 +91,30 @@ export function isFoundYaml(data: unknown): data is FoundYaml {
     })
   );
 }
+export function isFoundYamlWithPedInfo(
+  data: unknown
+): data is FoundYamlWithPedInfo {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    !Object.hasOwn(data, "__version__") &&
+    Object.entries(data).every(([k, v]) => {
+      if (k === "__ped__") return typeof v === "string";
+      const check = fqPairs.allows(v);
+      if (!check) console.error("invalid fq pair", v);
+      return check;
+    })
+  );
+}
 export function isFoundYamlPed(data: unknown): data is FoundYamlPed {
   if (!versionPed.allows(data)) {
-    console.error("version header not ped");
+    // console.error("version header not ped");
     return false;
   }
   return Object.entries(data).every(([k, v]) => {
     if (k === "__version__") return true;
-    const check = isFoundYaml(v);
-    if (!check) console.error("invalid found yaml", v);
+    const check = isFoundYamlWithPedInfo(v);
+    if (!check) console.error("invalid found yaml with ped", v);
     return check;
   });
 }

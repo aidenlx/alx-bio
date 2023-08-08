@@ -5,8 +5,8 @@ import {
   flatFounds,
   isFoundYamlPed,
   defaultMergeDir,
+  getSampleId,
 } from "./utils.ts";
-import { handleNonAscii, numToFixedLength } from "@/utils/ascii.ts";
 
 export default new Command()
   .name("pl.gen")
@@ -30,10 +30,7 @@ export default new Command()
         } else {
           [R1, R2] = files[0];
         }
-        const name = `${numToFixedLength(
-          i + 1,
-          arr.length > 10 ? arr.length : 11
-        )}-${handleNonAscii(id)}`;
+        const name = getSampleId(id, i, arr.length);
         return [i + 1, name, R1, R2];
       }
     );
