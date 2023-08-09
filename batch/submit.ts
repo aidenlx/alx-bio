@@ -129,7 +129,7 @@ export default new Command()
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
             "snv-hs-stat.slurm"
           )} ${arrayFile} ${ref_call} ${baitOption} ${targetOption}`,
-        canRun: opts.method === "wes" && ref_call === "hs37",
+        canRun: opts.method === "wes",
       }),
       bam: () => ({
         deps: "align",

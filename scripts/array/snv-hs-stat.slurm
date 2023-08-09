@@ -7,7 +7,7 @@
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
 conda_init mamba
 
-ASSEMBLY=$(validate_input ${2,,} hs37)
+ASSEMBLY=${2,,}
 shift;shift
 
 conda activate ngs-call
