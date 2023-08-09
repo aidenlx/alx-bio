@@ -10,7 +10,7 @@ import tsv2excel from "./final/tsv2excel.ts";
 import getSamples from "./final/get-samples.ts";
 import { getExomiserFieldList } from "@/pipeline/final/fields.ts";
 
-// mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno
+// mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
 const finalVersion = "." + "v3_1";
 

@@ -41,18 +41,21 @@ shift; shift; shift; shift
 
 if [ $ASSEMBLY == "hg19" ]; then
   REF=$(get_ref hs37)
+  RES_GNOMAD=/cluster/home/jiyuan/res/slivar/gnomad.hg37.zip
 elif [ $ASSEMBLY == "hg38" ]; then
   REF=$(get_ref hg38)
+  RES_GNOMAD=/cluster/home/jiyuan/res/slivar/gnomad.hg38.genomes.v3.fix.zip
 fi
 
-rm "$OUT_BASE.slivar."* "$OUT_BASE.ch."*
+mkdir -p $(dirname $OUT_BASE)
+# rm "$OUT_BASE.slivar."* "$OUT_BASE.ch."*
 
 echo --expr--
 pslivar expr --processes $THREADS \
   --vcf "$VCF" --ped "$PED" \
   --pass-only \
   --fasta "$REF" \
-  -g /cluster/home/jiyuan/res/slivar/gnomad.hg37.zip \
+  -g $RES_GNOMAD \
   --js /genetics/home/stu_liujiyuan/alx-bio/scripts/slivar-functions.js \
   --info 'INFO.impactful && INFO.gnomad_popmax_af < 0.01 && variant.FILTER == "PASS" && variant.ALT[0] != "*"' \
   --family-expr 'denovo:fam.every(segregating_denovo) && !freq_exceed(INFO, 0.001)' \
