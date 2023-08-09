@@ -267,7 +267,7 @@ const CADD = {
 export const vcfannoCADD = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => [
     ref,
-    { file: CADD[ref], names: ["CADD_PHRED"], ops: ["mean"], columns: [5] },
+    { file: CADD[ref], names: ["CADD_PHRED"], ops: ["mean"], columns: [6] },
   ])
 );
 
