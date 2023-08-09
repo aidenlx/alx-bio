@@ -1,7 +1,7 @@
 import { Command, D, EnumType, path, cd, tomlStringify } from "@/deps.ts";
 import {
   snpeff_assembly,
-  vcfannoCADD,
+  getVcfannoCADDCfg,
   vcfannoCfg,
   vcfannoLocal,
 } from "./_res.ts";
@@ -83,7 +83,7 @@ export default new Command()
             config: [
               ...vcfannoCfg[ref],
               options.local && vcfannoLocal[ref],
-              options.cadd && vcfannoCADD[ref],
+              options.cadd && getVcfannoCADDCfg(ref),
             ],
           });
           return output;

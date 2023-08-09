@@ -4,7 +4,11 @@ export type SupportAssembly = "hg38" | "hs37" | "hg19";
 import { normalizeVcfKey } from "@/utils/vcf-key.ts";
 import { D, pipe, path } from "@/deps.ts";
 import { validBedPath } from "@/utils/validate.ts";
-import { VcfAnnoConfig } from "@/pipeline/module/vcfanno.ts";
+import {
+  VcfAnnoConfig,
+  VcfAnnoConfigCol,
+  VcfAnnoConfigField,
+} from "@/pipeline/module/vcfanno.ts";
 
 export const getMarkDupBam = (sample: string, assembly: string) =>
   `${sample}.markdup.${assembly}.bam`;
@@ -264,12 +268,16 @@ const CADD = {
   hg38: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh38_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
 };
 
-export const vcfannoCADD = D.fromPairs(
-  (["hg19", "hg38"] as const).map((ref) => [
-    ref,
-    { file: CADD[ref], names: ["CADD_PHRED"], ops: ["mean"], columns: [6] },
-  ])
-);
+export function getVcfannoCADDCfg(ref: keyof typeof CADD): VcfAnnoConfigCol;
+export function getVcfannoCADDCfg(file: string): VcfAnnoConfigCol;
+export function getVcfannoCADDCfg(fileOrRef: string): VcfAnnoConfigCol {
+  return {
+    file: fileOrRef in CADD ? CADD[fileOrRef as keyof typeof CADD] : fileOrRef,
+    names: ["CADD_PHRED"],
+    ops: ["mean"],
+    columns: [6],
+  };
+}
 
 export const localAC = `FJMUN_AC`,
   localAF = `FJMUN_AF`;
@@ -337,7 +345,7 @@ function ColToDef<T extends VcfAnnotColumn[]>(
       out.ops.push(op ?? "first");
       return out;
     },
-    { columns: [] as number[], names: [] as string[], ops: [] as string[] }
+    { columns: [], names: [], ops: [] } as Omit<VcfAnnoConfigCol, "file">
   );
 }
 
@@ -355,7 +363,7 @@ function FieldsToDef<T extends VcfAnnotField[]>(
       out.ops.push(op ?? "self");
       return out;
     },
-    { fields: [] as string[], names: [] as string[], ops: [] as string[] }
+    { fields: [], names: [], ops: [] } as Omit<VcfAnnoConfigField, "file">
   );
 }
 

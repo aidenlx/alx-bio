@@ -4,45 +4,16 @@ import extract, { loadHpoData } from "./final/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
 import SnpSiftFilter from "@/pipeline/module/snpsift/filter.ts";
-import { vcfannoCADD } from "@/pipeline/_res.ts";
+import { getVcfannoCADDCfg } from "@/pipeline/_res.ts";
 import { mVersion } from "@/pipeline/snv-annot-m.ts";
 import tsv2excel from "./final/tsv2excel.ts";
 import getSamples from "./final/get-samples.ts";
 import { getExomiserFieldList } from "@/pipeline/final/fields.ts";
+import bcftoolsView from "@/pipeline/module/bcftools/view.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
 const finalVersion = "." + "v3_1";
-
-async function caddAnnot(
-  cadd: string,
-  inputVcfGz: string,
-  outputVcfGz: string
-) {
-  if (!exists(`${cadd}.tbi`)) {
-    console.error("Indexing CADD database...");
-    await $`tabix -b 2 -e 2 -s 1 ${cadd}`;
-  }
-  if (!exists(`${inputVcfGz}.tbi`)) {
-    console.error("Indexing input VCF file...");
-    await $`tabix -p vcf ${inputVcfGz}`;
-  }
-
-  console.error(`Annotating ${inputVcfGz} with ${cadd}`);
-
-  await vcfanno(inputVcfGz, outputVcfGz, {
-    config: [
-      {
-        file: resolve(cadd),
-        columns: [6],
-        names: ["CADD_PHRED"],
-        ops: ["mean"],
-      },
-    ],
-    threads: 4,
-  });
-  console.error(`Done, output to ${outputVcfGz}`);
-}
 
 export default new Command()
   .name("snv.final")
@@ -57,6 +28,7 @@ export default new Command()
   .option("--resource <dir:string>", "Path to Resource", {
     default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
   })
+  .option("--regions-file <FILE:string>", "restrict to regions listed in FILE")
   .option(
     "--no-cadd-script",
     "use prescored CADD score in favor of CADD script"
@@ -70,60 +42,100 @@ export default new Command()
       sampleMap,
       resource: resDir,
       caddScript,
+      regionsFile,
     }) => {
       const inputVcfGz = `${sample}.m${mVersion}.${assembly}.vcf.gz`;
       const fullVcfGz = `${sample}.full${finalVersion}.${assembly}.vcf.gz`;
-      const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
       if (caddScript) {
-        await caddAnnot(caddData, inputVcfGz, fullVcfGz);
+        const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
+        if (!exists(`${caddData}.tbi`)) {
+          await $`tabix -b 2 -e 2 -s 1 ${caddData}`;
+        }
+        if (!exists(`${inputVcfGz}.tbi`)) {
+          await $`tabix -p vcf ${inputVcfGz}`;
+        }
+        console.error(`Annotating ${inputVcfGz} with ${caddData}`);
+
+        await vcfanno(inputVcfGz, fullVcfGz, {
+          threads: 4,
+          config: [getVcfannoCADDCfg(resolve(caddData))],
+        });
       } else {
-        const result =
-          await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`;
-        if (result.exitCode === 0) {
+        const hasCADDAnnotation =
+          (await $`bcftools head ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`)
+            .exitCode === 0;
+        if (hasCADDAnnotation) {
           console.info(`CADD script gen disabled, skipping CADD annotation...`);
           await $`ln -sf ${inputVcfGz} ${fullVcfGz}`;
         } else {
           console.info(`no CADD annot found in ${inputVcfGz}, annot...`);
           await vcfanno(inputVcfGz, fullVcfGz, {
             threads: 4,
-            config: [vcfannoCADD[assembly]],
+            config: [getVcfannoCADDCfg(assembly)],
           });
         }
       }
+
+      /** extract options */
       const eOpts = {
         assembly,
         samples: await getSamples(fullVcfGz, sampleMap),
         database: await loadHpoData(resDir),
       };
-      const qcVcfGz = `${sample}.full.qc${finalVersion}.${assembly}.vcf.gz`,
-        qcTsvGz = `${sample}.full.qc${finalVersion}.${assembly}.tsv.gz`,
-        qcCsvGz = `${sample}.full.qc${finalVersion}.${assembly}.excel.csv.gz`;
-      const funcVcfGz = `${sample}.full.filter${finalVersion}.${assembly}.vcf.gz`,
-        funcTsvGz = `${sample}.full.filter${finalVersion}.${assembly}.tsv.gz`,
-        funcCsvGz = `${sample}.full.filter${finalVersion}.${assembly}.excel.csv.gz`;
-      const fullTsvGz = `${sample}.full${finalVersion}.${assembly}.tsv.gz`,
-        fullCsvGz = `${sample}.full${finalVersion}.${assembly}.excel.csv.gz`;
-      const exoExtraTsvGz = `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`;
 
-      console.error("Filtering & extracting...");
+      const snpOnly = `${sample}.full.snp${finalVersion}.${assembly}.vcf.gz`,
+        indelOnly = `${sample}.full.indel${finalVersion}.${assembly}.vcf.gz`;
+
+      const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];
       await Promise.all([
-        SnpSiftFilter(fullVcfGz, getFilterQuery("qual"), qcVcfGz).then(
-          (input) =>
-            Promise.all([
-              SnpSiftFilter(input, getFilterQuery("effect"), funcVcfGz)
-                .then((input) => extract(input, funcTsvGz, eOpts))
-                .then((input) => tsv2excel(input, funcCsvGz))
-                .then(() => console.error("Impactful variants hard-filtered and extracted")),
-              extract(qcVcfGz, qcTsvGz, eOpts)
-                .then((input) => tsv2excel(input, qcCsvGz))
-                .then(() => console.error("Hard-filtered and extracted")),
-            ])
-        ),
-        extract(fullVcfGz, fullTsvGz, eOpts)
-          .then((input) => tsv2excel(input, fullCsvGz))
-          .then(() => console.error(`Extracted full without filters`)),
-        exomiserExtra(fullVcfGz, exoExtraTsvGz, assembly),
+        bcftoolsView(fullVcfGz, snpOnly, {
+          args: ["-i", 'TYPE="snp"', ...regionFileOpt],
+        }).then((o) => annotate(o, "snp")),
+        bcftoolsView(fullVcfGz, indelOnly, {
+          args: ["-i", 'TYPE="indel"', ...regionFileOpt],
+        }).then((o) => annotate(o, "indel")),
       ]);
+
+      async function annotate(inputVcfGz: string, suffix?: string) {
+        if (suffix) {
+          suffix = `.${suffix}${finalVersion}.${assembly}`;
+        } else {
+          suffix = `${finalVersion}.${assembly}`;
+        }
+        const qcVcfGz = `${sample}.full.qc${suffix}.vcf.gz`,
+          qcTsvGz = `${sample}.full.qc${suffix}.tsv.gz`,
+          qcCsvGz = `${sample}.full.qc${suffix}.excel.csv.gz`;
+        const funcVcfGz = `${sample}.full.filter${suffix}.vcf.gz`,
+          funcTsvGz = `${sample}.full.filter${suffix}.tsv.gz`,
+          funcCsvGz = `${sample}.full.filter${suffix}.excel.csv.gz`;
+        const fullTsvGz = `${sample}.full${suffix}.tsv.gz`,
+          fullCsvGz = `${sample}.full${suffix}.excel.csv.gz`;
+        const exoExtraTsvGz = `${sample}.full.exo-extra${suffix}.tsv.gz`;
+
+        console.error(`Filtering & extracting from ${inputVcfGz}...`);
+        await Promise.all([
+          SnpSiftFilter(inputVcfGz, getFilterQuery("qual"), qcVcfGz).then(
+            (input) =>
+              Promise.all([
+                SnpSiftFilter(input, getFilterQuery("effect"), funcVcfGz)
+                  .then((input) => extract(input, funcTsvGz, eOpts))
+                  .then((input) => tsv2excel(input, funcCsvGz))
+                  .then(() =>
+                    console.error(
+                      "Impactful variants hard-filtered and extracted"
+                    )
+                  ),
+                extract(qcVcfGz, qcTsvGz, eOpts)
+                  .then((input) => tsv2excel(input, qcCsvGz))
+                  .then(() => console.error("Hard-filtered and extracted")),
+              ])
+          ),
+          extract(inputVcfGz, fullTsvGz, eOpts)
+            .then((input) => tsv2excel(input, fullCsvGz))
+            .then(() => console.error(`Extracted full without filters`)),
+          exomiserExtra(inputVcfGz, exoExtraTsvGz, assembly),
+        ]);
+      }
     }
   );
 
