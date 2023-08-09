@@ -2,15 +2,11 @@ import { Redis, connect } from "https://deno.land/x/redis@v0.31.0/mod.ts";
 import { readableStreamFromIterable } from "https://deno.land/std@0.194.0/streams/mod.ts";
 import { CsvStringifyStream, formatDate } from "@/deps.ts";
 import { localAC, localAF } from "@/pipeline/_res.ts";
+import getChrList from "@/utils/chr.ts";
 const redis = await connect({
   hostname: "127.0.0.1",
   port: 6379,
 });
-
-const chr = Array.from({ length: 22 }, (_, i) => (i + 1).toString()).concat(
-  "X",
-  "Y"
-);
 
 const totalAlleleCount = await redis.scard("resource:urls");
 
@@ -88,11 +84,11 @@ await readableStreamFromIterable(getAllAlleleCount(redis))
 // }
 
 async function* getAllAlleleCount(redis: Redis) {
-  for (const c of chr) {
+  for (const c of getChrList(true)) {
     console.error(`getall chr${c}...`);
     // yield every two elements
     yield* [
-      ...everyAllelCount(await redis.hgetall(`snp:allele.count:chr${c}`)),
+      ...everyAllelCount(await redis.hgetall(`snp:allele.count:${c}`)),
     ].sort(([, a], [, b]) => a - b);
   }
   console.error("All done!");

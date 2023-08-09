@@ -1,4 +1,5 @@
 import { ArgumentValue, Type, ValidationError } from "../deps.ts";
+import getChrList from "@/utils/chr.ts";
 
 export function assert(expr: unknown, msg = ""): asserts expr {
   if (expr) return;
@@ -15,16 +16,9 @@ export function portType({ value }: ArgumentValue) {
   return port;
 }
 
-// chr1 to chrY
-const chrom = [
-  ...Array.from({ length: 23 }, (_, i) => `${i + 1}`),
-  "X",
-  "Y",
-].map((v) => `chr${v}:`);
-
 export class RegionType extends Type<string> {
   complete(): string[] {
-    return chrom;
+    return getChrList().map((v) => `chr${v}:`);
   }
 
   parse({ value: query }: Pick<ArgumentValue, "value">): string {
@@ -74,7 +68,7 @@ function parsePos(input: string): number {
 
 function toRange(chr: string, _start: string, _end: string, _offset: string) {
   let start = parsePos(_start),
-  end = parsePos(_end);
+    end = parsePos(_end);
   const offset = _offset ? parsePos(_offset) : 0;
   assert(
     [start, end, offset].every((x) => !Number.isNaN(x)),

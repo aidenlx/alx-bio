@@ -32,6 +32,7 @@ export {
   existsSync,
   ensureDir,
   ensureDirSync,
+  emptyDir,
 } from "https://deno.land/std@0.194.0/fs/mod.ts";
 export {
   parse as csvParse,
