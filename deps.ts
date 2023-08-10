@@ -49,7 +49,7 @@ export { format as fmtDuration } from "https://deno.land/std@0.194.0/fmt/duratio
 export { readAll } from "https://deno.land/std@0.194.0/streams/mod.ts";
 export { D, pipe } from "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5";
 export { repeat } from "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5/Array?exports=repeat";
-export { type, scope } from "npm:arktype";
+export { type, scope } from "npm:arktype@1.0.19-alpha";
 export { readLines } from "https://deno.land/std@0.194.0/io/read_lines.ts";
 export {
   Number,

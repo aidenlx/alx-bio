@@ -1,6 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { csvParse, csvStringify } from "@/deps.ts";
-import { scope } from "npm:arktype";
+import { csvParse, csvStringify, scope } from "@/deps.ts";
 
 export const { Pedigree } = scope({
   sex: "parsedInteger",
