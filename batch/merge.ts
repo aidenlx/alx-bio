@@ -10,11 +10,11 @@ import {
 export default new Command()
   .name("pl.merge")
   .description("Merge fastq files from different runs")
-  .option("-f, --found <file>", "found.yaml path", { default: "found.yaml" })
+  .arguments("<found_file>")
   .env("PL_MERGE_OUT_DIR=<dir:string>", "output directory", {
     prefix: "PL_MERGE_",
   })
-  .action(async ({ found: opt_found, outDir = defaultMergeDir }) => {
+  .action(async ({ outDir = defaultMergeDir }, opt_found) => {
     const found = await getFound(opt_found);
     await ensureDir(outDir);
 
