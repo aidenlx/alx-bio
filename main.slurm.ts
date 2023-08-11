@@ -15,7 +15,7 @@ import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
 import snvVcf from "@/pipeline/ngs-call/snv-vcf.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
 import snvExtract from "@/pipeline/snv-extract.ts";
-import merlin from "@/pipeline/merlin.ts";
+import merlin from "@/pipeline/merlin/merlin.ts";
 import genPed from "@/batch/gen-ped.ts";
 
 await new Command()
