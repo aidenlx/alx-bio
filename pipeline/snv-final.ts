@@ -13,7 +13,7 @@ import bcftoolsView from "@/pipeline/module/bcftools/view.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-const finalVersion = "." + "v3_1";
+export const finalVersion = "." + "v3_1";
 
 export default new Command()
   .name("snv.final")
@@ -82,26 +82,22 @@ export default new Command()
         samples: await getSamples(fullVcfGz, sampleMap),
         database: await loadHpoData(resDir),
       };
-
-      const snpOnly = `${sample}.full.snp${finalVersion}.${assembly}.vcf.gz`,
-        indelOnly = `${sample}.full.indel${finalVersion}.${assembly}.vcf.gz`;
-
       const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];
+
       await Promise.all([
-        bcftoolsView(fullVcfGz, snpOnly, {
-          args: ["-i", 'TYPE="snp"', ...regionFileOpt],
-        }).then((o) => annotate(o, "snp")),
-        bcftoolsView(fullVcfGz, indelOnly, {
-          args: ["-i", 'TYPE="indel"', ...regionFileOpt],
-        }).then((o) => annotate(o, "indel")),
+        annotate(inputVcfGz, "snp"),
+        annotate(inputVcfGz, "indel"),
       ]);
 
-      async function annotate(inputVcfGz: string, suffix?: string) {
-        if (suffix) {
-          suffix = `.${suffix}${finalVersion}.${assembly}`;
-        } else {
-          suffix = `${finalVersion}.${assembly}`;
-        }
+      async function annotate(inputVcfGz: string, type: "snp" | "indel") {
+        const suffix = `.${type}${finalVersion}.${assembly}`;
+
+        const subVcfGz = `${sample}.full${suffix}.vcf.gz`;
+
+        await bcftoolsView(inputVcfGz, subVcfGz, {
+          args: ["-i", `TYPE="${type}"`, ...regionFileOpt],
+        });
+
         const qcVcfGz = `${sample}.full.qc${suffix}.vcf.gz`,
           qcTsvGz = `${sample}.full.qc${suffix}.tsv.gz`,
           qcCsvGz = `${sample}.full.qc${suffix}.excel.csv.gz`;

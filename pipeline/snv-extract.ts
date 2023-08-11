@@ -3,6 +3,8 @@ import { genomeAssembly } from "@/modules/common.ts";
 import extract, { loadHpoData } from "@/pipeline/final/hpo-annot.ts";
 import getSamples from "@/pipeline/final/get-samples.ts";
 import tsv2excel from "@/pipeline/final/tsv2excel.ts";
+import { finalVersion } from "@/pipeline/snv-final.ts";
+import bcftoolsView from "@/pipeline/module/bcftools/view.ts";
 
 export default new Command()
   .name("snv.extract")
@@ -22,31 +24,57 @@ export default new Command()
   .option("-i, --input <vcf:string>", "Input full.*.vcf.gz", { required: true })
   .option("-o, --output-base <base:string>", "Output base name")
   .option("--sample-map <file:string>", "Sample name mapping file")
+  .option("--regions-file <FILE:string>", "restrict to regions listed in FILE")
   .action(
     async ({
       input,
       resource: resDir,
-      ref,
+      ref: assembly,
       outputBase,
       sampleMap,
       local,
       slivar,
       slivarCh,
+      regionsFile,
     }) => {
+      const commonSuffix = `${finalVersion}.${assembly}`;
       /** should replace .vcf or .vcf.gz, also replace .$ref before extension if present */
       outputBase =
         outputBase ||
-        input.replace(new RegExp(`(\\.${ref})?\\.vcf(\\.gz)?$`), "");
-      const outCsvGz = `${outputBase}.${ref}.excel.csv.gz`,
-        outTsvGz = `${outputBase}.${ref}.tsv.gz`;
-      await extract(input, outTsvGz, {
-        assembly: ref,
+        input.replace(commonSuffix, "").replace(/\.vcf(\.gz)?$/, "");
+
+      const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];
+
+      const eOpts = {
+        assembly,
         samples: await getSamples(input, sampleMap),
         database: await loadHpoData(resDir),
         local,
-        slivar: slivarCh ? "compound-hets" : slivar ? "expr" : undefined,
-      }).then((input) => tsv2excel(input, outCsvGz));
+        slivar: slivarCh
+          ? ("compound-hets" as const)
+          : slivar
+          ? ("expr" as const)
+          : undefined,
+      };
 
-      console.error(`Done, output to ${outCsvGz} and ${outTsvGz}`);
+      await Promise.all([annotate(input, "snp"), annotate(input, "indel")]);
+
+      async function annotate(inputVcfGz: string, type: "snp" | "indel") {
+        const suffix = `.${type}${finalVersion}.${assembly}`;
+
+        const subVcfGz = `${outputBase}.full${suffix}.vcf.gz`;
+
+        await bcftoolsView(inputVcfGz, subVcfGz, {
+          args: ["-i", `TYPE="${type}"`, ...regionFileOpt],
+        });
+
+        const outCsvGz = `${outputBase}${suffix}.excel.csv.gz`,
+          outTsvGz = `${outputBase}${suffix}.tsv.gz`;
+        await extract(subVcfGz, outTsvGz, eOpts).then((input) =>
+          tsv2excel(input, outCsvGz)
+        );
+
+        console.error(`Done, output to ${outCsvGz} and ${outTsvGz}`);
+      }
     }
   );
