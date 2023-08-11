@@ -62,7 +62,7 @@ export default new Command()
         });
       } else {
         const hasCADDAnnotation =
-          (await $`bcftools head ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`)
+          (await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`)
             .exitCode === 0;
         if (hasCADDAnnotation) {
           console.info(`CADD script gen disabled, skipping CADD annotation...`);
