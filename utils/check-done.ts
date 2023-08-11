@@ -42,16 +42,17 @@ export async function checkDone(
   v1Output: string | true = true
 ) {
   const doneFile = path.resolve(noTrailingDots(`${name}.done`));
+  const hiddenDoneFile = path.join(
+    path.dirname(doneFile),
+    "." + path.basename(doneFile)
+  );
   const done = {
     done: true,
     finish: () => Promise.resolve(),
   };
   const inputs = Array.isArray(_input) ? _input : [_input];
 
-  const mtimeDoneFile = await Deno.readTextFile(doneFile).catch((err) => {
-    if (err instanceof Deno.errors.NotFound) return null;
-    throw err;
-  });
+  const mtimeDoneFile = (await read(hiddenDoneFile)) ?? (await read(doneFile));
   if (mtimeDoneFile === null) {
     if (v1Output) {
       const result = await checkDoneV1(v1Output === true ? name : v1Output);
@@ -105,9 +106,16 @@ export async function checkDone(
       );
 
       await Deno.writeTextFile(
-        doneFile,
+        hiddenDoneFile,
         JSON.stringify(Object.fromEntries(stats))
       );
     },
   };
+}
+
+async function read(path: string) {
+  return await Deno.readTextFile(path).catch((err) => {
+    if (err instanceof Deno.errors.NotFound) return null;
+    throw err;
+  });
 }
