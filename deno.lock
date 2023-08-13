@@ -24,6 +24,7 @@
     "https://deno.land/std@0.194.0/bytes/concat.ts": "d26d6f3d7922e6d663dacfcd357563b7bf4a380ce5b9c2bbe0c8586662f25ce2",
     "https://deno.land/std@0.194.0/bytes/copy.ts": "939d89e302a9761dcf1d9c937c7711174ed74c59eef40a1e4569a05c9de88219",
     "https://deno.land/std@0.194.0/collections/group_by.ts": "09f4565290b37cc0f1d8ff83a80096a007b1eac779272602e42de33857541bd7",
+    "https://deno.land/std@0.194.0/collections/map_values.ts": "431b78fd770c72cc978ca7bbfa08cdc0805e69c7d2b69ad19859e093467bd46d",
     "https://deno.land/std@0.194.0/csv/_io.ts": "0f90b154e0f9c574a025f24d35d7ef617944809a66d277716243e68523a816b2",
     "https://deno.land/std@0.194.0/csv/csv_parse_stream.ts": "122840c0f83907c01cfc7d1f07ed6a5dc4e0efc9840d5acfb7bcf93b6040be3f",
     "https://deno.land/std@0.194.0/csv/csv_stringify_stream.ts": "57919368a9f1ed39e69c2efcbea0f6d8cfa7c7803df03d83b8791d06db07ef06",
@@ -235,10 +236,13 @@
     "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5": "69bd903deb40b029f00a4080a00d4830c6dc4740656b7b3ed33414198cfab5f9",
     "https://esm.sh/@mobily/ts-belt@4.0.0-rc.5/Array?exports=repeat": "4cbf44dae4db2a3899d0b5e22de056fa1baf44ac905be9c566ec24eee942c5d1",
     "https://esm.sh/p-limit@4.0.0": "c88274f4a64b28581185fcc5c1feca8911541013e0a39c387f923e12834a60f6",
+    "https://esm.sh/pinyin@3.0.0-alpha.5/esm/pinyin-web.js": "f1d3e40211fb54d018f91e58400b631ea5fca33f10ffa5b6b74e6826937e9e86",
     "https://esm.sh/v128/p-limit@4.0.0/denonext/p-limit.mjs": "3eae21fd01e1951d9d52cfee982bf8110bc45a63c1df81d2e701a5697c5bfefc",
     "https://esm.sh/v128/yocto-queue@1.0.0/denonext/yocto-queue.mjs": "a9a6bb495a57157285c80b5c8844e5158c8923549777caabcedd022d4a91766a",
     "https://esm.sh/v129/@mobily/ts-belt@4.0.0-rc.5/X-dHMvcmVwZWF0/denonext/Array.js": "5c46d6fd49a4fe88429ef241a76d13505352c99abf28227a6289df801999bff4",
     "https://esm.sh/v129/@mobily/ts-belt@4.0.0-rc.5/denonext/ts-belt.mjs": "f89d8f4af9f005de2a3a92f2346263949289d7da1d2ca1f0944ab282a1425f59",
+    "https://esm.sh/v129/pinyin@3.0.0-alpha.5/denonext/esm/pinyin-web.js": "6e2e41ae9e5f4a84c064655e64ad4424a217b210218bb2e260ef11ac4984e43c",
+    "https://esm.sh/v129/segmentit@2.0.3/denonext/segmentit.mjs": "c88b1a65bd0209d7acd4efcde0ae9d376b65994ee33e9d8d0f1f9e6918bb9e86",
     "https://raw.githubusercontent.com/aidenlx/deno_std/main/_util/asserts.ts": "178dfc49a464aee693a7e285567b3d0b555dc805ff490505a8aae34f9cfb1462",
     "https://raw.githubusercontent.com/aidenlx/deno_std/main/bytes/bytes_list.ts": "31d664f4d42fa922066405d0e421c56da89d751886ee77bbe25a88bf0310c9d0",
     "https://raw.githubusercontent.com/aidenlx/deno_std/main/csv/_io.ts": "0f90b154e0f9c574a025f24d35d7ef617944809a66d277716243e68523a816b2",
@@ -254,6 +258,7 @@
   "npm": {
     "specifiers": {
       "arktype@1.0.19-alpha": "arktype@1.0.19-alpha",
+      "globby": "globby@13.2.2",
       "zx@7.1.1": "zx@7.1.1"
     },
     "packages": {

@@ -13,12 +13,12 @@ import samtoolsSort from "@/pipeline/module/samtools/sort.ts";
 import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
 import GATKMarkDuplicates from "@/pipeline/module/gatk/markDup.ts";
 import GATKMarkDuplicatesSpark from "@/pipeline/module/gatk/markDupSpark.ts";
-import { positiveIntType } from "@/utils/validate.ts";
+import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
   .name("snv.align")
   .description("Initial short-read sequence alignment pipeline")
-  .type("positiveInt", positiveIntType)
+  .type("positiveInt", PositiveInt)
   .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .option("--fq1 <path>", "forward fastq input in fq.gz format")
   .option("--fq2 <path>", "reverse fastq input in fq.gz format")

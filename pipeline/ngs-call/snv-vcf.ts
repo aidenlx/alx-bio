@@ -11,12 +11,12 @@ import gatherVCF from "@/pipeline/module/gatherVcf.ts";
 import { parseBaitIntevals } from "@/pipeline/ngs-call/parseBaitIntevals.ts";
 import GATKSplitIntervals from "@/pipeline/module/gatk/splitIntervals.ts";
 import GATKHaplotypeCaller from "@/pipeline/module/gatk/haplotypeCaller.ts";
-import { positiveIntType } from "@/utils/validate.ts";
+import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
   .name("snv.vcf")
   .description("Per-sample variant calling pipeline")
-  .type("positiveInt", positiveIntType)
+  .type("positiveInt", PositiveInt)
   .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .option(
     "--bait-intervals [path]",

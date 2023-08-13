@@ -8,8 +8,6 @@ import {
   emptyDir,
   resolve,
   csvParse,
-  type,
-  ValidationError,
 } from "@/deps.ts";
 import getChrList from "@/utils/chr.ts";
 import getSamples from "@/pipeline/final/get-samples.ts";
@@ -18,7 +16,7 @@ import { enumerate } from "@/utils/must-include.ts";
 import { ThresholdType, defaultThreshold } from "./clamp.ts";
 import { vcfFilter } from "./vcf-filter.ts";
 import { extractRanges } from "@/pipeline/merlin/2bed.ts";
-import { findParents } from "@/pipeline/merlin/find-parents.ts";
+import { NonNegativeInt, PositiveInt } from "@/utils/validate.ts";
 
 /**
  * @see http://csg.sph.umich.edu/abecasis/merlin/reference/parametric.html
@@ -97,28 +95,13 @@ const assembly = new EnumType(["hs37", "hg38"]);
 
 export const awkTsv = `BEGIN { FS = OFS = "\\t" }`;
 
-const PositiveInt = type(["integer", "=>", (v) => v > 0]);
-const NonNegativeInt = type(["integer", "=>", (v) => v >= 0]);
-
 export default new Command()
   .name("merlin")
   .type("model", model)
   .type("assembly", assembly)
   .type("threshold", new ThresholdType())
-  .type("positive-integer", ({ label, value }) => {
-    const { data, problems } = PositiveInt(value);
-    if (data !== undefined) return data;
-    throw new ValidationError(
-      `[${label}]: expected positive integer, got ${value}: ` + problems
-    );
-  })
-  .type("non-negative-integer", ({ label, value }) => {
-    const { data, problems } = NonNegativeInt(value);
-    if (data !== undefined) return data;
-    throw new ValidationError(
-      `[${label}]: expected non-negative integer, got ${value}: ` + problems
-    );
-  })
+  .type("positive-integer", PositiveInt)
+  .type("non-negative-integer", NonNegativeInt)
   // .option("-i, --input <file:string>", "input vcf(.gz) file")
   .option("-o, --output <prefix:string>", "output prefix")
   .option("-p, --ped <file:string>", "pedigree file", { required: true })

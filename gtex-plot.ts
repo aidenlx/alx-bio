@@ -2,7 +2,6 @@ import type { ProtocolMapping } from "npm:devtools-protocol@0.0.1170846/types/pr
 
 import {
   Command,
-  type ArgumentValue,
   EnumType,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.2/command/mod.ts";
 import { prepareSVG } from "./modules/render-gtex.js";
@@ -14,24 +13,7 @@ import puppeteer, {
   type Connection,
   type ProductLauncher,
 } from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
-import { ensureDir, join, pLimit } from "./deps.ts";
-
-function ParallelType({ label, name, value }: ArgumentValue) {
-  const n = Number.parseInt(value, 10);
-  if (Number.isNaN(n)) {
-    throw new Error(`${label} "${name}" must be a number`);
-  }
-  if (n < 1) {
-    throw new Error(`${label} "${name}" must be a positive integer`);
-  }
-  if (n > navigator.hardwareConcurrency) {
-    console.warn(
-      "Warning: Parallelism is greater than number of cores " +
-        navigator.hardwareConcurrency
-    );
-  }
-  return n;
-}
+import { ValidationError, ensureDir, join, pLimit, type } from "./deps.ts";
 
 const plotType = [
   "gene-expr-vplot",
@@ -42,7 +24,21 @@ type PlotType = (typeof plotType)[number];
 
 export default new Command()
   .name("gtex-plot")
-  .type("parallel", ParallelType)
+  .type("parallel", ({ label, name, value }) => {
+    const { data, problems } = type("integer>0")(value);
+    if (data === undefined)
+      throw new ValidationError(
+        `[${label}]: expected "${name}" positive integer, got ${value}: ` +
+          problems
+      );
+    if (data > navigator.hardwareConcurrency) {
+      console.warn(
+        "Warning: Parallelism is greater than number of cores " +
+          navigator.hardwareConcurrency
+      );
+    }
+    return data;
+  })
   .type("plot-type", new EnumType(plotType))
   .option("-o, --out <dir:string>", "Output directory", {
     default: "gtex-plot",

@@ -13,12 +13,12 @@ import GATKBaseRecalibrator from "@/pipeline/module/gatk/baseRecal.ts";
 import GATKGatherBQSRReports from "@/pipeline/module/gatk/gatherBQSRReports.ts";
 import GATKApplyBQSR from "@/pipeline/module/gatk/applyBQSR.ts";
 import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
-import { positiveIntType } from "@/utils/validate.ts";
+import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
   .name("snv.bam")
   .description("Prepare raw mapped bam reads for varinat calling")
-  .type("positiveInt", positiveIntType)
+  .type("positiveInt", PositiveInt)
   .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .option(
     "--bait-intervals [path]",
