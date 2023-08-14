@@ -6,9 +6,9 @@ import {
   join,
   exists,
   dirname,
-  readLines,
   Confirm,
   Number as NumberType,
+  csvParse,
 } from "@/deps.ts";
 import type { ProcessOutput, ProcessPromise } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
@@ -68,18 +68,17 @@ export default new Command()
         "Array file does not exist or is not readable: " + arrayFile
       );
     }
-    const list = await Deno.open(arrayFile, { read: true });
-    console.log(`Reading array file: ${arrayFile}`);
-    let lineCount = 0;
-    for await (const line of readLines(list)) {
-      lineCount++;
-      const lineNum = line.split("\t")[0].trim();
-      if (lineNum !== String(lineCount)) {
-        throw new Error(
-          `Array index not match at line ${lineCount}: ${arrayFile}`
-        );
+
+    console.error(`Reading array file: ${arrayFile}`);
+    const list = await Deno.readTextFile(arrayFile).then((c) =>
+      csvParse(c, { separator: "\t" })
+    );
+    list.forEach(([lineNum], i) => {
+      if (lineNum !== String(i + 1)) {
+        throw new Error(`Array index not match at line ${i + 1}: ${arrayFile}`);
       }
-    }
+    });
+    const lineCount = list.length;
 
     let array = `1-${lineCount}%${defaultArrayLimit}`;
     if (opts.array) {
@@ -92,8 +91,8 @@ export default new Command()
         array = `${opts.array}%${defaultArrayLimit}`;
       }
     }
-    console.log(`Array file line count: ${lineCount}`);
-    console.log(`Array index: ${array}`);
+    console.error(`Array file line count: ${lineCount}`);
+    console.error(`Array index: ${array}`);
 
     const slurmOpts = [
       ...commonOptions,
@@ -233,9 +232,11 @@ export default new Command()
 
     const taskList = parsePick(opts.pick);
 
-    const jobIds = await pipe(opts.dependency, ...taskList);
+    const jobIds = (await pipe(opts.dependency, ...taskList)).filter(
+      (i) => i > 0
+    );
     if (opts.parsable) {
-      console.log(jobIds.join(" "));
+      jobIds.forEach((id) => console.log(id));
     } else {
       console.log("Submitted jobs: " + jobIds.join(" "));
     }
@@ -279,7 +280,7 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
   for (const step of steps) {
     const { deps: _deps, run, canRun } = step();
     if (canRun === false) {
-      console.log("Skip task: " + step.name);
+      console.error("Skip task: " + step.name);
       tasks.set(step.name, -1);
       continue;
     }

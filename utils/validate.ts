@@ -7,17 +7,12 @@ export const validBedPath = type([
 ]);
 
 export function PositiveInt({ value, name, label }: ArgumentValue) {
-  const { data, problems } = type("integer>0")(value);
+  const { data, problems } = type("integer>0")(+value);
   if (data !== undefined) return data;
-  throw new ValidationError(
-    `[${label}]: expected "${name}" positive integer, got ${value}: ` + problems
-  );
+  throw new ValidationError(`[${label}]: "${name}" ${problems}, got ${value}`);
 }
 export function NonNegativeInt({ value, name, label }: ArgumentValue) {
-  const { data, problems } = type("integer>=0")(value);
+  const { data, problems } = type("integer>=0")(+value);
   if (data !== undefined) return data;
-  throw new ValidationError(
-    `[${label}]: expected "${name}" non-negative integer, got ${value}: ` +
-      problems
-  );
+  throw new ValidationError(`[${label}]: "${name}" ${problems}, got ${value}`);
 }

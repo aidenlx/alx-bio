@@ -17,6 +17,8 @@ import tsvFilter from "@/pipeline/tsv-filter.ts";
 import snvExtract from "@/pipeline/snv-extract.ts";
 import merlin from "@/pipeline/merlin/merlin.ts";
 import genPed from "@/batch/gen-ped.ts";
+import genFam from "@/batch/gen-fam.ts";
+import famCheck from "@/batch/fam-check.ts";
 
 await new Command()
   .name("bioa")
@@ -24,6 +26,8 @@ await new Command()
   .command(...c(arrSubmit))
   .command(...c(gen))
   .command(...c(genPed))
+  .command(...c(genFam))
+  .command(...c(famCheck))
   .command(...c(merge))
   .command(...c(hsStat))
   .command(...c(snvAlign))

@@ -47,6 +47,16 @@ export function flatFounds(yaml: FoundYamlPed): FoundYamlWithPedInfo[] {
     .filter((v): v is FoundYamlWithPedInfo => typeof v !== "string")
     .map(({ __ped__, ...rest }) => rest);
 }
+export function getFamFounds(yaml: FoundYamlPed) {
+  return Object.entries(yaml)
+    .filter(
+      (kv): kv is [string, FoundYamlWithPedInfo] => typeof kv[1] !== "string"
+    )
+    .map(([k, { __ped__, ...rest }]) => ({
+      famId: k,
+      members: Object.entries(rest).map(([indId, fastq]) => ({ indId, fastq })),
+    }));
+}
 
 export function extractPed(
   yaml: FoundYamlPed

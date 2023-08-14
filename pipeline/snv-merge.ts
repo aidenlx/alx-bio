@@ -1,7 +1,7 @@
 import { Command, ensureDir, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import { nonAscii } from "@/utils/ascii.ts";
-import { Res } from "@/pipeline/_res.ts";
+import { Res, getGVcfGz } from "@/pipeline/_res.ts";
 import GATKCombineGVCFs from "@/pipeline/module/gatk/combineGVCFs.ts";
 import GATKGenotypeGVCFs from "@/pipeline/module/gatk/genotypeGVCFs.ts";
 import bcftoolsNorm from "@/pipeline/module/bcftools/norm.ts";
@@ -31,7 +31,7 @@ export default new Command()
     const assembly = options.ref;
     const reference = Res[assembly].refFa;
 
-    const gVcfGz = `${output}.g.${assembly}.vcf.gz`,
+    const gVcfGz = getGVcfGz(output, assembly),
       rawVcfGz = `${output}.raw.${assembly}.vcf.gz`,
       normVcfGz = `${output}.norm.${assembly}.vcf.gz`;
 

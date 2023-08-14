@@ -1,5 +1,5 @@
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
-import { Res } from "@/pipeline/_res.ts";
+import { Res, getGVcfGz } from "@/pipeline/_res.ts";
 import { Command, cd, ensureDir, exists, pLimit, path } from "@/deps.ts";
 import {
   toIntervalScatter,
@@ -51,7 +51,7 @@ export default new Command()
 
     const vcf_dir = "vcf";
     ensureDir(vcf_dir);
-    const gVcfGz = path.join(vcf_dir, `${sample}.g.${assembly}.vcf.gz`);
+    const gVcfGz = path.join(vcf_dir, getGVcfGz(sample, assembly));
 
     if (baitIntervals) {
       const limit = pLimit(threads);
