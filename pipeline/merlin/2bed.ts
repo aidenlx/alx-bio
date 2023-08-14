@@ -107,12 +107,22 @@ export async function extractRanges(
     outputBed,
     csvStringify(
       Object.entries(ranges).flatMap(([chr, ranges]) =>
-        // bed format is 0-based for the coordinate start
-        // and 1-based for the coordinate end
+        // bed format is 0-based and end-exclusive 
         ranges.map(([start, end]) => [chr, start - 1, end, end - start])
       ),
-      { crlf: false, separator: "\t", headers: false }
+      {
+        crlf: false,
+        separator: "\t",
+        headers: true,
+        columns: ["#chr", "start", "end", "size"],
+      }
     )
   );
-  console.error(`Wrote ${Object.values(ranges).flat().length} ranges to ${outputBed} with threshold ${threshold.value} by ${threshold.field}`);
+  console.error(
+    `Wrote ${
+      Object.values(ranges).flat().length
+    } ranges to ${outputBed} with threshold ${threshold.value} by ${
+      threshold.field
+    }`
+  );
 }
