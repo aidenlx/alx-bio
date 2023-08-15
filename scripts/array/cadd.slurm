@@ -19,4 +19,4 @@ fi
 
 OUTPUT=$SAMPLE_ID.cadd.$ASSEMBLY.tsv.gz
 
-bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/cadd.sh $ASSEMBLY $INPUT $OUTPUT
+bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/cadd.sh $ASSEMBLY $INPUT_VCF $OUTPUT

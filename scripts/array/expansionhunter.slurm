@@ -15,5 +15,8 @@ fi
 
 OUT_DIR=$SAMPLE_ID/expansionhunter
 
+# https://stripy.org/expansionhunter-catalog-creator
+
 bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/expansionhunter.sh \
-  $ASSEMBLY $INPUT_BAM $OUT_DIR $SAMPLE_ID
+  $ASSEMBLY $INPUT_BAM $OUT_DIR $SAMPLE_ID \
+  /cluster/home/jiyuan/res/RepeatCatalogs_gnomad/$ASSEMBLY/variant_catalog_without_offtargets.json

@@ -11,6 +11,7 @@ ASSEMBLY=$(validate_input ${1,,} hg19 hg38)
 INPUT_BAM=$2
 OUT_DIR=${3:-.}
 SAMPLE_ID=$4
+CATALOG=${5:-"/cluster/home/jiyuan/res/RepeatCatalogs/$ASSEMBLY/variant_catalog.json"}
 
 if [ -z "$SAMPLE_ID" ]; then
     echo "Error: sample ID not provided in 3rd param"
@@ -24,7 +25,6 @@ fi
 
 mkdir -p $OUT_DIR
 
-CATALOG=/cluster/home/jiyuan/res/RepeatCatalogs/$ASSEMBLY/variant_catalog.json
 if [ $ASSEMBLY == "hg19" ]; then
   REF=$(get_ref hs37)
 elif [ $ASSEMBLY == "hg38" ]; then
