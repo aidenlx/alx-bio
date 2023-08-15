@@ -84,8 +84,8 @@ export default new Command()
       const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];
 
       await Promise.all([
-        annotate(inputVcfGz, "snp"),
-        annotate(inputVcfGz, "indel"),
+        annotate(fullVcfGz, "snp"),
+        annotate(fullVcfGz, "indel"),
       ]);
 
       async function annotate(inputVcfGz: string, type: "snp" | "indel") {

@@ -7,16 +7,20 @@ source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
 NAME=$(head -n1 fam.txt | cut -f2)
 
 ASSEMBLY=$(validate_input $1 hg19 hg38)
+ASSEMBLY_MERGE=$ASSEMBLY
+if [ $ASSEMBLY == "hg19" ]; then
+  ASSEMBLY_MERGE=hs37
+fi
 ARRAY=${2:-%4}
 shift;shift
 
-GVCFS=$(bioa pl.fam-check -r $ASSEMBLY file.txt)
+GVCFS=$(bioa pl.fam-check -r $ASSEMBLY_MERGE file.txt)
 
 BEFORE_MERGE=$(bioa pl.submit --parsable -J $NAME --pick -vcf -r $ASSEMBLY -a $ARRAY $@ file.txt)
 MERGE=$(sbatch --parsable -J $NAME.merge \
   --dependency=afterok:$(tail -n1 <<< "$BEFORE_MERGE") \
   /genetics/home/stu_liujiyuan/pipeline/scripts/task/snv-merge.sh \
-  -o $NAME/vcf/$NAME. -r $ASSEMBLY $GVCFS)
+  -o $NAME/vcf/$NAME. -r $ASSEMBLY_MERGE $GVCFS)
 echo ---
 echo merging:
 echo "$GVCFS"
