@@ -57,14 +57,13 @@ export default async function vcfanno(
     } else {
       await $`vcfanno ${args} > ${output}`;
     }
+    await finish();
+    return output;
   } catch (error) {
     console.error("Failed to run vcfanno, config: ");
     console.error(tomlStringify(config));
     throw error;
   } finally {
-    await Deno.remove(cfgFile);
+    await Deno.remove(cfgFile).catch(() => void 0);
   }
-
-  await finish();
-  return output;
 }
