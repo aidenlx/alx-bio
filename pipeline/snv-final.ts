@@ -61,10 +61,9 @@ export default new Command()
           config: [getVcfannoCADDCfg(resolve(caddData))],
         });
       } else {
-        const hasCADDAnnotation =
-          (await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`)
-            .exitCode === 0;
-        if (hasCADDAnnotation) {
+        const checkCADD =
+          await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`.nothrow();
+        if (checkCADD.exitCode === 0) {
           console.info(`CADD script gen disabled, skipping CADD annotation...`);
           await $`ln -sf ${inputVcfGz} ${fullVcfGz}`;
         } else {
