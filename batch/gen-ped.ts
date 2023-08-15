@@ -33,11 +33,13 @@ export default new Command()
           (opts.full ? ped : ped.filter((v) => ids[v.indId])).map(
             ({ famId: _, indId, patId, matId, ...rest }) => ({
               famId: handleNonAscii(famId),
-              indId: ids[indId] ?? indId,
+              indId: ids[indId] ?? handleNonAscii(indId),
               patId:
-                ids[patId] ?? (opts.full || opts.keepMissing ? patId : "0"), // patId.replace(/^\?*/, "?"),
+                ids[patId] ??
+                (opts.full || opts.keepMissing ? handleNonAscii(patId) : "0"), // patId.replace(/^\?*/, "?"),
               matId:
-                ids[matId] ?? (opts.full || opts.keepMissing ? matId : "0"), // matId.replace(/^\?*/, "?"),
+                ids[matId] ??
+                (opts.full || opts.keepMissing ? handleNonAscii(matId) : "0"), // matId.replace(/^\?*/, "?"),
               ...rest,
             })
           )
