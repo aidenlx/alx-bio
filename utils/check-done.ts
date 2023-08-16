@@ -87,7 +87,7 @@ export async function checkDone(
     if (results.every((v) => v)) {
       return done;
     } else {
-      results.forEach((v, i) => v || console.log(`${inputs[i]} not done`));
+      results.forEach((v, i) => v || console.log(`${inputs[i]} newer than done`));
     }
   }
 
