@@ -17,6 +17,7 @@ import { ThresholdType, defaultThreshold } from "./clamp.ts";
 import { vcfFilter } from "./vcf-filter.ts";
 import { extractRanges } from "@/pipeline/merlin/2bed.ts";
 import { NonNegativeInt, PositiveInt } from "@/utils/validate.ts";
+import { ensureDir } from "https://deno.land/std@0.194.0/fs/ensure_dir.ts";
 
 /**
  * @see http://csg.sph.umich.edu/abecasis/merlin/reference/parametric.html
@@ -124,7 +125,7 @@ export default new Command()
     const outPrefix = opts.output ?? input.replace(/\.vcf(\.gz)?$/, "");
     // const tempDir = await Deno.makeTempDir({ prefix: "merlin_" });
     const tempDir = resolve(join(dirname(outPrefix), ".merlin"));
-    await emptyDir(tempDir);
+    await Promise.all([emptyDir(tempDir), ensureDir(dirname(outPrefix))]);
 
     // extract directly relavant individuals that has data available in vcf
     const relavantPedFile = join(tempDir, "relevant.ped");
