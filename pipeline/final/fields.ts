@@ -40,17 +40,18 @@ function _getFieldList(
   const localFreq = new Set([localAC, localAF]);
   if (assembly === "hg38") {
     fieldList = fieldList.map((v) => v.replace("gnomad_g211_", "gnomad312_"));
-    // if (!local) {
-    //   list = list.filter((k) => !localFreq.has(k));
-    // }
+
     // local database has no hg38 data yet
-    fieldList = fieldList.filter((k) => !localFreq.has(k));
+    // deno-lint-ignore no-constant-condition
+    if (true) {
+      fieldList = fieldList.filter((k) => !localFreq.has(k));
+    }
     return fieldList;
   } else if (assembly === "hg19") {
     if (!local) {
       fieldList = fieldList.filter((k) => !localFreq.has(k));
     }
-    return fieldList.filter((k) => !localFreq.has(k));
+    return fieldList;
   } else {
     assertNever(assembly);
   }
