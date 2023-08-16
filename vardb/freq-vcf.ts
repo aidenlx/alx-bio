@@ -1,7 +1,7 @@
 import { Redis, connect } from "https://deno.land/x/redis@v0.31.0/mod.ts";
 import { readableStreamFromIterable } from "https://deno.land/std@0.194.0/streams/mod.ts";
 import { CsvStringifyStream, formatDate } from "@/deps.ts";
-import { localAC, localAF } from "@/pipeline/_res.ts";
+import { localAC, localAF } from "@/pipeline/_vcfanno.ts";
 import getChrList from "@/utils/chr.ts";
 const redis = await connect({
   hostname: "127.0.0.1",

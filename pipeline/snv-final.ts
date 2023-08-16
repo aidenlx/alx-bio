@@ -4,7 +4,7 @@ import extract, { loadHpoData } from "./final/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
 import SnpSiftFilter from "@/pipeline/module/snpsift/filter.ts";
-import { getVcfannoCADDCfg } from "@/pipeline/_res.ts";
+import { getVcfannoCADDCfg } from "@/pipeline/_vcfanno.ts";
 import { mVersion } from "@/pipeline/snv-annot-m.ts";
 import tsv2excel from "./final/tsv2excel.ts";
 import getSamples from "./final/get-samples.ts";
@@ -13,7 +13,7 @@ import bcftoolsView from "@/pipeline/module/bcftools/view.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-export const finalVersion = "." + "v3_1";
+export const finalVersion = "." + "v3_2";
 
 export default new Command()
   .name("snv.final")

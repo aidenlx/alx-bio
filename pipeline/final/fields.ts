@@ -1,4 +1,4 @@
-import { localAC, localAF } from "@/pipeline/_res.ts";
+import { localAC, localAF } from "@/pipeline/_vcfanno.ts";
 import hg19FieldList from "./vcf-extract.json" assert { type: "json" };
 import hg19ExomiserFieldList from "./vcf-extract-exomiser.json" assert { type: "json" };
 import slivarFieldList from "./vcf-extract-slivar.json" assert { type: "json" };

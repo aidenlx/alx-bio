@@ -1,17 +1,13 @@
 import { Command, D, EnumType, path, cd, tomlStringify } from "@/deps.ts";
-import {
-  snpeff_assembly,
-  getVcfannoCADDCfg,
-  vcfannoCfg,
-  vcfannoLocal,
-} from "./_res.ts";
+import { snpeff_assembly } from "./_res.ts";
+import { getVcfannoCADDCfg, vcfannoCfg, vcfannoLocal } from "./_vcfanno.ts";
 import { orGzip } from "@/utils/or-gzip.ts";
 import vcfanno from "./module/vcfanno.ts";
 import tableAnnovar from "./module/annovar/table_annovar.ts";
 import { toFinalOutput, pipe } from "./pipe.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
-export const mVersion = "." + "v2";
+export const mVersion = "." + "v2_1";
 
 export default new Command()
   .name("snv.annot.m")
