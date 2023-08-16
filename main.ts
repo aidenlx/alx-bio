@@ -5,6 +5,7 @@ import inspectBam from "./insp-bam.ts";
 import gtexPlot from "./gtex-plot.ts";
 import c from "@/utils/sub-cmd.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
+import snvExtract from "@/pipeline/snv-extract.ts";
 
 await new Command()
   .name("bioa")
@@ -14,6 +15,7 @@ await new Command()
   .command(...c(exomiserCfg))
   .command(...c(gtexPlot))
   .command(...c(tsvFilter))
+  .command(...c(snvExtract))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);

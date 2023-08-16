@@ -14,7 +14,7 @@ export default async function tsv2excel(
   // write BOM header (printf "\xEF\xBB\xBF")
   const outputCsv = outputCsvGz.slice(0, -3);
   await $`printf "\\xEF\\xBB\\xBF" > ${outputCsv} && \
-zcat ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
+zcat < ${inputTsvGz} | xsv fmt -d '\\t' --crlf >> ${outputCsv} \
 && bgzip -f ${outputCsv}`;
   await finish();
   return outputCsvGz;
