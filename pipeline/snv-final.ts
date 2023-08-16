@@ -1,4 +1,4 @@
-import { $, Command, exists, resolve } from "@/deps.ts";
+import { $, Command, ensureDir, exists, path, resolve } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
 import extract, { loadHpoData } from "./final/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
@@ -91,44 +91,65 @@ export default new Command()
       async function annotate(inputVcfGz: string, type: "snp" | "indel") {
         const suffix = `.${type}${finalVersion}.${assembly}`;
 
-        const subVcfGz = `${sample}.full${suffix}.vcf.gz`;
+        const { join } = path;
+        const fullDir = "full";
+        const fullOut = {
+          vcfGz: join(fullDir, `${sample}.full${suffix}.vcf.gz`),
+          tsvGz: join(fullDir, `${sample}.full${suffix}.tsv.gz`),
+          csvGz: join(fullDir, `${sample}.full${suffix}.excel.csv.gz`),
+        };
+        await ensureDir(fullDir);
 
-        await bcftoolsView(inputVcfGz, subVcfGz, {
+        await bcftoolsView(inputVcfGz, fullOut.vcfGz, {
           args: ["-i", `TYPE="${type}"`, ...regionFileOpt],
         });
 
-        const qcVcfGz = `${sample}.full.qc${suffix}.vcf.gz`,
-          qcTsvGz = `${sample}.full.qc${suffix}.tsv.gz`,
-          qcCsvGz = `${sample}.full.qc${suffix}.excel.csv.gz`;
-        const funcVcfGz = `${sample}.full.filter${suffix}.vcf.gz`,
-          funcTsvGz = `${sample}.full.filter${suffix}.tsv.gz`,
-          funcCsvGz = `${sample}.full.filter${suffix}.excel.csv.gz`;
-        const fullTsvGz = `${sample}.full${suffix}.tsv.gz`,
-          fullCsvGz = `${sample}.full${suffix}.excel.csv.gz`;
-        const exoExtraTsvGz = `${sample}.full.exo-extra${suffix}.tsv.gz`;
+        const qcDir = "qc";
+        const qcOut = {
+          vcfGz: join(qcDir, `${sample}.full.qc${suffix}.vcf.gz`),
+          tsvGz: join(qcDir, `${sample}.full.qc${suffix}.tsv.gz`),
+          csvGz: join(qcDir, `${sample}.full.qc${suffix}.excel.csv.gz`),
+        };
 
-        console.error(`Filtering & extracting from ${inputVcfGz}...`);
+        const funcDir = "qc.impactful";
+        const funcOut = {
+          vcfGz: join(funcDir, `${sample}.full.filter${suffix}.vcf.gz`),
+          tsvGz: join(funcDir, `${sample}.full.filter${suffix}.tsv.gz`),
+          csvGz: join(funcDir, `${sample}.full.filter${suffix}.excel.csv.gz`),
+        };
+
+        const exoExtraDir = "exomiser-extra";
+        const exoExtraOut = {
+          tsvGz: join(exoExtraDir, `${sample}.full.exo-extra${suffix}.tsv.gz`),
+        };
+
+        await Promise.all([qcDir, funcDir, exoExtraDir].map(ensureDir));
+
+        console.error(`Filtering & extracting from ${fullOut.vcfGz}...`);
         await Promise.all([
-          SnpSiftFilter(inputVcfGz, getFilterQuery("qual"), qcVcfGz).then(
-            (input) =>
-              Promise.all([
-                SnpSiftFilter(input, getFilterQuery("effect"), funcVcfGz)
-                  .then((input) => extract(input, funcTsvGz, eOpts))
-                  .then((input) => tsv2excel(input, funcCsvGz))
-                  .then(() =>
-                    console.error(
-                      "Impactful variants hard-filtered and extracted"
-                    )
-                  ),
-                extract(qcVcfGz, qcTsvGz, eOpts)
-                  .then((input) => tsv2excel(input, qcCsvGz))
-                  .then(() => console.error("Hard-filtered and extracted")),
-              ])
+          SnpSiftFilter(
+            fullOut.vcfGz,
+            getFilterQuery("qual"),
+            qcOut.vcfGz
+          ).then((input) =>
+            Promise.all([
+              SnpSiftFilter(input, getFilterQuery("effect"), funcOut.vcfGz)
+                .then((input) => extract(input, funcOut.tsvGz, eOpts))
+                .then((input) => tsv2excel(input, funcOut.csvGz))
+                .then(() =>
+                  console.error(
+                    "Impactful variants hard-filtered and extracted"
+                  )
+                ),
+              extract(input, qcOut.tsvGz, eOpts)
+                .then((input) => tsv2excel(input, qcOut.csvGz))
+                .then(() => console.error("Hard-filtered and extracted")),
+            ])
           ),
-          extract(inputVcfGz, fullTsvGz, eOpts)
-            .then((input) => tsv2excel(input, fullCsvGz))
+          extract(fullOut.vcfGz, fullOut.tsvGz, eOpts)
+            .then((input) => tsv2excel(input, fullOut.csvGz))
             .then(() => console.error(`Extracted full without filters`)),
-          exomiserExtra(inputVcfGz, exoExtraTsvGz, assembly),
+          exomiserExtra(fullOut.vcfGz, exoExtraOut.tsvGz, assembly),
         ]);
       }
     }
