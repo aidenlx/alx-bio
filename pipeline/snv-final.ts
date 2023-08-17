@@ -10,10 +10,13 @@ import tsv2excel from "./final/tsv2excel.ts";
 import getSamples from "./final/get-samples.ts";
 import { getExomiserFieldList } from "@/pipeline/final/fields.ts";
 import bcftoolsView from "@/pipeline/module/bcftools/view.ts";
+import filters from "./module/filter.json" assert { type: "json" };
+import bcftoolsFilter from "@/pipeline/module/bcftools/filter.ts";
+import genQC from "@/pipeline/module/gen-qc.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-export const finalVersion = "." + "v3_2";
+export const finalVersion = "." + "v3_3";
 
 export default new Command()
   .name("snv.final")
@@ -46,6 +49,7 @@ export default new Command()
     }) => {
       const inputVcfGz = `${sample}.m${mVersion}.${assembly}.vcf.gz`;
       const fullVcfGz = `${sample}.full${finalVersion}.${assembly}.vcf.gz`;
+      const _fullVcfGz = await Deno.makeTempFile({ suffix: ".vcf.gz" });
       if (caddScript) {
         const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
         if (!exists(`${caddData}.tbi`)) {
@@ -56,7 +60,7 @@ export default new Command()
         }
         console.error(`Annotating ${inputVcfGz} with ${caddData}`);
 
-        await vcfanno(inputVcfGz, fullVcfGz, {
+        await vcfanno(inputVcfGz, _fullVcfGz, {
           threads: 4,
           config: [getVcfannoCADDCfg(resolve(caddData))],
         });
@@ -65,20 +69,26 @@ export default new Command()
           await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`.nothrow();
         if (checkCADD.exitCode === 0) {
           console.info(`CADD script gen disabled, skipping CADD annotation...`);
-          await $`ln -sf ${inputVcfGz} ${fullVcfGz}`;
+          await $`ln -sf ${inputVcfGz} ${_fullVcfGz}`;
         } else {
           console.info(`no CADD annot found in ${inputVcfGz}, annot...`);
-          await vcfanno(inputVcfGz, fullVcfGz, {
+          await vcfanno(inputVcfGz, _fullVcfGz, {
             threads: 4,
             config: [getVcfannoCADDCfg(assembly)],
           });
         }
       }
 
+      // apply hard filters and set FILTER column
+      await bcftoolsFilter(_fullVcfGz, fullVcfGz, {
+        include: filters.hardFilter,
+      });
+      await $`rm -f ${_fullVcfGz}`;
+
       /** extract options */
       const eOpts = {
         assembly,
-        samples: await getSamples(fullVcfGz, sampleMap),
+        samples: await getSamples(_fullVcfGz, sampleMap),
         database: await loadHpoData(resDir),
       };
       const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];
@@ -127,11 +137,7 @@ export default new Command()
 
         console.error(`Filtering & extracting from ${fullOut.vcfGz}...`);
         await Promise.all([
-          SnpSiftFilter(
-            fullOut.vcfGz,
-            getFilterQuery("qual"),
-            qcOut.vcfGz
-          ).then((input) =>
+          genQC(fullOut.vcfGz, qcOut.vcfGz).then((input) =>
             Promise.all([
               SnpSiftFilter(input, getFilterQuery("effect"), funcOut.vcfGz)
                 .then((input) => extract(input, funcOut.tsvGz, eOpts))

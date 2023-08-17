@@ -12,7 +12,7 @@ export default async function bcftoolsView(
 ) {
   const { done, finish } = await checkDone(output, input);
   if (done) {
-    console.info("Skipping samtools view");
+    console.info("Skipping bcftools view");
     return output;
   }
   const args = [...(options.args ?? [])];

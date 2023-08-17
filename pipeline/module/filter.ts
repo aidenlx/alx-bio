@@ -1,6 +1,6 @@
 import data from "./filter.json" assert { type: "json" };
 
-const byQual = data.hardFilter;
+const byQual = "(FILTER = 'PASS')";
 
 const byEffect = `(${data.targetEffects
   .map((effect) => `(ANN[*].EFFECT has '${effect}')`)
