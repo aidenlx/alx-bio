@@ -195,7 +195,7 @@ export default new Command()
     k1 <(cut -f2 -d' ' ${ped}) \
     | cut -f2-
   ) - \
-> ${pedPheno}`;
+> ${pedPheno}`.nothrow();
     const datPheno = `${outPrefix}.pheno.dat`;
     const toMerlinDat = `${awkTsv} { print "M", "chr" $1 ":" $4 }`;
     const MerlinDatHeader = ["A", "VERY_RARE_DISEASE"].join("\t");

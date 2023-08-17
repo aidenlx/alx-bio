@@ -9,7 +9,7 @@ FAM=$2
 OUTPUT=${3:-./king}
 
 if [ -z "$VCF" ] || [ -z "$FAM" ]; then
-  echo "Usage: $0 <input> <output>"
+  echo "Usage: $0 <input> <ped> [output-prefix]"
   exit 1
 fi
 
@@ -33,7 +33,9 @@ FAM_FINAL=$TMPDIR/king.fam.out
 plink --vcf "$VCF" --make-bed --out $TMPDIR/king
 
 # update fam file
-matrixextend k2 c1-6 "$FAM" k2 "$TMPDIR/king.fam" | cut -f2- > "$FAM_FINAL"
+matrixextend k2 c1-6 "$FAM" k2 "$TMPDIR/king.fam" \
+  | cut -f2- > "$FAM_FINAL" \
+  || [ $? != 1 ] && echoerr "Error: failed with $?" && exit $?
 
 mkdir -p $(dirname "$OUTPUT")
 king -b $TMPDIR/king.bed --fam "$FAM_FINAL" --bim $TMPDIR/king.bim --kinship --prefix "$OUTPUT"
