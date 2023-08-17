@@ -1,5 +1,9 @@
 {
   "imports": {
     "@/": "./"
+  },
+  "tasks": {
+    "upload": "rsync --exclude='.git/' --exclude='slivar/repo' --exclude='build' -azvhP . lab-admin:alx-bio --delete",
+    "remote-compile": "ssh lab-admin 'cd alx-bio; /genetics/home/stu_liujiyuan/.asdf/shims/deno compile --allow-all --no-check main.slurm.ts -o ~/.local/bin/bioa'"
   }
 }
