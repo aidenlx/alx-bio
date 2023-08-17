@@ -86,6 +86,11 @@ export default new Command()
       await Promise.all([
         annotate(fullVcfGz, "snp"),
         annotate(fullVcfGz, "indel"),
+        exomiserExtra(
+          fullVcfGz,
+          `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`,
+          assembly
+        ),
       ]);
 
       async function annotate(inputVcfGz: string, type: "snp" | "indel") {
@@ -118,12 +123,7 @@ export default new Command()
           csvGz: join(funcDir, `${sample}.full.filter${suffix}.excel.csv.gz`),
         };
 
-        const exoExtraDir = "exomiser-extra";
-        const exoExtraOut = {
-          tsvGz: join(exoExtraDir, `${sample}.full.exo-extra${suffix}.tsv.gz`),
-        };
-
-        await Promise.all([qcDir, funcDir, exoExtraDir].map(ensureDir));
+        await Promise.all([qcDir, funcDir].map(ensureDir));
 
         console.error(`Filtering & extracting from ${fullOut.vcfGz}...`);
         await Promise.all([
@@ -149,7 +149,6 @@ export default new Command()
           extract(fullOut.vcfGz, fullOut.tsvGz, eOpts)
             .then((input) => tsv2excel(input, fullOut.csvGz))
             .then(() => console.error(`Extracted full without filters`)),
-          exomiserExtra(fullOut.vcfGz, exoExtraOut.tsvGz, assembly),
         ]);
       }
     }
