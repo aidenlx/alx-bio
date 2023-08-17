@@ -29,9 +29,12 @@ conda activate king
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
+FAM_FINAL=$TMPDIR/king.fam.out
 plink --vcf "$VCF" --make-bed --out $TMPDIR/king
-cp -f "$FAM" $TMPDIR/king.fam
+
+# update fam file
+matrixextend k2 c1-6 "$FAM" k2 "$TMPDIR/king.fam" | cut -f2- > "$FAM_FINAL"
 
 mkdir -p $(dirname "$OUTPUT")
-king -b $TMPDIR/king.bed --fam $TMPDIR/king.fam --bim $TMPDIR/king.bim --related --prefix "$OUTPUT"
+king -b $TMPDIR/king.bed --fam "$FAM_FINAL" --bim $TMPDIR/king.bim --kinship --prefix "$OUTPUT"
 # king -b lyx-g.king.bed --fam lyx-g.king.fam --bim lyx-g.king.bim --kinship
