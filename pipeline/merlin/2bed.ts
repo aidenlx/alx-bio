@@ -35,11 +35,13 @@ export async function extractRanges(
     offset,
     minRangeWidth,
     model,
+    chrPrefix,
   }: {
     threshold: Threshold;
     offset: number;
     minRangeWidth?: number;
     model?: string;
+    chrPrefix: boolean;
   }
 ) {
   const partbl = await Deno.readTextFile(partblFile)
@@ -103,20 +105,22 @@ export async function extractRanges(
       return realRanges;
     }
   );
+  const csvOutput = Object.entries(ranges).flatMap(([chr, ranges]) =>
+    // bed format is 0-based and end-exclusive
+    ranges.map(([start, end]) => [
+      chrPrefix ? "chr" + chr : chr,
+      start - 1,
+      end,
+      end - start,
+    ])
+  );
   await Deno.writeTextFile(
     outputBed,
-    csvStringify(
-      Object.entries(ranges).flatMap(([chr, ranges]) =>
-        // bed format is 0-based and end-exclusive 
-        ranges.map(([start, end]) => [chr, start - 1, end, end - start])
-      ),
-      {
-        crlf: false,
-        separator: "\t",
-        headers: true,
-        columns: ["#chr", "start", "end", "size"],
-      }
-    )
+    csvStringify([["#chr", "start", "end", "size"], ...csvOutput], {
+      crlf: false,
+      separator: "\t",
+      headers: true,
+    }).trimStart()
   );
   console.error(
     `Wrote ${

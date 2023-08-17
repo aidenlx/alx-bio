@@ -246,6 +246,7 @@ export default new Command()
       minRangeWidth: opts.minRangeWidth,
       offset: opts.offset,
       model: primaryModel,
+      chrPrefix: opts.ref === "hg38",
     });
 
     if (opts.cleanup) {
