@@ -14,9 +14,9 @@ export default async function genQC(inputVcfGz: string, outputVcfGz: string) {
   if (outputVcfGz.endsWith(".gz")) {
     // -t q: This is an option for the plugin +setGT, specifically the -t option followed by q. It specifies the type of modification to perform, where "q" indicates that the genotypes should be set to missing values (".") for the selected sites.
     // -n .: This is an option for the plugin +setGT, specifically the -n option followed by a dot ".". It specifies the number of alleles, where a dot "." represents an unspecified number of alleles.
-    await $`bcftools view -f "PASS" \
-| bcftools +setGT ${inputVcfGz} -- \
-  -t q -n . -i ${filters.hardFilterGTMissing} -Oz \
+    await $`bcftools view -f "PASS" ${inputVcfGz} \
+| bcftools +setGT -Oz -- \
+  -t q -n . -i ${filters.hardFilterGTMissing} \
 > ${outputVcfGz} \
 && tabix -f -p vcf ${outputVcfGz}`;
   } else {

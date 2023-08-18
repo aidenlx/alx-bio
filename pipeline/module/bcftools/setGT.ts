@@ -26,7 +26,7 @@ export default async function bcftoolsSetGT(
     ...(options.include ? ["-i", options.include] : []),
   ];
   if (output.endsWith(".gz")) {
-    await $`bcftools +setGT ${args} ${input} -- ${pluginArgs} -Oz > ${output} && tabix -f -p vcf ${output}`;
+    await $`bcftools +setGT ${args} ${input} -Oz -- ${pluginArgs} > ${output} && tabix -f -p vcf ${output}`;
   } else {
     await $`bcftools +setGT ${args} ${input} -- ${pluginArgs} > ${output}`;
   }
