@@ -49,7 +49,7 @@ export default new Command()
     }) => {
       const inputVcfGz = `${sample}.m${mVersion}.${assembly}.vcf.gz`;
       const fullVcfGz = `${sample}.full${finalVersion}.${assembly}.vcf.gz`;
-      const _fullVcfGz = await Deno.makeTempFile({ suffix: ".vcf.gz" });
+      const _fullVcfGz = `${sample}._full${finalVersion}.${assembly}.vcf.gz`;
       if (caddScript) {
         const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
         if (!exists(`${caddData}.tbi`)) {
@@ -88,7 +88,7 @@ export default new Command()
       /** extract options */
       const eOpts = {
         assembly,
-        samples: await getSamples(_fullVcfGz, sampleMap),
+        samples: await getSamples(fullVcfGz, sampleMap),
         database: await loadHpoData(resDir),
       };
       const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];

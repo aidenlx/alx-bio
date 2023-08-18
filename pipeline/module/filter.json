@@ -25,6 +25,6 @@
     "start_retained",
     "stop_retained_variant"
   ],
-  "hardFilter": "INFO/QUAL>=20 & INFO/FS<60 & INFO/MQ>=40 & INFO/QD>=2 & FORMAT/DP[*] >= 10",
+  "hardFilter": "QUAL>=20 & INFO/FS<60 & INFO/MQ>=40 & INFO/QD>=2 & FORMAT/DP[*] >= 10",
   "hardFilterGTMissing": "FMT/DP < 10"
 }
