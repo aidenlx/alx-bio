@@ -12,6 +12,7 @@ export default async function bcftoolsFilter(
   options: {
     include?: string;
     exclude?: string;
+    softFilter?: string;
     args?: string[];
   } = {}
 ) {
@@ -24,6 +25,7 @@ export default async function bcftoolsFilter(
     ...(options.args ?? []),
     ...(options.include ? ["-i", options.include] : []),
     ...(options.exclude ? ["-e", options.exclude] : []),
+    ...(options.softFilter ? ["-s", options.softFilter] : []),
   ];
   if (output.endsWith(".gz")) {
     await $`bcftools filter ${args} ${input} | bgzip > ${output} && tabix -f -p vcf ${output}`;

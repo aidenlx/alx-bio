@@ -1,6 +1,8 @@
 import data from "./filter.json" assert { type: "json" };
 
-const byQual = "(FILTER = 'PASS')";
+export const softFilterKey = "PASS";
+
+const byQual = `(FILTER = '${softFilterKey}')`;
 
 const byEffect = `(${data.targetEffects
   .map((effect) => `(ANN[*].EFFECT has '${effect}')`)

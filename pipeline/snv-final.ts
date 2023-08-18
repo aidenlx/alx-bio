@@ -82,6 +82,7 @@ export default new Command()
       // apply hard filters and set FILTER column
       await bcftoolsFilter(_fullVcfGz, fullVcfGz, {
         include: filters.hardFilter,
+        softFilter: "PASS",
       });
       await $`rm -f ${_fullVcfGz}`;
 
