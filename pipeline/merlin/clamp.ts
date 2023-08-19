@@ -12,7 +12,7 @@ export class ThresholdType extends Type<Threshold> {
 
   public parse({ label, name, value }: ArgumentValue): Threshold {
     if (!Number.isNaN(Number.parseFloat(value))) {
-      return defaultThreshold;
+      return { ...defaultThreshold, value: Number.parseFloat(value) };
     }
     const [field, valueStr] = value.split(":");
     if (!isThreshold(field)) {
