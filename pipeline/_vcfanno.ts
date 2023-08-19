@@ -18,7 +18,7 @@ export const wbbcDatabase = {
   hg38: "/cluster/home/jiyuan/res/wbbc/WBBC.hg38.vcf.gz",
 };
 export const localDatabase = {
-  hs37: "/cluster/home/jiyuan/res/fjmun/fjmun-230802.hg19.vcf.gz",
+  hs37: "/cluster/home/jiyuan/res/fjmun/fjmun-230818.hg19.vcf.gz",
 };
 
 export const dbnsfpSnpSift = {
