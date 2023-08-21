@@ -1,4 +1,4 @@
-import { localAC, localAF } from "@/pipeline/_vcfanno.ts";
+import { localAC, localAF, localNumHomAlt } from "@/pipeline/_vcfanno.ts";
 import hg19FieldList from "./vcf-extract.json" assert { type: "json" };
 import hg19ExomiserFieldList from "./vcf-extract-exomiser.json" assert { type: "json" };
 import slivarFieldList from "./vcf-extract-slivar.json" assert { type: "json" };
@@ -37,7 +37,7 @@ function _getFieldList(
       );
   }
 
-  const localFreq = new Set([localAC, localAF]);
+  const localFreq = new Set([localAC, localAF, localNumHomAlt]);
   if (assembly === "hg38") {
     fieldList = fieldList.map((v) => v.replace("gnomad_g211_", "gnomad312_"));
 

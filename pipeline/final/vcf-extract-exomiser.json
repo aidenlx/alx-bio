@@ -19,5 +19,6 @@
   "ANN",
   "GEN[*].GT",
   "CADD_PHRED",
-  "FJMUN_AC"
+  "FJMUN_AC",
+  "FJMUN_nhomalt"
 ]

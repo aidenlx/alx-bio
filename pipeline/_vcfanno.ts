@@ -18,7 +18,7 @@ export const wbbcDatabase = {
   hg38: "/cluster/home/jiyuan/res/wbbc/WBBC.hg38.vcf.gz",
 };
 export const localDatabase = {
-  hs37: "/cluster/home/jiyuan/res/fjmun/fjmun-230818.hg19.vcf.gz",
+  hs37: "/cluster/home/jiyuan/res/fjmun/fjmun-230822.hg19.vcf.gz",
 };
 
 export const dbnsfpSnpSift = {
@@ -88,14 +88,19 @@ export function getVcfannoCADDCfg(fileOrRef: string): VcfAnnoConfigCol {
 }
 
 export const localAC = `FJMUN_AC`,
-  localAF = `FJMUN_AF`;
+  localAF = `FJMUN_AF`,
+  localNumHomAlt = `FJMUN_nhomalt`;
 
 export const vcfannoLocal = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => [
     ref,
     ref === "hg19" && {
       file: localDatabase.hs37,
-      ...FieldsToDef([[localAC], [localAF]]),
+      ...FieldsToDef([
+        ["AC", localAC],
+        ["AF", localAF],
+        ["nhomalt", localNumHomAlt],
+      ]),
     },
   ])
 );
