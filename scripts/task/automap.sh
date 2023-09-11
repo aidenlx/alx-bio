@@ -21,15 +21,18 @@ INPUT_VCF=$(mktemp --suffix ".vcf")
 trap "rm -f $INPUT_VCF" EXIT
 OUT_DIR=${3:-.}
 
-zcat_safe $INPUT_VCF_GZ > $INPUT_VCF
+zcat_safe "$INPUT_VCF_GZ" > "$INPUT_VCF"
+
+# if bcftools query -l "$INPUT_VCF" | wc -l larger than 1,
+if [ $(bcftools query -l "$INPUT_VCF" | wc -l) -gt 1 ]; then
+  MULTIVCF="--multivcf"
+fi
 
 # AutoMap for single individual
 # The main script AutoMap_v1.0.sh takes as input a VCF file which needs to contain GT (genotype) and AD (or AO) (allelic depths for the ref and alt alleles) or DP4 (number of high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases) fields for variants. The output is a text file containing the detected ROHs and a pdf file with the ROHs graphical representation. It is called with bash:
 # The approximate computation time per sample is 30 seconds for exome and few minutes for genome sequencing data.
 
-$EXEC_BIN \
-  --vcf $INPUT_VCF --out $OUT_DIR \
-  --genome $ASSEMBLY
+"$EXEC_BIN" --genome $ASSEMBLY --out "$OUT_DIR" --vcf "$INPUT_VCF" $MULTIVCF
 
 touch $OUT_DIR/automap.done
 
