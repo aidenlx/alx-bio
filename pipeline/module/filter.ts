@@ -1,3 +1,4 @@
+import { freqSource } from "@/pipeline/_freq.ts";
 import data from "./filter.json" assert { type: "json" };
 
 export const softFilterKey = "PASS";
@@ -8,8 +9,12 @@ const byEffect = `(${data.targetEffects
   .map((effect) => `(ANN[*].EFFECT has '${effect}')`)
   .join(" | ")})`;
 
-const getFreqQuery = (freq: number) =>
-  `((gnomad_g211_AF < ${freq}) | (gnomad_e211_AF < ${freq}) | (gnomad312_AF < ${freq}))`;
+function getFreqQuery(threshold: number) {
+  const exceeds = freqSource.global
+    .concat(freqSource.eas)
+    .map((key) => `((exists ${key}) & (${key} > ${threshold}))`);
+  return `!(${exceeds.join(" | ")})`;
+}
 
 // export function getFilterQuery(query: "all", freq: number): string;
 // export function getFilterQuery(query: "qual" | "effect"): string;
