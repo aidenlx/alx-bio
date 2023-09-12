@@ -19,6 +19,9 @@ import merlin from "@/pipeline/merlin/merlin.ts";
 import genPed from "@/batch/gen-ped.ts";
 import genFam from "@/batch/gen-fam.ts";
 import famCheck from "@/batch/fam-check.ts";
+import ontMap from "@/pipeline/3GS/ont-map.ts";
+import svAnnot from "@/pipeline/3GS/sv-annot.ts";
+import svCall from "@/pipeline/3GS/sv-call.ts";
 
 await new Command()
   .name("bioa")
@@ -42,6 +45,9 @@ await new Command()
   .command(...c(tsvFilter))
   .command(...c(merlin))
   .command(...c(vcfFilterQuery))
+  .command(...c(ontMap))
+  .command(...c(svCall))
+  .command(...c(svAnnot))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);

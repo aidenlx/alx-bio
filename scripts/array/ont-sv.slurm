@@ -11,11 +11,9 @@ conda_init conda
 INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.sort.hg38.bam"
 
 conda activate svision
-$PIPELINE \
-  sv.call -t $THREADS -o $SAMPLE_ID/ -s $SAMPLE_ID --ref hg38 \
+bioa sv.call -t $THREADS -o $SAMPLE_ID/ -s $SAMPLE_ID --ref hg38 \
   --bam $INPUT_BAM
 
 conda activate annotsv
-$PIPELINE \
-  sv.annot -o $SAMPLE_ID/ -s $SAMPLE_ID --ref hg38 \
+bioa sv.annot -o $SAMPLE_ID/ -s $SAMPLE_ID --ref hg38 \
   --vcf $SAMPLE_ID/svision/$SAMPLE_ID.annotsv.vcf

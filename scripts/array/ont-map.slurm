@@ -6,12 +6,11 @@
 #SBATCH --error=log-%A-%x_%a.err
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
-conda_init conda
+conda_init mamba
 
 eval "$(conda shell.bash hook)"
-conda activate /cluster/home/jiyuan/mambaforge/envs/ont-map
+conda activate ont-map
 
-$PIPELINE \
-  ont.map -t $THREADS -o $SAMPLE_ID/ -s $SAMPLE_ID \
-  --fq $FASTQ1
+bioa ont.map -t $THREADS \
+  -o $SAMPLE_ID/ -s $SAMPLE_ID --fq $FASTQ1
 
