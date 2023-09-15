@@ -11,7 +11,7 @@ import {
   csvParse,
 } from "@/deps.ts";
 import type { ProcessOutput, ProcessPromise } from "@/deps.ts";
-import { genomeAssembly } from "@/modules/common.ts";
+import { genomeAssembly, vcfCaller } from "@/modules/common.ts";
 const commonOptions = [
   "--parsable",
   "--output",
@@ -46,6 +46,10 @@ export default new Command()
   .option("--parsable", "parsable output")
   .option("-J, --job-name <jobName:string>", "job name", {
     default: currTime,
+  })
+  .type("vcfCaller", vcfCaller)
+  .option("--caller <vcf_caller:vcfCaller>", "variant caller", {
+    default: "gatk" as const,
   })
   .option("-m, --method <type:method>", "method", { required: true })
   .option("-r, --ref <ref:genomeAssembly>", "reference genome", {
@@ -194,7 +198,7 @@ export default new Command()
             "snv-final.slurm"
           )} ${arrayFile} ${ref_annot} ${
             !useCADDScript ? "--no-cadd-script" : ""
-          }`,
+          } --caller ${opts.caller}`,
       }),
     } satisfies Record<string, Task>;
 

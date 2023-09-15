@@ -1,5 +1,5 @@
 import { $, Command, ensureDir, exists, path, resolve } from "@/deps.ts";
-import { genomeAssembly } from "@/modules/common.ts";
+import { genomeAssembly, vcfCaller } from "@/modules/common.ts";
 import extract, { loadHpoData } from "./final/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
 import { getFilterQuery } from "@/pipeline/module/filter.ts";
@@ -31,6 +31,10 @@ export default new Command()
   .option("--resource <dir:string>", "Path to Resource", {
     default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
   })
+  .type("vcfCaller", vcfCaller)
+  .option("--caller <vcf_caller:vcfCaller>", "Variant caller", {
+    default: "gatk" as const,
+  })
   .option("--regions-file <FILE:string>", "restrict to regions listed in FILE")
   .option(
     "--no-cadd-script",
@@ -46,6 +50,7 @@ export default new Command()
       resource: resDir,
       caddScript,
       regionsFile,
+      caller: vcfCaller,
     }) => {
       const inputVcfGz = `${sample}.m${mVersion}.${assembly}.vcf.gz`;
       const fullVcfGz = `${sample}.full${finalVersion}.${assembly}.vcf.gz`;
@@ -80,11 +85,15 @@ export default new Command()
       }
 
       // apply hard filters and set FILTER column
-      await bcftoolsFilter(_fullVcfGz, fullVcfGz, {
-        include: filters.hardFilter,
-        softFilter: "PASS",
-      });
-      await $`rm -f ${_fullVcfGz}`;
+      if (vcfCaller === "deepvariant") {
+        await $`mv ${_fullVcfGz} ${fullVcfGz}`;
+      } else {
+        await bcftoolsFilter(_fullVcfGz, fullVcfGz, {
+          include: filters.hardFilter,
+          softFilter: "PASS",
+        });
+        await $`rm -f ${_fullVcfGz}`;
+      }
 
       /** extract options */
       const eOpts = {
@@ -100,7 +109,8 @@ export default new Command()
         exomiserExtra(
           fullVcfGz,
           `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`,
-          assembly
+          assembly,
+          vcfCaller
         ),
       ]);
 
@@ -165,9 +175,13 @@ export default new Command()
 async function exomiserExtra(
   input: string,
   output: string,
-  assembly: "hg19" | "hg38"
+  assembly: "hg19" | "hg38",
+  caller: "gatk" | "deepvariant"
 ) {
-  const extraFields = getExomiserFieldList(assembly, { local: true });
+  const extraFields = getExomiserFieldList(assembly, {
+    local: true,
+    qualFields: caller !== "deepvariant",
+  });
   await $`SnpSift extractFields -s "," -e "." ${input} ${extraFields} \
   | sed '1s/CHROM/#CHROM/' \
   | bgzip > ${output} \
