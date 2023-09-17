@@ -8,7 +8,6 @@
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
 conda_init mamba
 
-eval "$(conda shell.bash hook)"
 conda activate ont-map
 
 bioa ont.map -t $THREADS \
