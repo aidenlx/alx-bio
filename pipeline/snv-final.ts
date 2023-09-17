@@ -148,20 +148,21 @@ export default new Command()
 
         console.error(`Filtering & extracting from ${fullOut.vcfGz}...`);
         await Promise.all([
-          genQC(fullOut.vcfGz, qcOut.vcfGz).then((input) =>
-            Promise.all([
-              SnpSiftFilter(input, getFilterQuery("effect"), funcOut.vcfGz)
-                .then((input) => extract(input, funcOut.tsvGz, eOpts))
-                .then((input) => tsv2excel(input, funcOut.csvGz))
-                .then(() =>
-                  console.error(
-                    "Impactful variants hard-filtered and extracted"
-                  )
-                ),
-              extract(input, qcOut.tsvGz, eOpts)
-                .then((input) => tsv2excel(input, qcOut.csvGz))
-                .then(() => console.error("Hard-filtered and extracted")),
-            ])
+          genQC(fullOut.vcfGz, qcOut.vcfGz, vcfCaller === "deepvariant").then(
+            (input) =>
+              Promise.all([
+                SnpSiftFilter(input, getFilterQuery("effect"), funcOut.vcfGz)
+                  .then((input) => extract(input, funcOut.tsvGz, eOpts))
+                  .then((input) => tsv2excel(input, funcOut.csvGz))
+                  .then(() =>
+                    console.error(
+                      "Impactful variants hard-filtered and extracted"
+                    )
+                  ),
+                extract(input, qcOut.tsvGz, eOpts)
+                  .then((input) => tsv2excel(input, qcOut.csvGz))
+                  .then(() => console.error("Hard-filtered and extracted")),
+              ])
           ),
           extract(fullOut.vcfGz, fullOut.tsvGz, eOpts)
             .then((input) => tsv2excel(input, fullOut.csvGz))
