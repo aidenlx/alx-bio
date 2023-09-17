@@ -73,10 +73,9 @@ export default new Command()
     const outputDirectory = join(outputDir, "exomiser");
     const outputFileName = basename(vcf).split(".")[0];
     const genomeAssembly = vcf.includes("hg38") ? "hg38" : "hg19";
-    const { stdout: _sampleIds } =
-      await $`zcat -f ${options.input} | rg '#CHROM' | cut -f10-`;
+    const _sampleIds = (await $`bcftools query -l ${options.input}`).stdout;
     const sampleIds = _sampleIds
-      .split("\t")
+      .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
     if (sampleIds.length === 0) {
