@@ -82,10 +82,15 @@ export function getVcfannoCADDCfg(fileOrRef: string): VcfAnnoConfigCol {
   return {
     file: fileOrRef in CADD ? CADD[fileOrRef as keyof typeof CADD] : fileOrRef,
     names: ["CADD_PHRED"],
-    ops: ["mean"],
+    ops: ["self"],
     columns: [6],
   };
 }
+
+const AlphaMissense = {
+  hg19: "/cluster/home/jiyuan/res/alphamissense/AlphaMissense_hg19.tsv.gz",
+  hg38: "/cluster/home/jiyuan/res/alphamissense/AlphaMissense_hg38.tsv.gz",
+};
 
 export const localAC = `FJMUN_AC`,
   localAF = `FJMUN_AF`,
@@ -126,6 +131,12 @@ export const vcfannoCfg = D.fromPairs(
         ] as [string, string, string?][]),
       },
       {
+        file: AlphaMissense[ref],
+        names: ["AM_PATHOGENICITY", "AM_CLASS"],
+        ops: ["self", "self"],
+        columns: [9, 10],
+      },
+      {
         file: wbbcDatabase[ref === "hg19" ? "hs37" : ref],
         ...FieldsToDef(
           [["AF"], ["North_AF"], ["Central_AF"], ["South_AF"], ["Lingnan_AF"]],
@@ -156,7 +167,7 @@ function ColToDef<T extends VcfAnnotColumn[]>(
     (out, [column, name, op]) => {
       out.columns.push(column);
       out.names.push(normalizeVcfKey(toName ? toName(name) : name));
-      out.ops.push(op ?? "first");
+      out.ops.push(op ?? "self");
       return out;
     },
     { columns: [], names: [], ops: [] } as Omit<VcfAnnoConfigCol, "file">

@@ -7,7 +7,7 @@ import tableAnnovar from "./module/annovar/table_annovar.ts";
 import { toFinalOutput, pipe } from "./pipe.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
-export const mVersion = "." + "v2_2";
+export const mVersion = "." + "v2_3";
 
 export default new Command()
   .name("snv.annot.m")
