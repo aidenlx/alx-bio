@@ -7,12 +7,14 @@ source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
 THREADS=${SLURM_CPUS_PER_TASK:-8}
 
 TAG="2.2.9"
+RES_DIR=/cluster/home/jiyuan/res
 
 # check if becklab/pav:2.2.9 loaded
 if ! docker image inspect becklab/pav:${TAG} &>/dev/null; then
-  zcat /cluster/home/jiyuan/res/pav/pav-${TAG}.tar.gz | docker load
+  zcat "$RES_DIR/pav/pav-${TAG}.tar.gz" | docker load
 fi
 
 docker run --rm \
-  -v ${PWD}:${PWD} --user "$(id -u):$(id -g)" \
+  -v ${RES_DIR}:${RES_DIR}:ro -v ${PWD}:${PWD} \
+  --user "$(id -u):$(id -g)" \
   --workdir ${PWD} becklab/pav:${TAG} -c ${THREADS} "$@"
