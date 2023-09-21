@@ -28,40 +28,40 @@ export const dbnsfpSnpSift = {
 
 const dbnsfpColumns = ColToDef([
   [17, "Uniprot_acc"],
-  [40, "SIFT_pred"],
-  [46, "Polyphen2_HDIV_pred"],
-  [49, "Polyphen2_HVAR_pred"],
-  [52, "LRT_pred"],
-  [56, "MutationTaster_pred"],
-  [61, "MutationAssessor_pred"],
-  [64, "FATHMM_pred"],
-  [67, "PROVEAN_pred"],
-  [72, "MetaSVM_pred"],
+  [40, "SIFT_pred_float"],
+  [46, "Polyphen2_HDIV_pred_float"],
+  [49, "Polyphen2_HVAR_pred_float"],
+  [52, "LRT_pred_float"],
+  [56, "MutationTaster_pred_float"],
+  [61, "MutationAssessor_pred_float"],
+  [64, "FATHMM_pred_float"],
+  [67, "PROVEAN_pred_float"],
+  [72, "MetaSVM_pred_float"],
   [165, "GERP++_NR"],
   [166, "GERP++_RS"],
   [174, "phastCons100way_vertebrate"],
-  [186, "1000Gp3_AF"],
-  [194, "1000Gp3_EAS_AF"],
-  [208, "ExAC_AF"],
-  [216, "ExAC_EAS_AF"],
-  [649, "ALFA_East_Asian_AF"],
-  [676, "ALFA_Total_AF"],
+  [186, "1000Gp3_AF_float"],
+  [194, "1000Gp3_EAS_AF_float"],
+  [208, "ExAC_AF_float"],
+  [216, "ExAC_EAS_AF_float"],
+  [649, "ALFA_East_Asian_AF_float"],
+  [676, "ALFA_Total_AF_float"],
   [686, "Interpro_domain"],
   [687, "GTEx_V8_gene"],
   [688, "GTEx_V8_tissue"],
 ] as [number, string, string?][]);
 
 const gnomad211ExomeColumns = ColToDef([
-  [6, "gnomad_e211_AF"],
-  [14, "gnomad_e211_AF_eas"],
+  [6, "gnomad_e211_AF_float"],
+  [14, "gnomad_e211_AF_eas_float"],
 ]);
 const gnomad211GenomeColumns = ColToDef([
-  [6, "gnomad_g211_AF"],
-  [14, "gnomad_g211_AF_eas"],
+  [6, "gnomad_g211_AF_float"],
+  [14, "gnomad_g211_AF_eas_float"],
 ]);
 const gnomad312GenomeColumns = ColToDef([
-  [6, "gnomad312_AF"],
-  [16, "gnomad312_AF_eas"],
+  [6, "gnomad312_AF_float"],
+  [16, "gnomad312_AF_eas_float"],
 ]);
 
 const annovar = {
@@ -81,12 +81,13 @@ export function getVcfannoCADDCfg(file: string): VcfAnnoConfigCol;
 export function getVcfannoCADDCfg(fileOrRef: string): VcfAnnoConfigCol {
   return {
     file: fileOrRef in CADD ? CADD[fileOrRef as keyof typeof CADD] : fileOrRef,
-    names: ["CADD_PHRED"],
+    names: ["CADD_PHRED_float"],
     ops: ["self"],
     columns: [6],
   };
 }
 
+// tabix -f -b 2 -e 2 -s 1
 const AlphaMissense = {
   hg19: "/cluster/home/jiyuan/res/alphamissense/AlphaMissense_hg19.tsv.gz",
   hg38: "/cluster/home/jiyuan/res/alphamissense/AlphaMissense_hg38.tsv.gz",
@@ -132,7 +133,7 @@ export const vcfannoCfg = D.fromPairs(
       },
       {
         file: AlphaMissense[ref],
-        names: ["AM_PATHOGENICITY", "AM_CLASS"],
+        names: ["AM_PATHOGENICITY_float", "AM_CLASS"],
         ops: ["self", "self"],
         columns: [9, 10],
       },
