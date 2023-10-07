@@ -21,7 +21,12 @@ const GTMap: Record<string, string> = {
   "0|1": "Het|",
   "0|0": "Ref|",
   ".|.": "MIS|",
+  ".": "MIS",
 };
+function toGTTag(v: string) {
+  return GTMap[v] ?? v;
+}
+
 const GTSymbolMap: Record<string, string> = {
   Hom: "●",
   Ref: "◎",
@@ -237,23 +242,27 @@ function HpoAnnot({
           `GT length not match, expected ${samples}(${samples.length}), got ${GT.length}: ${GT}`
         );
       }
-      const homCount = GT.map((v) => GTMap[v]).filter((v) =>
+      const homCount = GT.map(toGTTag).filter((v) =>
         v.startsWith("Hom")
       ).length;
       colsAfterCADD.HOM_COUNT = homCount;
       colsPrepend.HOM_PCT = homCount / GT.length;
       // `${homCount}/${GT.length}~${homCount / GT.length}`;
-      const hetCount = GT.map((v) => GTMap[v]).filter((v) =>
+      const hetCount = GT.map(toGTTag).filter((v) =>
         v.startsWith("Het")
       ).length;
       colsAfterCADD.HET_COUNT = hetCount;
       colsPrepend.HET_PCT = hetCount / GT.length;
       // `${hetCount}/${GT.length}~${hetCount / GT.length}`;
-      colsPrepend.GT_SYMBOL = GT.map((v) =>
-        GTMap[v] ? GTSymbolMap[GTMap[v].slice(0, -1)] : "?"
-      ).join("");
+      colsPrepend.GT_SYMBOL = GT.map((v) => {
+        const tag = toGTTag(v);
+        if (v !== tag) {
+          return GTSymbolMap[tag.replace(/[/|]$/, "")];
+        }
+        return "?";
+      }).join("");
       GT.forEach((v, i) => {
-        sampleGTColumns[samples[i]] = GTMap[v] ?? v;
+        sampleGTColumns[samples[i]] = toGTTag(v);
       });
 
       const gene = data[geneCol],
