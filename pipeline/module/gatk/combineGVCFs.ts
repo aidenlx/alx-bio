@@ -31,8 +31,8 @@ export default async function GATKCombineGVCFs(
   /** https://hpc.nih.gov/training/gatk_tutorial/genotype-gvcfs.html#optimized-script-4 */
   opts.javaOptions = [
     ...(opts.javaOptions ?? []),
-    "-Xmx2G",
-    "-Xms2G",
+    "-Xmx20G",
+    "-Xms4G",
     "-XX:ParallelGCThreads=2",
     gatkTempDirJava(),
   ];
