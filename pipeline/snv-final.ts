@@ -64,10 +64,14 @@ export default new Command()
           await $`tabix -p vcf ${inputVcfGz}`;
         }
         console.error(`Annotating ${inputVcfGz} with ${caddData}`);
-
+        const columnsNum = Number.parseInt(
+          (
+            await $`zcat ${caddData} | grep -m1 '^#Chrom' | head -1 | awk '{print NF}'`
+          ).stdout
+        );
         await vcfanno(inputVcfGz, _fullVcfGz, {
           threads: 4,
-          config: [getVcfannoCADDCfg(resolve(caddData))],
+          config: [await getVcfannoCADDCfg(resolve(caddData), columnsNum > 6)],
         });
       } else {
         const checkCADD =
@@ -79,7 +83,7 @@ export default new Command()
           console.info(`no CADD annot found in ${inputVcfGz}, annot...`);
           await vcfanno(inputVcfGz, _fullVcfGz, {
             threads: 4,
-            config: [getVcfannoCADDCfg(assembly)],
+            config: [await getVcfannoCADDCfg(assembly, true)],
           });
         }
       }

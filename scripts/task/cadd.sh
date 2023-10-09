@@ -33,7 +33,7 @@ elif [ $ASSEMBLY == "hg38" ]; then
   zcat_safe $SRC_VCF | sed 's/^chr//' | rg $FILTER | bgzip > $INPUT_VCF
 fi
 
-CADD.sh -g $ASSEMBLY_CADD -o "$OUTPUT" -c $SLURM_CPUS_PER_TASK $INPUT_VCF
+CADD.sh -a -g $ASSEMBLY_CADD -o "$OUTPUT" -c $SLURM_CPUS_PER_TASK $INPUT_VCF
 
 echo indexing "$OUTPUT"
 tabix -b 2 -e 2 "$OUTPUT"
