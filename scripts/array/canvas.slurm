@@ -10,7 +10,6 @@ conda_init conda
 ASSEMBLY=$(validate_input ${2,,} hg38)
 INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.bqsr.hg38.bam"
 
-$PIPELINE \
-  canvas -r $ASSEMBLY \
+bioa canvas -r $ASSEMBLY \
   --bam=$INPUT_BAM:proband \
   -o $SAMPLE_ID/canvas

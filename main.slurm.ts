@@ -22,6 +22,8 @@ import famCheck from "@/batch/fam-check.ts";
 import ontMap from "@/pipeline/3GS/ont-map.ts";
 import svAnnot from "@/pipeline/3GS/sv-annot.ts";
 import svCall from "@/pipeline/3GS/sv-call.ts";
+import pavToVcf from "@/pipeline/pav/to-vcf.ts";
+import canvas from "@/pipeline/3GS/canvas.ts";
 
 await new Command()
   .name("bioa")
@@ -48,6 +50,8 @@ await new Command()
   .command(...c(ontMap))
   .command(...c(svCall))
   .command(...c(svAnnot))
+  .command(...c(pavToVcf))
+  .command(...c(canvas))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
