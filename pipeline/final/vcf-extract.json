@@ -21,6 +21,8 @@
   "CLNREVSTAT",
   "CLNDN",
   "FJMUN_AF",
+  "global_popmax_AF",
+  "eas_popmax_AF",
   "WBBC_AF",
   "WBBC_South_AF",
   "gnomad_e211_AF_eas",

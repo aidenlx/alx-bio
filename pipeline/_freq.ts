@@ -1,3 +1,5 @@
+import { type VcfAnnoPostAnnotConfig } from "@/pipeline/module/vcfanno.ts";
+
 export const freqSource = {
   global: [
     "gnomad_e211_AF",
@@ -16,3 +18,12 @@ export const freqSource = {
     "ALFA_East_Asian_AF",
   ],
 };
+
+export const popmaxPostAnnot = (["global", "eas"] as const).map(
+  (type): VcfAnnoPostAnnotConfig => ({
+    name: `${type}_popmax_AF`,
+    fields: freqSource[type],
+    op: `max`,
+    type: "Float",
+  })
+);

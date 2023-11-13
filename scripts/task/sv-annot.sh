@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
 conda_init mamba
@@ -17,6 +17,11 @@ if [ $ASSEMBLY == "hg19" ]; then
   ASSEMBLY=GRCh37
 elif [ $ASSEMBLY == "hg38" ]; then
   ASSEMBLY=GRCh38
+fi
+
+if [[ $INPUT == *.gz ]]; then
+  zcat "$INPUT" > "${INPUT%.gz}"
+  INPUT=${INPUT%.gz}
 fi
 
 AnnotSV -SVinputFile $INPUT -outputFile $OUTPUT -genomeBuild $ASSEMBLY 

@@ -6,8 +6,9 @@ import vcfanno from "./module/vcfanno.ts";
 import tableAnnovar from "./module/annovar/table_annovar.ts";
 import { toFinalOutput, pipe } from "./pipe.ts";
 import { PositiveInt } from "@/utils/validate.ts";
+import { popmaxPostAnnot } from "@/pipeline/_freq.ts";
 
-export const mVersion = "." + "v2_4";
+export const mVersion = "." + "v2_5";
 
 export default new Command()
   .name("snv.annot.m")
@@ -76,11 +77,14 @@ export default new Command()
           const output = prefix + `vcfannot${mVersion}.${ref}.vcf.gz`;
           await vcfanno(orGzip(input), output, {
             threads,
-            config: [
-              ...vcfannoCfg[ref],
-              options.local && vcfannoLocal[ref],
-              options.cadd && await getVcfannoCADDCfg(ref, true),
-            ],
+            config: {
+              annotation: [
+                ...vcfannoCfg[ref],
+                options.local && vcfannoLocal[ref],
+                options.cadd && (await getVcfannoCADDCfg(ref, true)),
+              ],
+              postannotation: popmaxPostAnnot,
+            },
           });
           return output;
         }

@@ -2,26 +2,41 @@ import { $, tomlStringify } from "@/deps.ts";
 import { checkDone } from "@/utils/check-done.ts";
 import { overrideSymlink } from "./overrideSymlink.ts";
 
-interface VcfAnnoConfigBase {
+interface VcfAnnoAnnotConfigBase {
   file: string;
   names: string[];
   ops: string[];
 }
-export interface VcfAnnoConfigCol extends VcfAnnoConfigBase {
+
+// const customLuaScript = ``;
+
+export interface VcfAnnoAnnotConfigCol extends VcfAnnoAnnotConfigBase {
   columns: number[];
 }
 
-export interface VcfAnnoConfigField extends VcfAnnoConfigBase {
+export interface VcfAnnoAnnotConfigField extends VcfAnnoAnnotConfigBase {
   fields: string[];
 }
 
-export type VcfAnnoConfig = VcfAnnoConfigCol | VcfAnnoConfigField;
+export interface VcfAnnoPostAnnotConfig {
+  name: string;
+  fields: string[];
+  op: string;
+  type: "String" | "Float" | "Integer";
+}
+
+export type VcfAnnoAnnotConfig =
+  | VcfAnnoAnnotConfigCol
+  | VcfAnnoAnnotConfigField;
 
 export default async function vcfanno(
   input: string,
   output: string,
   options: {
-    config: (VcfAnnoConfig | false)[];
+    config: {
+      annotation: (VcfAnnoAnnotConfig | false)[];
+      postannotation?: (VcfAnnoPostAnnotConfig | false)[];
+    };
     threads: number;
     args?: string[];
   }
@@ -37,14 +52,22 @@ export default async function vcfanno(
   }
 
   const cfgFile = await Deno.makeTempFile({ suffix: ".toml" });
+  // const luaScriptFile = await Deno.makeTempFile({ suffix: ".lua" });
 
   const config = {
-    annotation: options.config.filter((v): v is VcfAnnoConfig => v !== false),
+    annotation: options.config.annotation.filter(
+      (v): v is VcfAnnoAnnotConfig => v !== false
+    ),
+    postannotation: (options.config.postannotation ?? []).filter(
+      (v): v is VcfAnnoPostAnnotConfig => v !== false
+    ),
   };
   await Deno.writeTextFile(cfgFile, tomlStringify(config));
+  // await Deno.writeTextFile(luaScriptFile, customLuaScript);
   const args = [
     ...["-p", options.threads],
     ...(options.args ?? []),
+    // ...["-lua", luaScriptFile],
     ...[cfgFile, input],
   ];
 
@@ -52,6 +75,7 @@ export default async function vcfanno(
     // avoid writing into symlinked source file
     await overrideSymlink(output, output + ".tbi");
     console.error("vcfanno config: ", tomlStringify(config));
+    // console.error("vcfanno config: ", JSON.stringify(config));
     if (output.endsWith(".gz")) {
       await $`vcfanno ${args} | bgzip > ${output} && tabix -f -p vcf ${output}`;
     } else {
@@ -65,5 +89,6 @@ export default async function vcfanno(
     throw error;
   } finally {
     await Deno.remove(cfgFile).catch(() => void 0);
+    // await Deno.remove(luaScriptFile).catch(() => void 0);
   }
 }

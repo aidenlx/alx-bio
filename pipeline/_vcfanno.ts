@@ -2,9 +2,9 @@ import { normalizeVcfKey } from "@/utils/vcf-key.ts";
 import { D, pipe, path, $ } from "@/deps.ts";
 
 import {
-  VcfAnnoConfig,
-  VcfAnnoConfigCol,
-  VcfAnnoConfigField,
+  VcfAnnoAnnotConfig,
+  VcfAnnoAnnotConfigCol,
+  VcfAnnoAnnotConfigField,
 } from "@/pipeline/module/vcfanno.ts";
 import { annovarDataDir } from "@/pipeline/_res.ts";
 import { CADDColumns, CADDCommonColumn } from "@/pipeline/_cadd_anno.ts";
@@ -87,15 +87,15 @@ const CADD = {
 export async function getVcfannoCADDCfg(
   ref: keyof typeof CADD,
   inclAnno?: boolean
-): Promise<VcfAnnoConfigCol>;
+): Promise<VcfAnnoAnnotConfigCol>;
 export async function getVcfannoCADDCfg(
   file: string,
   inclAnno?: boolean
-): Promise<VcfAnnoConfigCol>;
+): Promise<VcfAnnoAnnotConfigCol>;
 export async function getVcfannoCADDCfg(
   fileOrRef: string,
   inclAnno = false
-): Promise<VcfAnnoConfigCol> {
+): Promise<VcfAnnoAnnotConfigCol> {
   const database = CADD[inclAnno ? "inclAnno" : "noAnno"];
   let version: keyof typeof CADDColumns;
   let file: string;
@@ -181,7 +181,7 @@ export const vcfannoLocal = D.fromPairs(
 
 export const vcfannoCfg = D.fromPairs(
   (["hg19", "hg38"] as const).map((ref) => {
-    const cfg: VcfAnnoConfig[] = [
+    const cfg: VcfAnnoAnnotConfig[] = [
       {
         file: dbnsfpSnpSift[ref],
         ...dbnsfpColumns,
@@ -239,7 +239,7 @@ export function ColToDef<T extends VcfAnnotColumn[]>(
       out.ops.push(op ?? "self");
       return out;
     },
-    { columns: [], names: [], ops: [] } as Omit<VcfAnnoConfigCol, "file">
+    { columns: [], names: [], ops: [] } as Omit<VcfAnnoAnnotConfigCol, "file">
   );
 }
 
@@ -273,6 +273,6 @@ function FieldsToDef<T extends VcfAnnotField[]>(
       out.ops.push(op ?? "self");
       return out;
     },
-    { fields: [], names: [], ops: [] } as Omit<VcfAnnoConfigField, "file">
+    { fields: [], names: [], ops: [] } as Omit<VcfAnnoAnnotConfigField, "file">
   );
 }

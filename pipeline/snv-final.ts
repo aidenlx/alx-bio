@@ -16,7 +16,7 @@ import genQC from "@/pipeline/module/gen-qc.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-export const finalVersion = "." + "v3_5";
+export const finalVersion = "." + "v3_6";
 
 export default new Command()
   .name("snv.final")
@@ -66,12 +66,17 @@ export default new Command()
         console.error(`Annotating ${inputVcfGz} with ${caddData}`);
         const columnsNum = Number.parseInt(
           (
-            await $`zcat ${caddData} | grep -m1 '^#Chrom' | head -1 | awk '{print NF}'`
-          ).stdout
+            await $`zcat ${caddData} | grep -m1 '^#Chrom' | head -1 | awk '{print NF}'`.nothrow()
+          ).stdout,
+          10
         );
         await vcfanno(inputVcfGz, _fullVcfGz, {
           threads: 4,
-          config: [await getVcfannoCADDCfg(resolve(caddData), columnsNum > 6)],
+          config: {
+            annotation: [
+              await getVcfannoCADDCfg(resolve(caddData), columnsNum > 6),
+            ],
+          },
         });
       } else {
         const checkCADD =
@@ -83,7 +88,7 @@ export default new Command()
           console.info(`no CADD annot found in ${inputVcfGz}, annot...`);
           await vcfanno(inputVcfGz, _fullVcfGz, {
             threads: 4,
-            config: [await getVcfannoCADDCfg(assembly, true)],
+            config: { annotation: [await getVcfannoCADDCfg(assembly, true)] },
           });
         }
       }
