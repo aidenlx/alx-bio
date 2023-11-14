@@ -1,7 +1,7 @@
 import getHPODisease from "@/database/hpo-disease.ts";
 import getHPOPhenotype from "@/database/hpo-phenotype.ts";
 import getHPOTranslate from "@/database/hpo-cn.ts";
-import { CsvStringifyStream, CsvParseStream, fmtBytes } from "@/deps.ts";
+import { CsvStringifyStream, CsvParseStream, fmtBytes, $ } from "@/deps.ts";
 // import getOMIMAnnot from "../database/omim-annot.ts";
 import getORPHA from "@/database/orpha.ts";
 import getOMIMTranslate from "@/database/omim-cn.ts";
@@ -63,6 +63,29 @@ import printStdErr from "@/utils/print-stderr.ts";
 import { checkDone } from "@/utils/check-done.ts";
 import { ExtractOptions, getFieldList } from "@/pipeline/final/fields.ts";
 
+async function Extract(
+  inputVcf: string,
+  outputTsvGz: string,
+  {
+    assembly,
+    ...extractOpts
+  }: {
+    assembly: "hg19" | "hg38";
+  } & ExtractOptions
+) {
+  const { done, finish } = await checkDone(outputTsvGz, inputVcf);
+  if (done) {
+    console.info("Skipping extract");
+    return outputTsvGz;
+  }
+  console.error(`Extracting from ${inputVcf}...`);
+
+  const fieldList = getFieldList(assembly, extractOpts);
+  await $`SnpSift extractFields -s , -e . ${inputVcf} ${fieldList} > ${outputTsvGz}`;
+  await finish();
+  return outputTsvGz;
+}
+
 export default async function ExtractAndHpoAnnot(
   inputVcf: string,
   outputTsvGz: string,
@@ -84,7 +107,10 @@ export default async function ExtractAndHpoAnnot(
   }
   console.error(`Extracting from ${inputVcf}...`);
 
-  const fieldList = getFieldList(assembly, extractOpts);
+  const extractRaw = outputTsvGz.replace("tsv.gz", "raw.tsv");
+
+  await Extract(inputVcf, extractRaw, { assembly, ...extractOpts });
+
   const hpoAnnot = HpoAnnot({ samples, database });
   const output = await Deno.open(outputTsvGz, {
     create: true,
@@ -96,27 +122,19 @@ export default async function ExtractAndHpoAnnot(
     stdout: "piped",
     stderr: "piped",
   }).spawn();
-  const extractFields = new Deno.Command("SnpSift", {
-    args: [
-      "extractFields",
-      ...["-s", ","],
-      ...["-e", "."],
-      inputVcf,
-      ...fieldList,
-    ],
-    stdin: "null",
-    stdout: "piped",
-    stderr: "piped",
-  }).spawn();
-  printStdErr(extractFields.stderr);
+
   printStdErr(bgzip.stderr);
 
-  const pipea = extractFields.stdout
+  const extractRawFile = await Deno.open(extractRaw);
+
+  const pipea = extractRawFile.readable
+    // .pipeThrough(new DecompressionStream("gzip"))
     .pipeThrough(new TextDecoderStream())
     .pipeThrough(
       new CsvParseStream({
         skipFirstRow: false,
         separator,
+        lazyQuotes: true,
       })
     )
     .pipeThrough(hpoAnnot)
@@ -126,11 +144,7 @@ export default async function ExtractAndHpoAnnot(
   const pipeb = bgzip.stdout.pipeTo(output.writable);
 
   await Promise.all([pipea, pipeb]);
-  const eStatus = await extractFields.status,
-    bStatus = await bgzip.status;
-  if (!eStatus.success) {
-    throw new Error("extractFields failed: " + eStatus.code);
-  }
+  const bStatus = await bgzip.status;
   if (!bStatus.success) {
     throw new Error("bgzip failed: " + bStatus.code);
   }

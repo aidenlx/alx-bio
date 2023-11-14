@@ -124,14 +124,16 @@ export async function getVcfannoCADDCfg(
   if (!inclAnno) {
     return {
       file,
-      ...ColToDef([[6, "CADD_PHRED_float"]]),
+      ...ColToDef([[6, "CADD_PHRED_float", "first"]]),
     };
   } else {
     return {
       file,
       ...CADDToDef(
         version,
-        ["PHRED", "CADD_PHRED"],
+        ["PHRED", "CADD_PHRED", "first"],
+        ["(AnnoType)", "CADD_AnnoType"],
+        ["Consequence", "CADD_Consequence"],
         "SIFTcat",
         "SIFTval",
         "PolyPhenCat",
@@ -243,18 +245,35 @@ export function ColToDef<T extends VcfAnnotColumn[]>(
   );
 }
 
+type CADDKeyDef =
+  | CADDCommonColumn
+  | [key: CADDCommonColumn, name?: string, op?: string];
+
+function parseCADDKeyDef(def: CADDKeyDef): {
+  key: CADDCommonColumn;
+  altName?: string;
+  op: string;
+} {
+  if (typeof def === "string") {
+    return { key: def, altName: def, op: "self" };
+  } else if (Array.isArray(def)) {
+    const [key, altName, op] = def;
+    return { key, altName: altName, op: op ?? "self" };
+  }
+  assertNever(def);
+}
+
 export function CADDToDef(
   version: keyof typeof CADDColumns,
-  ...keys: (CADDCommonColumn | [key: CADDCommonColumn, name?: string])[]
+  ...keys: CADDKeyDef[]
 ) {
   return ColToDef(
     keys.map((def) => {
-      const key = typeof def === "string" ? def : def[0];
-      const altName = typeof def === "string" ? undefined : def[1];
+      const { key, altName, op } = parseCADDKeyDef(def);
       const { id, name, type } = CADDColumns[version][key];
       const typeDef =
         type === "float" ? "_float" : type === "integer" ? "_int" : "";
-      return [id, `${altName ?? name}${typeDef}`, "self"];
+      return [id, `${altName ?? name}${typeDef}`, op];
     })
   );
 }

@@ -920,7 +920,7 @@ const GRCh37_v1_6 = {
     type: "integer",
     description: "Number of inserted/deleted bases",
   },
-  "(Annotype)": {
+  "(AnnoType)": {
     id: 7,
     name: "(Annotype)",
     type: "factor",
