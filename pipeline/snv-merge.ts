@@ -6,6 +6,8 @@ import GATKCombineGVCFs from "@/pipeline/module/gatk/combineGVCFs.ts";
 import GATKGenotypeGVCFs from "@/pipeline/module/gatk/genotypeGVCFs.ts";
 import bcftoolsNorm from "@/pipeline/module/bcftools/norm.ts";
 
+export const mergeVersion = "." + "v2";
+
 export default new Command()
   .name("snv.merge")
   .description("Pipeline to consolidate GVCFs and perform joint genotyping")
@@ -33,7 +35,7 @@ export default new Command()
 
     const gVcfGz = getGVcfGz(output, assembly),
       rawVcfGz = `${output}.raw.${assembly}.vcf.gz`,
-      normVcfGz = `${output}.norm.${assembly}.vcf.gz`;
+      normVcfGz = `${output}.norm${mergeVersion}.${assembly}.vcf.gz`;
 
     if (gvcfInputs.length > 1) {
       console.error(
@@ -45,12 +47,12 @@ export default new Command()
       console.info("normalize vcf");
       // split multiallelic variants into biallelic variants
       // required by annovar
-      await bcftoolsNorm(rawVcfGz, normVcfGz);
+      await bcftoolsNorm(rawVcfGz, normVcfGz, { fastaRef: reference });
     } else {
       console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
       await GATKGenotypeGVCFs(gvcfInputs[0], rawVcfGz, { reference });
       console.info("normalize vcf");
-      await bcftoolsNorm(rawVcfGz, normVcfGz);
+      await bcftoolsNorm(rawVcfGz, normVcfGz, { fastaRef: reference });
     }
 
     console.info("END ALL ************************************* Bey");

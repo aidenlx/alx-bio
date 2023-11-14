@@ -12,11 +12,11 @@ ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 cd $SAMPLE_ID/vcf
 
 if [ $ASSEMBLY == "hg19" ]; then
-  INPUT_VCF="$SAMPLE_ID.norm.hs37.vcf.gz"
+  INPUT_VCF="$SAMPLE_ID.norm.v2.hs37.vcf.gz"
 elif [ $ASSEMBLY == "hg38" ]; then
-  INPUT_VCF="$SAMPLE_ID.norm.hg38.vcf.gz"
+  INPUT_VCF="$SAMPLE_ID.norm.v2.hg38.vcf.gz"
 fi
 
-OUTPUT=$SAMPLE_ID.cadd.$ASSEMBLY.tsv.gz
+OUTPUT=$SAMPLE_ID.cadd.v2.$ASSEMBLY.tsv.gz
 
 bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/cadd.sh $ASSEMBLY $INPUT_VCF $OUTPUT

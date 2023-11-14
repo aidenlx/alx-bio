@@ -16,7 +16,8 @@ import genQC from "@/pipeline/module/gen-qc.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-export const finalVersion = "." + "v3_6";
+export const finalVersion = "." + "v3_7";
+const CADDVersion = "." + "v2";
 
 export default new Command()
   .name("snv.final")
@@ -56,7 +57,7 @@ export default new Command()
       const fullVcfGz = `${sample}.full${finalVersion}.${assembly}.vcf.gz`;
       const _fullVcfGz = `${sample}._full${finalVersion}.${assembly}.vcf.gz`;
       if (caddScript) {
-        const caddData = `${sample}.cadd.${assembly}.tsv.gz`;
+        const caddData = `${sample}.cadd${CADDVersion}.${assembly}.tsv.gz`;
         if (!exists(`${caddData}.tbi`)) {
           await $`tabix -b 2 -e 2 -s 1 ${caddData}`;
         }

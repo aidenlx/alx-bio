@@ -25,4 +25,4 @@ bioa snv.annot.s -r $ASSEMBLY --normed \
   -i "$SAMPLE_ID.$ASSEMBLY.vcf.gz" -s "$SAMPLE_ID" --no-stats
 
 bioa snv.annot.m -t $THREADS -r $ASSEMBLY --normed --no-local \
-  -i "$SAMPLE_ID.s.$ASSEMBLY.vcf.gz" -s "$SAMPLE_ID"
+  -i "$SAMPLE_ID.s.v2.$ASSEMBLY.vcf.gz" -s "$SAMPLE_ID"

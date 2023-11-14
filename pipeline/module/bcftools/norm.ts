@@ -10,6 +10,7 @@ export default async function bcftoolsNorm(
   input: string,
   output: string,
   options: {
+    fastaRef?: string;
     args?: string[];
   } = {}
 ) {
@@ -18,7 +19,11 @@ export default async function bcftoolsNorm(
     console.info("Skipping bcftools norm");
     return output;
   }
-  const args = [...(options.args ?? []), "-m", "-both"];
+  const args = [
+    ...(options.args ?? []),
+    ...["-m", "-both"],
+    ...(options.fastaRef ? ["-f", options.fastaRef] : []),
+  ];
   if (output.endsWith(".gz")) {
     await $`bcftools norm ${args} ${input} | bgzip > ${output} && tabix -f -p vcf ${output}`;
   } else {

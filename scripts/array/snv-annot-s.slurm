@@ -11,9 +11,9 @@ ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 shift;shift
 
 if [ $ASSEMBLY == "hg19" ]; then
-  INPUT_VCF="$SAMPLE_ID.norm.hs37.vcf"
+  INPUT_VCF="$SAMPLE_ID.norm.v2.hs37.vcf"
 elif [ $ASSEMBLY == "hg38" ]; then
-  INPUT_VCF="$SAMPLE_ID.norm.hg38.vcf"
+  INPUT_VCF="$SAMPLE_ID.norm.v2.hg38.vcf"
 fi
 
 export PATH=/cluster/home/jiyuan/res/annovar:$PATH

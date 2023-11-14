@@ -24,9 +24,9 @@ cd $(dirname "$INPUT_VCF")
 INPUT_VCF=$(basename "$INPUT_VCF")
 
 if [ $ASSEMBLY == "hg19" ]; then
-  NORM_VCF="$SAMPLE_ID.norm.hs37.vcf"
+  NORM_VCF="$SAMPLE_ID.norm.v2.hs37.vcf"
 elif [ $ASSEMBLY == "hg38" ]; then
-  NORM_VCF="$SAMPLE_ID.norm.hg38.vcf"
+  NORM_VCF="$SAMPLE_ID.norm.v2.hg38.vcf"
 fi
 
 bcftools norm -m -both "$INPUT_VCF" -o "$NORM_VCF"
@@ -35,6 +35,6 @@ bcftools norm -m -both "$INPUT_VCF" -o "$NORM_VCF"
   -i "$NORM_VCF" -s "$SAMPLE_ID" --no-stats
 
 /genetics/home/stu_liujiyuan/.local/bin/bioa snv.annot.m -t $THREADS -r $ASSEMBLY  --normed \
-  -i "$SAMPLE_ID.s.$ASSEMBLY.vcf" -s "$SAMPLE_ID"
+  -i "$SAMPLE_ID.s.v2.$ASSEMBLY.vcf" -s "$SAMPLE_ID"
 
 /genetics/home/stu_liujiyuan/.local/bin/bioa snv.final -r $ASSEMBLY -s "$SAMPLE_ID" --no-cadd-script

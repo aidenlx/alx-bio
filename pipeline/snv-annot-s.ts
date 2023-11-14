@@ -3,9 +3,9 @@ import { snpeff_assembly } from "./_res.ts";
 import { orGzip } from "@/utils/or-gzip.ts";
 import snpEff from "./module/snpeff.ts";
 import { toFinalOutput, pipe } from "@/pipeline/pipe.ts";
+import { mergeVersion } from "@/pipeline/snv-merge.ts";
 
-export const sVersoin = "";
-// export const sVersoin = "." + "v2";
+export const sVersoin = "." + "v2";
 
 export default new Command()
   .name("snv.annot.s")
@@ -40,7 +40,10 @@ export default new Command()
 
     console.info("Input vcf: " + inputVcf);
 
-    if (!path.basename(inputVcf).includes("norm") && !options.normed) {
+    if (
+      !path.basename(inputVcf).includes("norm" + mergeVersion) &&
+      !options.normed
+    ) {
       throw new Error("Input vcf may not be handled by bcftools norm -m -both");
     }
 

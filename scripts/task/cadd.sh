@@ -29,11 +29,11 @@ if [ $ASSEMBLY == "hg19" ]; then
   zcat_safe $SRC_VCF | rg $FILTER | bgzip > $INPUT_VCF
 elif [ $ASSEMBLY == "hg38" ]; then
   ASSEMBLY_CADD="GRCh38"
-  # INPUT_VCF="$SAMPLE_ID.norm.hg38.no-chr.vcf.gz"
+  # INPUT_VCF="$SAMPLE_ID.norm.v2.hg38.no-chr.vcf.gz"
   zcat_safe $SRC_VCF | sed 's/^chr//' | rg $FILTER | bgzip > $INPUT_VCF
 fi
 
-CADD.sh -a -g $ASSEMBLY_CADD -o "$OUTPUT" -c $SLURM_CPUS_PER_TASK $INPUT_VCF
+CADD.sh -a -g $ASSEMBLY_CADD -o "$OUTPUT" -c $THREADS $INPUT_VCF
 
 echo indexing "$OUTPUT"
 tabix -b 2 -e 2 "$OUTPUT"

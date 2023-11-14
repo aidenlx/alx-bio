@@ -14,4 +14,4 @@ shift;shift
 export PATH=/cluster/home/jiyuan/res/annovar:$PATH
 conda activate snv-final
 bioa snv.annot.m -t $THREADS -r $ASSEMBLY --normed \
-  -i "$SAMPLE_ID/vcf/$SAMPLE_ID.s.$ASSEMBLY.vcf" -s "$SAMPLE_ID" "$@"
+  -i "$SAMPLE_ID/vcf/$SAMPLE_ID.s.v2.$ASSEMBLY.vcf" -s "$SAMPLE_ID" "$@"
