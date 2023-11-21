@@ -8,7 +8,7 @@ import { toFinalOutput, pipe } from "./pipe.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 import { popmaxPostAnnot } from "@/pipeline/_freq.ts";
 
-export const mVersion = "." + "v2_6";
+export const mVersion = "." + "v2_7";
 
 export default new Command()
   .name("snv.annot.m")

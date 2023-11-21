@@ -11,8 +11,8 @@ import { CADDColumns, CADDCommonColumn } from "@/pipeline/_cadd_anno.ts";
 import { assertNever } from "@/utils/assert-never.ts";
 
 export const ClinVar = {
-  hg19: "/cluster/home/jiyuan/res/hg19/clinvar_20230717.vcf.gz",
-  hg38: "/cluster/home/jiyuan/res/hg38/clinvar_20230717.vcf.gz",
+  hg19: "/cluster/home/jiyuan/res/hg19/clinvar_20231112.vcf.gz",
+  hg38: "/cluster/home/jiyuan/res/hg38/clinvar_20231112.vcf.gz",
 };
 
 export const wbbcDatabase = {
