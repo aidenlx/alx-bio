@@ -18,6 +18,7 @@ export default new Command()
   .option("--resource <dir:string>", "Path to Resource", {
     default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
   })
+  .option("--split-indel", "Split indel and snp")
   .option("--no-local", "Do not extract local database")
   .option("--slivar", "Extract slivar fields")
   .option("--slivar-ch", "Extract slivar fields from result of compound-hets")
@@ -36,6 +37,7 @@ export default new Command()
       slivar,
       slivarCh,
       regionsFile,
+      splitIndel,
     }) => {
       const commonSuffix = `${finalVersion}.${assembly}`;
       /** should replace .vcf or .vcf.gz, also replace .$ref before extension if present */
@@ -57,23 +59,34 @@ export default new Command()
           : undefined,
       };
 
-      await Promise.all([annotate(input, "snp"), annotate(input, "indel")]);
+      if (splitIndel) {
+        await Promise.all([annotate(input, "snp"), annotate(input, "indel")]);
+      } else {
+        await annotate(input);
+      }
 
-      async function annotate(inputVcfGz: string, type: "snp" | "indel") {
-        const suffix = `.${type}${finalVersion}.${assembly}`;
+      async function annotate(inputVcfGz: string, type?: "snp" | "indel") {
+        const suffix = (type ? `.${type}` : "") + `${finalVersion}.${assembly}`;
 
-        const subVcfGz = `${outputBase}.full${suffix}.vcf.gz`;
+        async function split(inputVcfGz: string, type?: "snp" | "indel") {
+          if (!type) return inputVcfGz;
+          const subVcfGz = `${outputBase}.full${suffix}.vcf.gz`;
 
-        await bcftoolsView(inputVcfGz, subVcfGz, {
-          args: ["-i", `TYPE="${type}"`, ...regionFileOpt],
-        });
+          await bcftoolsView(inputVcfGz, subVcfGz, {
+            args: ["-i", `TYPE="${type}"`, ...regionFileOpt],
+          });
+          return subVcfGz;
+        }
 
         const outCsvGz = `${outputBase}${suffix}.excel.csv.gz`,
           outTsvGz = `${outputBase}${suffix}.tsv.gz`;
-        await extract(subVcfGz, outTsvGz, eOpts).then((input) =>
+
+        await extract(await split(inputVcfGz, type), outTsvGz, eOpts).then(
+          (input) => tsv2excel(input, outCsvGz)
+        );
+        await extract(inputVcfGz, outTsvGz, eOpts).then((input) =>
           tsv2excel(input, outCsvGz)
         );
-
         console.error(`Done, output to ${outCsvGz} and ${outTsvGz}`);
       }
     }

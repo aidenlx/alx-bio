@@ -77,13 +77,13 @@ slivar compound-hets -v "$EXPR_OUT" \
 
 conda activate snv-final
 
-EXPR_OUT_SNV="$OUT_BASE.slivar.snv.$ASSEMBLY.vcf.gz"
-EXPR_OUT_INDEL="$OUT_BASE.slivar.indel.$ASSEMBLY.vcf.gz"
+# EXPR_OUT_SNV="$OUT_BASE.slivar.snv.$ASSEMBLY.vcf.gz"
+# EXPR_OUT_INDEL="$OUT_BASE.slivar.indel.$ASSEMBLY.vcf.gz"
 
-bcftools view -i 'TYPE="snp"' $EXPR_OUT -Oz > $EXPR_OUT_SNV
-bcftools view -i 'TYPE="indel"' $EXPR_OUT -Oz > $EXPR_OUT_INDEL
+# bcftools view -i 'TYPE="snp"' $EXPR_OUT -Oz > $EXPR_OUT_SNV
+# bcftools view -i 'TYPE="indel"' $EXPR_OUT -Oz > $EXPR_OUT_INDEL
 
-bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT_SNV --slivar "$@" &
-bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT_INDEL --slivar "$@" &
+# bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT_SNV --slivar "$@" &
+bioa snv.extract -r $ASSEMBLY -i $EXPR_OUT --slivar "$@" &
 bioa snv.extract -r $ASSEMBLY -i $CH_OUT --slivar-ch "$@" &
 wait
