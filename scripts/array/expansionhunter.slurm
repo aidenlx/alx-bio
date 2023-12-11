@@ -6,11 +6,14 @@
 
 source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
 
+CATALOG=/cluster/home/jiyuan/res/str-analysis/str_analysis/variant_catalogs
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 if [ $ASSEMBLY == "hg19" ]; then
   INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.bqsr.hs37.bam"
+  CATALOG=$CATALOG/variant_catalog_without_offtargets.GRCh37.json
 elif [ $ASSEMBLY == "hg38" ]; then
   INPUT_BAM="$SAMPLE_ID/bamfile/$SAMPLE_ID.bqsr.hg38.bam"
+  CATALOG=$CATALOG/variant_catalog_without_offtargets.GRCh38.json
 fi
 
 OUT_DIR=$SAMPLE_ID/expansionhunter
@@ -18,5 +21,5 @@ OUT_DIR=$SAMPLE_ID/expansionhunter
 # https://stripy.org/expansionhunter-catalog-creator
 
 bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/expansionhunter.sh \
-  $ASSEMBLY $INPUT_BAM $OUT_DIR $SAMPLE_ID \
-  /cluster/home/jiyuan/res/RepeatCatalogs_gnomad/$ASSEMBLY/variant_catalog_without_offtargets.json
+  $ASSEMBLY "$INPUT_BAM" "$OUT_DIR" "$SAMPLE_ID" \
+  "$CATALOG"
