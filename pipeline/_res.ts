@@ -66,6 +66,11 @@ const _Interval = {
       hs37: "xgen-exome-hyb-panel-v2-probes.hs37.bed",
       hg38: "xgen-exome-hyb-panel-v2-probes.hg38.bed",
     },
+    KAPA_HyperExome_v1: {
+      hg19: "KAPA_HyperExome_hg19_capture_targets.bed",
+      hs37: "KAPA_HyperExome_hs37_capture_targets.bed",
+      hg38: "KAPA_HyperExome_hg38_capture_targets.bed"
+    }
   },
   Target: {
     AgilentV6r2: {
@@ -91,6 +96,11 @@ const _Interval = {
       hs37: "xgen-exome-hyb-panel-v2-targets.hs37.bed",
       hg38: "xgen-exome-hyb-panel-v2-targets.hg38.bed",
     },
+    KAPA_HyperExome_v1: {
+      hg19: "KAPA_HyperExome_hg19_primary_targets.bed",
+      hs37: "KAPA_HyperExome_hs37_primary_targets.bed",
+      hg38: "KAPA_HyperExome_hg38_primary_targets.bed"
+    }
   },
 } satisfies Record<
   "Bait" | "Target",
