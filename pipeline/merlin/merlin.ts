@@ -165,11 +165,16 @@ export default new Command()
     const chrPrefix = opts.ref !== "hs37";
     const chrList = getChrList(chrPrefix).join(",");
     await $`[ ! -f ${inputVcf}.tbi ] && tabix -p vcf ${inputVcf} || true`;
-    await $`bcftools view -r ${chrList} ${inputVcf} -Oz -o ${chrOnlyVcf} && tabix ${chrOnlyVcf}`;
+    await $`bcftools view -i 'TYPE="snp"' -r ${chrList} ${inputVcf} -Oz -o ${chrOnlyVcf} && tabix ${chrOnlyVcf}`;
 
     const cmMap = cmMapRes[opts.ref === "hs37" ? "hg19" : opts.ref];
     const cmFilterBimPrefix = join(tempDir, "cm-filter");
-    await $`plink --vcf ${chrOnlyVcf} --cm-map ${cmMap} --make-just-bim --out ${cmFilterBimPrefix}`;
+    const halfCallOpts = [
+      ...["--vcf-half-call", "missing"],
+      ...["--set-missing-var-ids", "@:#[b37]$1,$2"],
+      ...["--new-id-max-allele-len", "50"],
+    ];
+    await $`plink --vcf ${chrOnlyVcf} --cm-map ${cmMap} --make-just-bim ${halfCallOpts} --out ${cmFilterBimPrefix}`;
     const cmFilterBim = `${cmFilterBimPrefix}.bim`;
 
     const filterVcf = join(tempDir, "filter.vcf.gz");
