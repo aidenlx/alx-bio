@@ -16,7 +16,7 @@ import genQC from "@/pipeline/module/gen-qc.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-export const finalVersion = "." + "v3_8";
+export const finalVersion = "." + "v3_9";
 const CADDVersion = "." + "v2";
 
 export default new Command()
@@ -114,8 +114,7 @@ export default new Command()
       const regionFileOpt = regionsFile ? ["-R", regionsFile] : [];
 
       await Promise.all([
-        annotate(fullVcfGz, "snp"),
-        annotate(fullVcfGz, "indel"),
+        annotate(fullVcfGz),
         exomiserExtra(
           fullVcfGz,
           `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`,
@@ -124,8 +123,8 @@ export default new Command()
         ),
       ]);
 
-      async function annotate(inputVcfGz: string, type: "snp" | "indel") {
-        const suffix = `.${type}${finalVersion}.${assembly}`;
+      async function annotate(inputVcfGz: string) {
+        const suffix = `${finalVersion}.${assembly}`;
 
         const { join } = path;
         const fullDir = "full";
@@ -137,7 +136,7 @@ export default new Command()
         await ensureDir(fullDir);
 
         await bcftoolsView(inputVcfGz, fullOut.vcfGz, {
-          args: ["-i", `TYPE="${type}"`, ...regionFileOpt],
+          args: ["-i"/* , `TYPE="${type}"` */, ...regionFileOpt],
         });
 
         const qcDir = "qc";

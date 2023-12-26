@@ -1,7 +1,7 @@
 import getHPODisease from "@/database/hpo-disease.ts";
 import getHPOPhenotype from "@/database/hpo-phenotype.ts";
 import getHPOTranslate from "@/database/hpo-cn.ts";
-import { CsvStringifyStream, CsvParseStream, fmtBytes, $ } from "@/deps.ts";
+import { $, CsvParseStream, CsvStringifyStream, fmtBytes } from "@/deps.ts";
 // import getOMIMAnnot from "../database/omim-annot.ts";
 import getORPHA from "@/database/orpha.ts";
 import getOMIMTranslate from "@/database/omim-cn.ts";
@@ -45,9 +45,10 @@ const newColumnsAfterCADD = {
 } satisfies Record<string, string | number>;
 const newColumnsPrepend = {
   ID: "",
+  TYPE: "",
   GT_SYMBOL: "",
-  HOM_PCT: -1,
-  HET_PCT: -1,
+  HOM_SAMPLE: "",
+  HET_SAMPLE: "",
 } satisfies Record<string, string | number>;
 const newColumnsAfterGene = {
   gene_omim: "",
@@ -71,7 +72,7 @@ async function Extract(
     ...extractOpts
   }: {
     assembly: "hg19" | "hg38";
-  } & ExtractOptions
+  } & ExtractOptions,
 ) {
   const { done, finish } = await checkDone(outputTsvGz, inputVcf);
   if (done) {
@@ -98,7 +99,7 @@ export default async function ExtractAndHpoAnnot(
     assembly: "hg19" | "hg38";
     samples: string[];
     database: HpoData;
-  } & ExtractOptions
+  } & ExtractOptions,
 ) {
   const { done, finish } = await checkDone(outputTsvGz, inputVcf);
   if (done) {
@@ -135,7 +136,7 @@ export default async function ExtractAndHpoAnnot(
         skipFirstRow: false,
         separator,
         lazyQuotes: true,
-      })
+      }),
     )
     .pipeThrough(hpoAnnot)
     .pipeThrough(new CsvStringifyStream({ separator, crlf: false }))
@@ -250,25 +251,30 @@ function HpoAnnot({
         .map((key) => data[key])
         .join("-")
         .replace(/^chr/, "");
-      const GT = data[gtCol].split(",");
+      colsPrepend.TYPE = data.REF.length === data.ALT.length ? "SNV" : "INDEL";
+      const GT = data[gtCol].split(",").map(toGTTag);
       if (GT.length !== samples.length) {
         throw new Error(
-          `GT length not match, expected ${samples}(${samples.length}), got ${GT.length}: ${GT}`
+          `GT length not match, expected ${samples}(${samples.length}), got ${GT.length}: ${GT}`,
         );
       }
-      const homCount = GT.map(toGTTag).filter((v) =>
-        v.startsWith("Hom")
-      ).length;
+
+      const hom = GT.flatMap((gt, i) =>
+        gt.startsWith("Hom") ? [samples[i]] : []
+      );
+      const homCount = hom.length;
       colsAfterCADD.HOM_COUNT = homCount;
-      colsPrepend.HOM_PCT = homCount / GT.length;
-      // `${homCount}/${GT.length}~${homCount / GT.length}`;
+      colsPrepend.HOM_SAMPLE = hom.join(",");
+
+      const het = GT.flatMap((gt, i) =>
+        gt.startsWith("Het") ? [samples[i]] : []
+      );
       const hetCount = GT.map(toGTTag).filter((v) =>
         v.startsWith("Het")
       ).length;
       colsAfterCADD.HET_COUNT = hetCount;
-      colsPrepend.HET_PCT = hetCount / GT.length;
-      // `${hetCount}/${GT.length}~${hetCount / GT.length}`;
-      colsPrepend.GT_SYMBOL = GT.map((v) => {
+      colsPrepend.HET_SAMPLE = het.join(",");
+      colsPrepend.GT_SYMBOL = GT.length > 8 ? "-" : GT.map((v) => {
         const tag = toGTTag(v);
         if (v !== tag) {
           return GTSymbolMap[tag.replace(/[/|]$/, "")];
@@ -359,8 +365,7 @@ function HpoAnnot({
       source = "ORPHA";
     } else if (v.startsWith("OMIM:")) {
       const d = omimTranslate[v.substring(5)];
-      name =
-        d &&
+      name = d &&
         ((cn ? d.cnTitle : null) ?? d.preTitle ?? d.altTitle ?? d.incTitle);
       source = "OMIM";
     }
