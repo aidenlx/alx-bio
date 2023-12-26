@@ -1,7 +1,7 @@
 import { Command, ensureDir, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import { nonAscii } from "@/utils/ascii.ts";
-import { Res, getGVcfGz } from "@/pipeline/_res.ts";
+import { getGVcfGz, Res } from "@/pipeline/_res.ts";
 import GATKCombineGVCFs from "@/pipeline/module/gatk/combineGVCFs.ts";
 import GATKGenotypeGVCFs from "@/pipeline/module/gatk/genotypeGVCFs.ts";
 import bcftoolsNorm from "@/pipeline/module/bcftools/norm.ts";
@@ -16,6 +16,7 @@ export default new Command()
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
     required: true,
   })
+  .option("--no-normalize", "skip normalization")
   .arguments("<input...>")
   .action(async (options, ...gvcfInputs) => {
     const output = options.output.replace(/\.+?$/, "");
@@ -39,21 +40,23 @@ export default new Command()
 
     if (gvcfInputs.length > 1) {
       console.error(
-        `Merging ${gvcfInputs.length} gvcfs: \n${gvcfInputs.join("\n")}`
+        `Merging ${gvcfInputs.length} gvcfs: \n${gvcfInputs.join("\n")}`,
       );
       await GATKCombineGVCFs(gvcfInputs, gVcfGz, { reference });
       console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
       await GATKGenotypeGVCFs(gVcfGz, rawVcfGz, { reference });
+    } else {
+      console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
+      await GATKGenotypeGVCFs(gvcfInputs[0], rawVcfGz, { reference });
+    }
+
+    if (options.normalize) {
       console.info("normalize vcf");
       // split multiallelic variants into biallelic variants
       // required by annovar
       await bcftoolsNorm(rawVcfGz, normVcfGz, { fastaRef: reference });
     } else {
-      console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
-      await GATKGenotypeGVCFs(gvcfInputs[0], rawVcfGz, { reference });
-      console.info("normalize vcf");
-      await bcftoolsNorm(rawVcfGz, normVcfGz, { fastaRef: reference });
+      console.info("skip normalization");
     }
-
     console.info("END ALL ************************************* Bey");
   });
