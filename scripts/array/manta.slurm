@@ -5,7 +5,7 @@
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+source $HOME/alx-bio/scripts/array/_base.sh
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 if [ $ASSEMBLY == "hg19" ]; then
@@ -16,11 +16,11 @@ fi
 
 OUT_DIR=$SAMPLE_ID/manta
 
-bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/manta-cfg.sh \
+bash $HOME/alx-bio/scripts/task/manta-cfg.sh \
   $ASSEMBLY $INPUT_BAM $OUT_DIR
 
-bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/manta-run.sh \
+bash $HOME/alx-bio/scripts/task/manta-run.sh \
   $OUT_DIR
 
-bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/manta-annot.sh \
+bash $HOME/alx-bio/scripts/task/manta-annot.sh \
   $ASSEMBLY $OUT_DIR

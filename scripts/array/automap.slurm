@@ -4,7 +4,7 @@
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+source $HOME/alx-bio/scripts/array/_base.sh
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 if [ $ASSEMBLY == "hg19" ]; then
@@ -15,5 +15,5 @@ fi
 
 OUT_DIR=$SAMPLE_ID/automap
 
-bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/automap.sh \
+bash $HOME/alx-bio/scripts/task/automap.sh \
   $ASSEMBLY $INPUT_VCF $OUT_DIR

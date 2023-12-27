@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
-#SBATCH --cpus-per-task 16
+#SBATCH --cpus-per-task 4
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
@@ -11,7 +11,7 @@
 #   $(cut -f 2 file.txt | xargs -I _ printf "%s/vcf/%s.g.$ASSEMBLY.vcf.gz " _ _) \
 # && printf "1\t$MERGED" > fam.txt
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
 
 conda activate ngs-call

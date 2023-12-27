@@ -5,7 +5,7 @@
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+source $HOME/alx-bio/scripts/array/_base.sh
 
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 
@@ -19,4 +19,4 @@ fi
 
 OUTPUT=$SAMPLE_ID.cadd.v2.$ASSEMBLY.tsv.gz
 
-bash /genetics/home/stu_liujiyuan/pipeline/scripts/task/cadd.sh $ASSEMBLY $INPUT_VCF $OUTPUT
+bash $HOME/alx-bio/scripts/task/cadd.sh $ASSEMBLY $INPUT_VCF $OUTPUT

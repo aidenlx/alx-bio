@@ -1,14 +1,14 @@
 import {
   $,
   Command,
+  Confirm,
+  csvParse,
+  dirname,
   EnumType,
+  exists,
   formatDate,
   join,
-  exists,
-  dirname,
-  Confirm,
   Number as NumberType,
-  csvParse,
 } from "@/deps.ts";
 import type { ProcessOutput, ProcessPromise } from "@/deps.ts";
 import { genomeAssembly, vcfCaller } from "@/modules/common.ts";
@@ -25,7 +25,7 @@ const defaultArrayLimit = 4;
 const currTime = formatDate(new Date(), "M-d-HHmm");
 
 const script = (file: string) =>
-  join("/genetics/home/stu_liujiyuan/pipeline/scripts/array", file);
+  join(Deno.env.get("HOME") ?? ".", "alx-bio", "scripts", "array", file);
 
 const toJobId = (resp: ProcessOutput) => {
   if (resp.exitCode !== 0) {
@@ -57,7 +57,7 @@ export default new Command()
   })
   .option(
     "--no-cadd-script",
-    "use prescored CADD score in favor of CADD script"
+    "use prescored CADD score in favor of CADD script",
   )
   .option("-b, --bait-intervals <path:file>", "bait intervals BED file")
   .option("--target-intervals <path:file>", "target intervals BED file")
@@ -69,7 +69,7 @@ export default new Command()
     const useCADDScript = opts.caddScript;
     if (!(await exists(arrayFile, { isReadable: true, isFile: true }))) {
       throw new Error(
-        "Array file does not exist or is not readable: " + arrayFile
+        "Array file does not exist or is not readable: " + arrayFile,
       );
     }
 
@@ -108,10 +108,12 @@ export default new Command()
     let baitOption: string[] = [],
       targetOption: string[] = [];
     if (opts.method === "wes") {
-      if (opts.baitIntervals)
+      if (opts.baitIntervals) {
         baitOption = ["--bait-intervals", opts.baitIntervals];
-      if (opts.targetIntervals)
+      }
+      if (opts.targetIntervals) {
         targetOption = ["--target-intervals", opts.targetIntervals];
+      }
     }
 
     const cleanup = opts.cleanup ? "" : "--no-cleanup";
@@ -122,31 +124,39 @@ export default new Command()
     const TaskList = {
       align: () => ({
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-align.slurm"
-          )} ${arrayFile} ${ref_call} ${cleanup}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-align.slurm",
+            )
+          } ${arrayFile} ${ref_call} ${cleanup}`,
       }),
       hs_stat: () => ({
         deps: "align",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-hs-stat.slurm"
-          )} ${arrayFile} ${ref_call} ${baitOption} ${targetOption}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-hs-stat.slurm",
+            )
+          } ${arrayFile} ${ref_call} ${baitOption} ${targetOption}`,
         canRun: opts.method === "wes",
       }),
       bam: () => ({
         deps: "align",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-bam.slurm"
-          )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-bam.slurm",
+            )
+          } ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
       }),
       vcf: () => ({
         deps: "bam",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-vcf.slurm"
-          )} ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-vcf.slurm",
+            )
+          } ${arrayFile} ${ref_call} ${opts.method} ${cleanup} ${baitOption}`,
       }),
       // eh: () => ({
       //   deps: "bam",
@@ -158,9 +168,11 @@ export default new Command()
       merge: () => ({
         deps: "vcf",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-merge.slurm"
-          )} ${arrayFile} ${ref_call}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-merge.slurm",
+            )
+          } ${arrayFile} ${ref_call}`,
       }),
       // automap: () => ({
       //   deps: "merge",
@@ -172,31 +184,39 @@ export default new Command()
       cadd: () => ({
         deps: "merge",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "cadd.slurm"
-          )} ${arrayFile} ${ref_annot}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "cadd.slurm",
+            )
+          } ${arrayFile} ${ref_annot}`,
         canRun: useCADDScript,
       }),
       annot_s: () => ({
         deps: "merge",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-annot-s.slurm"
-          )} ${arrayFile} ${ref_annot}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-annot-s.slurm",
+            )
+          } ${arrayFile} ${ref_annot}`,
       }),
       annot_m: () => ({
         deps: "annot_s",
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-annot-m.slurm"
-          )} ${arrayFile} ${ref_annot} ${useCADDScript ? "--no-cadd" : ""}`,
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-annot-m.slurm",
+            )
+          } ${arrayFile} ${ref_annot} ${useCADDScript ? "--no-cadd" : ""}`,
       }),
       final: () => ({
         deps: ["cadd", "annot_m"],
         run: (name, deps) =>
-          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${script(
-            "snv-final.slurm"
-          )} ${arrayFile} ${ref_annot} ${
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-final.slurm",
+            )
+          } ${arrayFile} ${ref_annot} ${
             !useCADDScript ? "--no-cadd-script" : ""
           } --caller ${opts.caller}`,
       }),
@@ -219,7 +239,7 @@ export default new Command()
         }
         return tasks.slice(
           tasks.indexOf(startTask),
-          tasks.indexOf(endTask) + 1
+          tasks.indexOf(endTask) + 1,
         );
       }
       return pick.split(",").flatMap((arg) => {
@@ -237,7 +257,7 @@ export default new Command()
     const taskList = parsePick(opts.pick);
 
     const jobIds = (await pipe(opts.dependency, ...taskList)).filter(
-      (i) => i > 0
+      (i) => i > 0,
     );
     if (opts.parsable) {
       jobIds.forEach((id) => console.log(id));
@@ -247,7 +267,7 @@ export default new Command()
 
     await Deno.writeTextFile(
       join(dirname(arrayFile), `job-${currTime}.txt`),
-      jobIds.join("\n")
+      jobIds.join("\n"),
     );
   });
 
@@ -267,7 +287,7 @@ async function pipe(initDep: string | undefined, ...steps: Task[]) {
     } else if (firstRequestedDeps && depNames.length > 0) {
       const frDeps = firstRequestedDeps;
       const taskIds = await tasks.getLots(
-        ...depNames.filter((n) => !frDeps.includes(n))
+        ...depNames.filter((n) => !frDeps.includes(n)),
       );
       const deps: string[] = [];
       if (taskIds.length > 0) {
@@ -308,15 +328,17 @@ class Tasks extends Map<string, number> {
         }
         const skip = await new Confirm({
           default: true,
-          message: `Dependency ${n} not found in previous tasks. If you're sure that the task is completed, you can skip it. Skip?`,
+          message:
+            `Dependency ${n} not found in previous tasks. If you're sure that the task is completed, you can skip it. Skip?`,
         }).prompt();
         if (skip) return [];
         const newDepId = await new NumberType({
-          message: `Provide the job id of task ${n}, the task should be a job array: `,
+          message:
+            `Provide the job id of task ${n}, the task should be a job array: `,
           min: 1,
         }).prompt();
         return [newDepId];
-      })
+      }),
     );
     return ids.flat();
   }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 
 [ ! -f "file.txt" ] && echo "file.txt not found" && exit 1
 [ ! -f "fam.txt" ] && echo "fam.txt not found" && exit 1
@@ -19,7 +19,7 @@ GVCFS=$(bioa pl.fam-check -r $ASSEMBLY_MERGE file.txt)
 BEFORE_MERGE=$(bioa pl.submit --parsable -J $NAME --pick -vcf -r $ASSEMBLY -a $ARRAY $@ file.txt)
 MERGE=$(sbatch --parsable -J $NAME.merge \
   --dependency=afterok:$(tail -n1 <<< "$BEFORE_MERGE") \
-  /genetics/home/stu_liujiyuan/pipeline/scripts/task/snv-merge.sh \
+  $HOME/alx-bio/scripts/task/snv-merge.sh \
   -o $NAME/vcf/$NAME. -r $ASSEMBLY_MERGE $GVCFS)
 echo ---
 echo merging:

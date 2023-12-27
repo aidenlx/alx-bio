@@ -25,7 +25,7 @@ export default new Command()
     required: true,
   })
   .option("--resource <dir:string>", "Path to Resource", {
-    default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
+    default: join(Deno.env.get("HOME") ?? ".", "alx-bio/deno-csv/res"),
   })
   .option("-i, --input <file:string>", "input file", { required: true })
   .option("-o, --output <file:string>", "output prefix", { required: true })

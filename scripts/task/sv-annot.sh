@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
 
 INPUT=$1
@@ -12,7 +12,7 @@ if [ -z "$OUTPUT" ] || [ -z "$INPUT" ]; then
 fi
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 
-conda activate /genetics/home/stu_liujiyuan/miniconda3/envs/annotsv
+conda activate $HOME/miniconda3/envs/annotsv
 if [ $ASSEMBLY == "hg19" ]; then
   ASSEMBLY=GRCh37
 elif [ $ASSEMBLY == "hg38" ]; then

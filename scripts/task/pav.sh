@@ -3,7 +3,7 @@
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 THREADS=${SLURM_CPUS_PER_TASK:-8}
 
 TAG="2.2.9"

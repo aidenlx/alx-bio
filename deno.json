@@ -4,6 +4,8 @@
   },
   "tasks": {
     "upload": "rsync --exclude='.git/' --exclude='slivar/repo' --exclude='build' -azvhP . lab-admin:alx-bio --delete",
-    "remote-compile": "ssh lab-admin 'cd alx-bio; /genetics/home/stu_liujiyuan/.asdf/shims/deno compile --allow-all --no-check main.slurm.ts -o ~/.local/bin/bioa'"
+    "remote-compile": "ssh lab-admin 'cd alx-bio; /genetics/home/stu_liujiyuan/.asdf/shims/deno compile --allow-all --no-check main.slurm.ts -o ~/.local/bin/bioa'",
+    "upload-sc": "rsync --exclude='.git/' --exclude='slivar/repo' --exclude='build' -azvhP . fjsc:alx-bio --delete",
+    "remote-compile-sc": "ssh fjsc 'cd alx-bio; deno compile --allow-all --no-check -o ~/.local/bin/bioa main.slurm.ts'"
   }
 }

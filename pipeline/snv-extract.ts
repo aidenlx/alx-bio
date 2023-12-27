@@ -1,4 +1,4 @@
-import { Command } from "@/deps.ts";
+import { Command, join } from "@/deps.ts";
 import { genomeAssembly } from "@/modules/common.ts";
 import extract, { loadHpoData } from "@/pipeline/final/hpo-annot.ts";
 import getSamples from "@/pipeline/final/get-samples.ts";
@@ -16,7 +16,7 @@ export default new Command()
     required: true,
   })
   .option("--resource <dir:string>", "Path to Resource", {
-    default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
+    default: join(Deno.env.get("HOME") ?? ".", "alx-bio/deno-csv/res")
   })
   .option("--split-indel", "Split indel and snp")
   .option("--no-local", "Do not extract local database")

@@ -22,7 +22,7 @@ if [ ! -f "$FAM" ]; then
   exit 1
 fi
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
 
 conda activate king

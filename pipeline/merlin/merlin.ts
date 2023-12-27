@@ -165,7 +165,7 @@ export default new Command()
     const chrPrefix = opts.ref !== "hs37";
     const chrList = getChrList(chrPrefix).join(",");
     await $`[ ! -f ${inputVcf}.tbi ] && tabix -p vcf ${inputVcf} || true`;
-    await $`bcftools view -i 'TYPE="snp"' -r ${chrList} ${inputVcf} -Oz -o ${chrOnlyVcf} && tabix ${chrOnlyVcf}`;
+    await $`bcftools view -r ${chrList} ${inputVcf} -Oz -o ${chrOnlyVcf} && tabix ${chrOnlyVcf}`;
 
     const cmMap = cmMapRes[opts.ref === "hs37" ? "hg19" : opts.ref];
     const cmFilterBimPrefix = join(tempDir, "cm-filter");

@@ -5,7 +5,7 @@
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/array/_base.sh
+source $HOME/alx-bio/scripts/array/_base.sh
 conda_init mamba
 
 conda activate ont-map

@@ -8,9 +8,14 @@ _ALX_BASE_CONFIGED=1
 
 set -eo pipefail
 
-PIPELINE=/genetics/home/stu_liujiyuan/.local/share/pnpm/pipeline
-
 function conda_init() {
+  # for fjsc
+  if [ -x "$(command -v micromamba)" ]; then
+    shopt -s expand_aliases
+    source "$HOME/.bashrc"
+    alias conda="$(which micromamba) $@"
+    return
+  fi
   if [ $1 == "conda" ]; then
     export CONDA_EXE=/genetics/home/stu_liujiyuan/miniconda3/bin/conda
     export CONDA_PREFIX=/genetics/home/stu_liujiyuan/miniconda3

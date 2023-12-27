@@ -1,7 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
 export type SupportAssembly = "hg38" | "hs37" | "hg19";
 
-import { D, path } from "@/deps.ts";
+const resDir = Deno.env.get("ALXBIO_RES") ?? "/cluster/home/jiyuan/res";
+
+import { D, join, path } from "@/deps.ts";
 import { validBedPath } from "@/utils/validate.ts";
 
 export const getMarkDupBam = (sample: string, assembly: string) =>
@@ -15,18 +17,17 @@ export const getGVcfGz = (sample: string, assembly: string) =>
 export const Res = {
   hg38: {
     // https://lh3.github.io/2017/11/13/which-human-reference-genome-to-use
-    refFa:
-      "/cluster/home/jiyuan/res/hg38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
-    dbsnp: "/cluster/home/jiyuan/res/dbsnp/dbsnp156.hg38.vcf.gz",
+    refFa: join(resDir, "hg38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa"),
+    dbsnp: join(resDir, "dbsnp/dbsnp156.hg38.vcf.gz"),
   },
   /** hs37 (1-22,X,Y) vs hg19 (chr1-chr22,chrX,chrY) */
   hs37: {
-    refFa: "/cluster/home/jiyuan/res/hg19/hs37d5.fa",
-    dbsnp: "/cluster/home/jiyuan/res/dbsnp/dbsnp156.hs37.vcf.gz",
+    refFa: join(resDir, "hg19/hs37d5.fa"),
+    dbsnp: join(resDir, "dbsnp/dbsnp156.hs37.vcf.gz"),
   },
   hg19: {
     refFa: "/cluster/apps/humandb/hg19/hg19.chr.fa",
-    dbsnp: "/cluster/home/jiyuan/res/dbsnp/dbsnp156.hg19.vcf.gz",
+    dbsnp: join(resDir, "dbsnp/dbsnp156.hg19.vcf.gz"),
   },
 } satisfies Record<SupportAssembly, any>;
 
@@ -69,8 +70,8 @@ const _Interval = {
     KAPA_HyperExome_v1: {
       hg19: "KAPA_HyperExome_hg19_capture_targets.bed",
       hs37: "KAPA_HyperExome_hs37_capture_targets.bed",
-      hg38: "KAPA_HyperExome_hg38_capture_targets.bed"
-    }
+      hg38: "KAPA_HyperExome_hg38_capture_targets.bed",
+    },
   },
   Target: {
     AgilentV6r2: {
@@ -99,24 +100,24 @@ const _Interval = {
     KAPA_HyperExome_v1: {
       hg19: "KAPA_HyperExome_hg19_primary_targets.bed",
       hs37: "KAPA_HyperExome_hs37_primary_targets.bed",
-      hg38: "KAPA_HyperExome_hg38_primary_targets.bed"
-    }
+      hg38: "KAPA_HyperExome_hg38_primary_targets.bed",
+    },
   },
 } satisfies Record<
   "Bait" | "Target",
   Record<string, Partial<Record<SupportAssembly, string>>>
 >;
 
-export const Interval = D.map(_Interval, (types) =>
-  D.map(types, (intervalFiles) =>
-    D.map(intervalFiles, (file) =>
-      path.join(
-        "/",
-        ..."/cluster/home/jiyuan/res/probes/".split("/").filter(Boolean),
-        file
-      )
-    )
-  )
+export const Interval = D.map(
+  _Interval,
+  (types) =>
+    D.map(types, (intervalFiles) =>
+      D.map(intervalFiles, (file) =>
+        path.join(
+          "/",
+          ...join(resDir, "probes").split("/").filter(Boolean),
+          file,
+        ))),
 ) as typeof _Interval;
 
 export const KnownSites = {
@@ -174,32 +175,32 @@ export function parseFastqOption({
   }
   if (!fq1 && !fq2) {
     console.info(
-      "No fastq input specified, using 1.fq.gz and 2.fq.gz in outDir"
+      "No fastq input specified, using 1.fq.gz and 2.fq.gz in outDir",
     );
     return ["1.fq.gz", "2.fq.gz"];
   }
   throw new Error("Must specify both fq1 and fq2");
 }
 
-export const annovarDataDir = "/cluster/home/jiyuan/res/annovar_data/";
+export const annovarDataDir = join(resDir, "annovar_data/");
 
-export const CueDir = "/cluster/home/jiyuan/res/cue/",
+export const CueDir = join(resDir, "cue/"),
   CueModelCfg = {
     model_path: path.join(CueDir, "data/models/cue.v2.pt"),
   };
 
 export const CanvasRes = {
   resDir: {
-    hg38: "/cluster/home/jiyuan/res/canvas/GRCh38/",
-    hg19: "/cluster/home/jiyuan/res/canvas/hg19/",
+    hg38: join(resDir, "canvas/GRCh38/"),
+    hg19: join(resDir, "canvas/hg19/"),
     // no res without chr prefix (hs37) yet
   },
   populationBAlleleVcf: {
-    hg38: "/cluster/home/jiyuan/res/hg38/somatic-hg38_af-only-gnomad.10p.hg38.vcf",
+    hg38: join(resDir, "hg38/somatic-hg38_af-only-gnomad.10p.hg38.vcf"),
     // no res with chr prefix (hg19) yet
-    hs37: "/cluster/home/jiyuan/res/hg19/af-only-gnomad.raw.sites.10p.vcf",
+    hs37: join(resDir, "hg19/af-only-gnomad.raw.sites.10p.vcf"),
   },
-  dockerImage: "/cluster/home/jiyuan/res/canvas/image.tar",
+  dockerImage: join(resDir, "canvas/image.tar"),
 };
 
 export const readGroupNGS = (sample: string) =>
@@ -208,24 +209,24 @@ export const readGroupNGS = (sample: string) =>
 export const readGroupONT = (sample: string) =>
   `@RG\\tID:${sample}\\tSM:${sample}\\tPL:PACBIO`;
 
-
-
 export function parseIntevals(
   intervalsOpt: true | string | undefined,
   assembly: SupportAssembly,
-  baitOrTarget: "Bait" | "Target"
+  baitOrTarget: "Bait" | "Target",
 ): [path: string | null, bultiIn: boolean] {
   if (intervalsOpt === undefined) return [null, false];
-  if (intervalsOpt === true)
+  if (intervalsOpt === true) {
     return [Interval[baitOrTarget].AgilentV6r2[assembly], true];
+  }
   if (Object.keys(Interval[baitOrTarget]).includes(intervalsOpt)) {
     type BaitKey = keyof (typeof Interval)["Bait"];
     const baits = Interval[baitOrTarget][intervalsOpt as BaitKey];
     const bait = (baits as any)[assembly] as string | undefined;
-    if (!bait)
+    if (!bait) {
       throw new Error(
-        `Bait Intervals of ${intervalsOpt} not found for ${assembly}`
+        `Bait Intervals of ${intervalsOpt} not found for ${assembly}`,
       );
+    }
     return [bait, true];
   }
   if (!validBedPath.allows(intervalsOpt)) {

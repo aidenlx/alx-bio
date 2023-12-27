@@ -5,7 +5,7 @@
 
 # sbatch -J $name-str --array=1-24%4 ../run.slurm */bamfile/*.sort.hg38.bam */str ;
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
 conda activate slivar
 
@@ -56,7 +56,7 @@ pslivar expr --processes $THREADS \
   --pass-only \
   --fasta "$REF" \
   -g $RES_GNOMAD \
-  --js /genetics/home/stu_liujiyuan/alx-bio/scripts/slivar-functions.js \
+  --js $HOME/alx-bio/scripts/slivar-functions.js \
   --info 'INFO.impactful && INFO.gnomad_popmax_af < 0.01 && variant.FILTER == "PASS" && variant.ALT[0] != "*"' \
   --family-expr 'denovo:fam.every(segregating_denovo) && !freq_exceed(INFO, 0.001)' \
   --family-expr 'dominant:fam.every(segregating_dominant)' \

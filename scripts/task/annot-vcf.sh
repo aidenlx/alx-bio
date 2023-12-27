@@ -5,7 +5,7 @@
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
 
 INPUT_VCF=$1
@@ -31,10 +31,10 @@ fi
 
 bcftools norm -m -both "$INPUT_VCF" -o "$NORM_VCF"
 
-/genetics/home/stu_liujiyuan/.local/bin/bioa snv.annot.s -r $ASSEMBLY \
+bioa snv.annot.s -r $ASSEMBLY \
   -i "$NORM_VCF" -s "$SAMPLE_ID" --no-stats
 
-/genetics/home/stu_liujiyuan/.local/bin/bioa snv.annot.m -t $THREADS -r $ASSEMBLY  --normed \
+bioa snv.annot.m -t $THREADS -r $ASSEMBLY  --normed \
   -i "$SAMPLE_ID.s.v2.$ASSEMBLY.vcf" -s "$SAMPLE_ID"
 
-/genetics/home/stu_liujiyuan/.local/bin/bioa snv.final -r $ASSEMBLY -s "$SAMPLE_ID" --no-cadd-script
+bioa snv.final -r $ASSEMBLY -s "$SAMPLE_ID" --no-cadd-script

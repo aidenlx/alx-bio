@@ -1,6 +1,6 @@
-import { readAll, yamlParse } from "@/deps.ts";
+import { join, readAll, yamlParse } from "@/deps.ts";
 import { scope } from "@/deps.ts";
-import { Pedigree, parsePedFile } from "@/batch/ped.ts";
+import { parsePedFile, Pedigree } from "@/batch/ped.ts";
 import { handleNonAscii, numToFixedLength } from "@/utils/ascii.ts";
 
 export async function ArrayfromAsync<T>(gen: AsyncIterable<T>): Promise<T[]> {
@@ -31,9 +31,9 @@ export function getDate() {
 }
 
 export async function getFound(
-  foundFile: string
+  foundFile: string,
 ): Promise<FoundYaml | FoundYamlPed> {
-  const yamlData = await readFile(foundFile).then(yamlParse);
+  const yamlData = await readFile(foundFile).then((d) => yamlParse(d));
   if (isFoundYaml(yamlData)) {
     return yamlData;
   } else if (isFoundYamlPed(yamlData)) {
@@ -50,7 +50,7 @@ export function flatFounds(yaml: FoundYamlPed): FoundYamlWithPedInfo[] {
 export function getFamFounds(yaml: FoundYamlPed) {
   return Object.entries(yaml)
     .filter(
-      (kv): kv is [string, FoundYamlWithPedInfo] => typeof kv[1] !== "string"
+      (kv): kv is [string, FoundYamlWithPedInfo] => typeof kv[1] !== "string",
     )
     .map(([k, { __ped__, ...rest }]) => ({
       famId: k,
@@ -59,7 +59,7 @@ export function getFamFounds(yaml: FoundYamlPed) {
 }
 
 export function extractPed(
-  yaml: FoundYamlPed
+  yaml: FoundYamlPed,
 ): [string, (typeof Pedigree.infer)[]][] {
   return Object.entries(yaml).flatMap(([k, v]) => {
     if (typeof v === "string" || !v.__ped__) return [];
@@ -67,11 +67,8 @@ export function extractPed(
   });
 }
 
-export function getSampleId(id: string, i: number, length: number) {
-  return `${numToFixedLength(
-    i + 1,
-    length > 10 ? length : 11
-  )}-${handleNonAscii(id)}`;
+export function getSampleId(id: string) {
+  return handleNonAscii(id);
 }
 
 const { fqPairs, versionPed } = scope({
@@ -83,8 +80,9 @@ const { fqPairs, versionPed } = scope({
 }).compile();
 
 export type FoundYaml = Record<string, typeof fqPairs.infer>;
-export type FoundYamlWithPedInfo = FoundYaml &
-  Partial<Record<"__ped__", string>>;
+export type FoundYamlWithPedInfo =
+  & FoundYaml
+  & Partial<Record<"__ped__", string>>;
 export type FoundYamlPed = Record<string, FoundYamlWithPedInfo> & {
   __version__: "ped";
 };
@@ -102,7 +100,7 @@ export function isFoundYaml(data: unknown): data is FoundYaml {
   );
 }
 export function isFoundYamlWithPedInfo(
-  data: unknown
+  data: unknown,
 ): data is FoundYamlWithPedInfo {
   return (
     typeof data === "object" &&
@@ -129,4 +127,7 @@ export function isFoundYamlPed(data: unknown): data is FoundYamlPed {
   });
 }
 
-export const defaultMergeDir = "/genetics/home/stu_liujiyuan/analysis/merge";
+export const defaultMergeDir = join(
+  Deno.env.get("HOME") ?? ".",
+  "analysis/merge",
+);

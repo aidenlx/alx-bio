@@ -3,7 +3,7 @@
 #SBATCH -N 1
 #SBATCH --cpus-per-task 6
 
-source /genetics/home/stu_liujiyuan/pipeline/scripts/_base.sh
+source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
 
 # mamba create -y -c conda-forge -c bioconda -n cadd-initial ripgrep tabix snakemake    

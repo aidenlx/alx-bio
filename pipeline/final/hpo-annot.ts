@@ -40,15 +40,15 @@ const newColumnsAfterCADD = {
   hpo_phenotype_cn: "",
   hpo_disease: "",
   hpo_phenotype: "",
-  HOM_COUNT: -1,
-  HET_COUNT: -1,
 } satisfies Record<string, string | number>;
 const newColumnsPrepend = {
   ID: "",
   TYPE: "",
   GT_SYMBOL: "",
   HOM_SAMPLE: "",
+  HOM_COUNT: -1,
   HET_SAMPLE: "",
+  HET_COUNT: -1,
 } satisfies Record<string, string | number>;
 const newColumnsAfterGene = {
   gene_omim: "",
@@ -63,8 +63,8 @@ import getOMIMGene from "@/database/mim2gene.ts";
 import printStdErr from "@/utils/print-stderr.ts";
 import { checkDone } from "@/utils/check-done.ts";
 import { ExtractOptions, getFieldList } from "@/pipeline/final/fields.ts";
-
 async function Extract(
+
   inputVcf: string,
   outputTsvGz: string,
   {
@@ -150,6 +150,7 @@ export default async function ExtractAndHpoAnnot(
     throw new Error("bgzip failed: " + bStatus.code);
   }
   await finish();
+  await $`rm -f ${extractRaw}`
   return outputTsvGz;
 }
 
@@ -251,7 +252,7 @@ function HpoAnnot({
         .map((key) => data[key])
         .join("-")
         .replace(/^chr/, "");
-      colsPrepend.TYPE = data.REF.length === data.ALT.length ? "SNV" : "INDEL";
+      colsPrepend.TYPE = data.REF.length === data.ALT.length ? "SNP" : "INDEL";
       const GT = data[gtCol].split(",").map(toGTTag);
       if (GT.length !== samples.length) {
         throw new Error(
@@ -263,7 +264,7 @@ function HpoAnnot({
         gt.startsWith("Hom") ? [samples[i]] : []
       );
       const homCount = hom.length;
-      colsAfterCADD.HOM_COUNT = homCount;
+      colsPrepend.HOM_COUNT = homCount;
       colsPrepend.HOM_SAMPLE = hom.join(",");
 
       const het = GT.flatMap((gt, i) =>
@@ -272,7 +273,7 @@ function HpoAnnot({
       const hetCount = GT.map(toGTTag).filter((v) =>
         v.startsWith("Het")
       ).length;
-      colsAfterCADD.HET_COUNT = hetCount;
+      colsPrepend.HET_COUNT = hetCount;
       colsPrepend.HET_SAMPLE = het.join(",");
       colsPrepend.GT_SYMBOL = GT.length > 8 ? "-" : GT.map((v) => {
         const tag = toGTTag(v);

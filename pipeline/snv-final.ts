@@ -1,4 +1,4 @@
-import { $, Command, ensureDir, exists, path, resolve } from "@/deps.ts";
+import { $, Command, ensureDir, exists, join, path, resolve } from "@/deps.ts";
 import { genomeAssembly, vcfCaller } from "@/modules/common.ts";
 import extract, { loadHpoData } from "./final/hpo-annot.ts";
 import vcfanno from "@/pipeline/module/vcfanno.ts";
@@ -23,14 +23,14 @@ export default new Command()
   .name("snv.final")
   .version(finalVersion.substring(1))
   .description(
-    "Annotate HPO phenotypes and disease, filter with preset rules and output tab-delimited table and Excel ready table"
+    "Annotate HPO phenotypes and disease, filter with preset rules and output tab-delimited table and Excel ready table",
   )
   .type("genomeAssembly", genomeAssembly)
   .option("-r, --ref <genome:genomeAssembly>", "Genome assembly", {
     required: true,
   })
   .option("--resource <dir:string>", "Path to Resource", {
-    default: "/genetics/home/stu_liujiyuan/alx-bio/deno-csv/res/",
+    default: join(Deno.env.get("HOME") ?? ".", "alx-bio/deno-csv/res"),
   })
   .type("vcfCaller", vcfCaller)
   .option("--caller <vcf_caller:vcfCaller>", "Variant caller", {
@@ -39,7 +39,7 @@ export default new Command()
   .option("--regions-file <FILE:string>", "restrict to regions listed in FILE")
   .option(
     "--no-cadd-script",
-    "use prescored CADD score in favor of CADD script"
+    "use prescored CADD score in favor of CADD script",
   )
   .option("-s, --sample <name:string>", "Sample name", { required: true })
   .option("--sample-map <file:string>", "Sample name mapping file")
@@ -67,9 +67,10 @@ export default new Command()
         console.error(`Annotating ${inputVcfGz} with ${caddData}`);
         const columnsNum = Number.parseInt(
           (
-            await $`zcat ${caddData} | grep -m1 '^#Chrom' | head -1 | awk '{print NF}'`.nothrow()
+            await $`zcat ${caddData} | grep -m1 '^#Chrom' | head -1 | awk '{print NF}'`
+              .nothrow()
           ).stdout,
-          10
+          10,
         );
         await vcfanno(inputVcfGz, _fullVcfGz, {
           threads: 4,
@@ -81,7 +82,8 @@ export default new Command()
         });
       } else {
         const checkCADD =
-          await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`.nothrow();
+          await $`bcftools view -h ${inputVcfGz} | rg -wq "INFO=<ID=CADD_PHRED"`
+            .nothrow();
         if (checkCADD.exitCode === 0) {
           console.info(`CADD script gen disabled, skipping CADD annotation...`);
           await $`ln -sf ${inputVcfGz} ${_fullVcfGz}`;
@@ -119,7 +121,7 @@ export default new Command()
           fullVcfGz,
           `${sample}.full.exo-extra${finalVersion}.${assembly}.tsv.gz`,
           assembly,
-          vcfCaller
+          vcfCaller,
         ),
       ]);
 
@@ -135,9 +137,13 @@ export default new Command()
         };
         await ensureDir(fullDir);
 
-        await bcftoolsView(inputVcfGz, fullOut.vcfGz, {
-          args: ["-i"/* , `TYPE="${type}"` */, ...regionFileOpt],
-        });
+        if (regionFileOpt.filter(Boolean).length > 0) {
+          await bcftoolsView(inputVcfGz, fullOut.vcfGz, {
+            args: [/*"-i" , `TYPE="${type}"` ,*/ ...regionFileOpt],
+          });
+        } else {
+          await $`ln -sf ../${inputVcfGz} ${fullOut.vcfGz}`;
+        }
 
         const qcDir = "qc";
         const qcOut = {
@@ -165,20 +171,20 @@ export default new Command()
                   .then((input) => tsv2excel(input, funcOut.csvGz))
                   .then(() =>
                     console.error(
-                      "Impactful variants hard-filtered and extracted"
+                      "Impactful variants hard-filtered and extracted",
                     )
                   ),
                 extract(input, qcOut.tsvGz, eOpts)
                   .then((input) => tsv2excel(input, qcOut.csvGz))
                   .then(() => console.error("Hard-filtered and extracted")),
-              ])
+              ]),
           ),
           extract(fullOut.vcfGz, fullOut.tsvGz, eOpts)
             .then((input) => tsv2excel(input, fullOut.csvGz))
             .then(() => console.error(`Extracted full without filters`)),
         ]);
       }
-    }
+    },
   );
 
 /** output extra data for exomiser */
@@ -186,7 +192,7 @@ async function exomiserExtra(
   input: string,
   output: string,
   assembly: "hg19" | "hg38",
-  caller: "gatk" | "deepvariant"
+  caller: "gatk" | "deepvariant",
 ) {
   const extraFields = getExomiserFieldList(assembly, {
     local: true,
