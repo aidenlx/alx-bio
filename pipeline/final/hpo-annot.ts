@@ -275,10 +275,10 @@ function HpoAnnot({
       ).length;
       colsPrepend.HET_COUNT = hetCount;
       colsPrepend.HET_SAMPLE = het.join(",");
-      colsPrepend.GT_SYMBOL = GT.length > 8 ? "-" : GT.map((v) => {
-        const tag = toGTTag(v);
-        if (v !== tag) {
-          return GTSymbolMap[tag.replace(/[/|]$/, "")];
+      colsPrepend.GT_SYMBOL = GT.length > 8 ? "-" : GT.map((tag) => {
+        const genotypeKey = tag.replace(/[/|]$/, "")
+        if (genotypeKey in GTSymbolMap) {
+          return GTSymbolMap[genotypeKey];
         }
         return "?";
       }).join("");
