@@ -3,12 +3,12 @@ import { snpeff_assembly } from "./_res.ts";
 import { getVcfannoCADDCfg, vcfannoCfg, vcfannoLocal } from "./_vcfanno.ts";
 import { orGzip } from "@/utils/or-gzip.ts";
 import vcfanno from "./module/vcfanno.ts";
-import tableAnnovar from "./module/annovar/table_annovar.ts";
+// import tableAnnovar from "./module/annovar/table_annovar.ts";
 import { toFinalOutput, pipe } from "./pipe.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 import { popmaxPostAnnot } from "@/pipeline/_freq.ts";
 
-export const mVersion = "." + "v2_7";
+export const mVersion = "." + "v2_8";
 
 export default new Command()
   .name("snv.annot.m")
@@ -59,19 +59,19 @@ export default new Command()
     const output = await toFinalOutput(
       pipe(
         inputVcf,
-        async (input) => {
-          console.info(`annotate ${input} with annovar`);
-          const annovarOutBase = prefix + "annovar";
-          const {
-            vcf: vcfAnnovar,
-            avinput,
-            tsv: tsvAnnovar,
-          } = await tableAnnovar(input, annovarOutBase, {
-            threads,
-            assembly: ref,
-          });
-          return [avinput, tsvAnnovar, vcfAnnovar];
-        },
+        // async (input) => {
+        //   console.info(`annotate ${input} with annovar`);
+        //   const annovarOutBase = prefix + "annovar";
+        //   const {
+        //     vcf: vcfAnnovar,
+        //     avinput,
+        //     tsv: tsvAnnovar,
+        //   } = await tableAnnovar(input, annovarOutBase, {
+        //     threads,
+        //     assembly: ref,
+        //   });
+        //   return [avinput, tsvAnnovar, vcfAnnovar];
+        // },
         async (input) => {
           console.info(`annotate ${input} with vcfanno`);
           const output = prefix + `vcfannot${mVersion}.${ref}.vcf.gz`;
