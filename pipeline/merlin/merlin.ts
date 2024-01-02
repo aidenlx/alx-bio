@@ -132,10 +132,10 @@ export default new Command()
     const samples = await getSamples(input);
     const fullPed = await Deno.readTextFile(opts.ped).then(parsePedFile);
 
-    const relevantPed = samples.map((n) => {
+    const relevantPed = samples.flatMap((n) => {
       const ped = fullPed.find((v) => v.indId === n);
-      if (!ped) throw new Error(`sample ${n} not found in ped file`);
-      return ped;
+      if (!ped) {return []}
+      return [ped];
     });
 
     await Deno.writeTextFile(relavantPedFile, stringifyPedFile(relevantPed));
@@ -200,6 +200,7 @@ export default new Command()
     k1 <(cut -f2 -d' ' ${ped}) \
     | cut -f2-
   ) - \
+| grep -v '^NULL' \
 > ${pedPheno}`.nothrow();
     const datPheno = `${outPrefix}.pheno.dat`;
     const toMerlinDat = `${awkTsv} { print "M", "chr" $1 ":" $4 }`;
