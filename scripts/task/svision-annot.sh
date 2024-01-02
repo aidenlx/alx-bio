@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 source $HOME/alx-bio/scripts/_base.sh
 conda_init mamba
