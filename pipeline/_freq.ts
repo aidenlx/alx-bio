@@ -17,6 +17,7 @@ export const freqSource = {
     "ExAC_EAS_AF",
     "ALFA_East_Asian_AF",
   ],
+  aggregated: ["global_popmax_AF", "eas_popmax_AF"],
 };
 
 export const popmaxPostAnnot = (["global", "eas"] as const).map(
@@ -25,5 +26,5 @@ export const popmaxPostAnnot = (["global", "eas"] as const).map(
     fields: freqSource[type],
     op: `max`,
     type: "Float",
-  })
+  }),
 );

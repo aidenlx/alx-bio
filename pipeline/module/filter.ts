@@ -5,13 +5,14 @@ export const softFilterKey = "PASS";
 
 const byQual = `(FILTER = '${softFilterKey}')`;
 
-const byEffect = `(${data.targetEffects
-  .map((effect) => `(ANN[*].EFFECT has '${effect}')`)
-  .join(" | ")})`;
+const byEffect = `(${
+  data.targetEffects
+    .map((effect) => `(ANN[*].EFFECT has '${effect}')`)
+    .join(" | ")
+})`;
 
 function getFreqQuery(threshold: number) {
-  const exceeds = freqSource.global
-    .concat(freqSource.eas)
+  const exceeds = freqSource.aggregated
     .map((key) => `((exists ${key}) & (${key} > ${threshold}))`);
   return `!(${exceeds.join(" | ")})`;
 }

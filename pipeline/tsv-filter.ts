@@ -8,7 +8,7 @@ export default new Command()
   })
   .action(async ({ freq: threshold }) => {
     let _header: string[] | undefined;
-    const freq = freqSource.global.concat(freqSource.eas);
+    const freq = freqSource.aggregated;
 
     await Deno.stdin.readable
       .pipeThrough(new TextDecoderStream())
