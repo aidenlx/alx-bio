@@ -19,7 +19,7 @@ import merlin from "@/pipeline/merlin/merlin.ts";
 import genPed from "@/batch/gen-ped.ts";
 import genFam from "@/batch/gen-fam.ts";
 import famCheck from "@/batch/fam-check.ts";
-import ontMap from "@/pipeline/3GS/ont-map.ts";
+import _3gsMap from "./pipeline/3GS/3gs-map.ts";
 import svAnnot from "@/pipeline/3GS/sv-annot.ts";
 import svCall from "@/pipeline/3GS/sv-call.ts";
 import pavToVcf from "@/pipeline/pav/to-vcf.ts";
@@ -47,7 +47,7 @@ await new Command()
   .command(...c(tsvFilter))
   .command(...c(merlin))
   .command(...c(vcfFilterQuery))
-  .command(...c(ontMap))
+  .command(...c(_3gsMap))
   .command(...c(svCall))
   .command(...c(svAnnot))
   .command(...c(pavToVcf))

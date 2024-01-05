@@ -1,12 +1,21 @@
-import { Command, cd, ensureDir, join as j, resolve } from "@/deps.ts";
+import {
+  cd,
+  Command,
+  ensureDir,
+  EnumType,
+  join as j,
+  resolve,
+} from "@/deps.ts";
 import { PositiveInt } from "@/utils/validate.ts";
-import { Res, readGroupONT } from "@/pipeline/_res.ts";
+import { readGroup, Res } from "@/pipeline/_res.ts";
 import minimap2 from "@/pipeline/module/minimap2.ts";
 import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
 
 export default new Command()
-  .name("ont.map")
+  .name("3gs.map")
   .type("positiveInt", PositiveInt)
+  .type("platform", new EnumType(["ont", "pb", "hifi"]))
+  .option("-p, --platform <platform:platform>", "Platform", { required: true })
   .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
   .option("--fq <path>", "fastq input in fq.gz format", { required: true })
   .option("-o, --out-dir <path>", "output directory", { default: "." })
@@ -32,7 +41,8 @@ export default new Command()
     await minimap2(fastqInput, bamSorted, {
       threads,
       reference,
-      readGroup: readGroupONT(sample),
+      readGroup: readGroup(sample, opts.platform),
+      preset: `map-${opts.platform}`,
       sort: true,
     });
     await samtoolsIndex(bamSorted, { threads });

@@ -122,12 +122,13 @@ export const Interval = D.map(
 
 export const KnownSites = {
   hg38: [
-    "/cluster/apps/humandb/GATK4/hg38/1000G_phase1.snps.high_confidence.hg38.vcf",
-    "/cluster/apps/humandb/GATK4/hg38/Mills_and_1000G_gold_standard.indels.hg38.vcf",
+    join(resDir, "GATK4/hg38/1000G_phase1.snps.high_confidence.hg38.vcf.gz"),
+    join(resDir, "GATK4/hg38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"),
     Res.hg38.dbsnp,
   ],
   hs37: [
-    "/genetics/home/shiyan/bin/Database/gnomad/gnomad.exomes.r2.1.1.sites.vcf.gz",
+    join(resDir, "GATK4/hs37/1000G_phase1.snps.high_confidence.b37.vcf.gz"),
+    join(resDir, "GATK4/hs37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"),
     Res.hs37.dbsnp,
   ],
   hg19: [
@@ -203,11 +204,29 @@ export const CanvasRes = {
   dockerImage: join(resDir, "canvas/image.tar"),
 };
 
-export const readGroupNGS = (sample: string) =>
-  `@RG\\tID:${sample}\\tSM:${sample}\\tPL:ILLUMINA`;
-
-export const readGroupONT = (sample: string) =>
-  `@RG\\tID:${sample}\\tSM:${sample}\\tPL:PACBIO`;
+export const readGroup = (
+  sample: string,
+  platform: "pb" | "ont" | "hifi" | "ngs" = "ngs",
+) => {
+  let pl = "";
+  switch (platform) {
+    case "ont":
+      pl = "NANOPORE";
+      break;
+    case "pb":
+      pl = "PACBIO";
+      break;
+    case "hifi":
+      pl = "HIFI";
+      break;
+    case "ngs":
+      pl = "ILLUMINA";
+      break;
+    default:
+      throw new Error(`Unsupported platform ${platform}`);
+  }
+  return `@RG\\tID:${sample}\\tSM:${sample}\\tPL:${pl}`;
+};
 
 export function parseIntevals(
   intervalsOpt: true | string | undefined,

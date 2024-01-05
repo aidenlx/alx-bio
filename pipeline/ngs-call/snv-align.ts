@@ -3,7 +3,7 @@ import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import {
   getMarkDupBam,
   parseFastqOption,
-  readGroupNGS,
+  readGroup,
 } from "@/pipeline/_res.ts";
 import { createLocalFastq } from "@/utils/ln-fastq.ts";
 import { validateOptions } from "@/pipeline/ngs-call/_common.ts";
@@ -72,7 +72,7 @@ export default new Command()
     const bam_raw = path.join(bam_dir, `${sample}.${assembly}.bam`);
     await bwaMem2(fastqTrimmed, bam_raw, {
       threads,
-      readGroup: readGroupNGS(sample),
+      readGroup: readGroup(sample),
       reference,
     });
     await cleanup(...fastqTrimmed);

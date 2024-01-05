@@ -10,6 +10,6 @@ conda_init mamba
 
 conda activate ont-map
 
-bioa ont.map -t $THREADS \
+bioa 3gs.map -p ont -t $THREADS \
   -o $SAMPLE_ID/ -s $SAMPLE_ID --fq $FASTQ1
 

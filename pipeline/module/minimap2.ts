@@ -13,6 +13,7 @@ export default async function minimap2(
     /** fasta file */
     reference: string;
     readGroup: string;
+    preset?: string;
     minimapOpts?: string[];
   }
 ) {
@@ -24,6 +25,7 @@ export default async function minimap2(
   const minimapOpts = [
     ...(opts.minimapOpts ?? []),
     ...["-t", opts.threads, "-R", opts.readGroup],
+    ...(opts.preset ? ["-x", opts.preset] : []),
   ];
   const sort = opts.sort ?? true;
 
