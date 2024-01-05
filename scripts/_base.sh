@@ -11,9 +11,12 @@ set -eo pipefail
 function conda_init() {
   # for fjsc
   if [ -x "$(command -v micromamba)" ]; then
-    shopt -s expand_aliases
+    echo "using micromamba"
     source "$HOME/.bashrc"
-    alias conda="$(which micromamba) $@"
+    shopt -s expand_aliases
+    conda() {
+      micromamba $@
+    }
     return
   fi
   if [ $1 == "conda" ]; then
