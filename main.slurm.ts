@@ -11,6 +11,7 @@ import snvAnnotS from "@/pipeline/snv-annot-s.ts";
 import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
 import snvMerge from "@/pipeline/snv-merge.ts";
 import snvAlign from "@/pipeline/ngs-call/snv-align.ts";
+import snvMarkdup from "@/pipeline/ngs-call/snv-markdup.ts";
 import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
 import snvVcf from "@/pipeline/ngs-call/snv-vcf.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
@@ -36,6 +37,7 @@ await new Command()
   .command(...c(merge))
   .command(...c(hsStat))
   .command(...c(snvAlign))
+  .command(...c(snvMarkdup))
   .command(...c(snvBam))
   .command(...c(snvVcf))
   .command(...c(snvMerge))

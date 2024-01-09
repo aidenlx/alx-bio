@@ -8,8 +8,8 @@ conda_init mamba
 
 conda activate snv-final
 
-HG19_RENAME=GCF_000001405.25_GRCh37.p13_assembly_report.chrnames
-HG38_RENAME=GCF_000001405.40_GRCh38.p14_assembly_report.chrnames
+HG19_RENAME=GCF_000001405.25_GRCh37.p13.chrnames
+HG38_RENAME=GCF_000001405.40_GRCh38.p14.chrnames
 
 DBSNP_HG19=GCF_000001405.25.gz
 DBSNP_HG38=GCF_000001405.40.gz

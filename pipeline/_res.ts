@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 export type SupportAssembly = "hg38" | "hs37" | "hg19";
 
-const resDir = Deno.env.get("ALXBIO_RES") ?? "/cluster/home/jiyuan/res";
+export const resDir = Deno.env.get("ALXBIO_RES") ?? "/cluster/home/jiyuan/res";
 
 import { D, join, path } from "@/deps.ts";
 import { validBedPath } from "@/utils/validate.ts";
@@ -108,6 +108,9 @@ const _Interval = {
   Record<string, Partial<Record<SupportAssembly, string>>>
 >;
 
+export const wgsInterval = {
+  hg38: join(resDir, "hg38/wgs_calling_regions.hg38.interval_list"),
+};
 export const Interval = D.map(
   _Interval,
   (types) =>
@@ -182,6 +185,16 @@ export function parseFastqOption({
   }
   throw new Error("Must specify both fq1 and fq2");
 }
+
+export const slivarGnotateDb = {
+  gnomad: {
+    hg19: [`gnomad/v2.1.1/gnomad.e211.zip`, `gnomad/v2.1.1/gnomad.g211.zip`]
+      .map((f) => join(resDir, f)),
+    hg38: [`gnomad/v4.0/gnomad.e4.zip`, `gnomad/v4.0/gnomad.g4.zip`].map(
+      (f) => join(resDir, f),
+    ),
+  },
+};
 
 export const annovarDataDir = join(resDir, "annovar_data/");
 

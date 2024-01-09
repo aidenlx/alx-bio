@@ -10,9 +10,9 @@ export default async function GATKSplitIntervals(
   options: GATKOptions & {
     threads: number;
     reference: string;
-    intervalPadding: number;
+    intervalPadding?: number;
     quiet?: boolean;
-  }
+  },
 ) {
   const { done, finish } = await checkDone(output, intervals, true);
   if (done) {
@@ -25,11 +25,12 @@ export default async function GATKSplitIntervals(
     ...[
       "--reference",
       options.reference,
-      `--interval-padding`,
-      options.intervalPadding,
       "--scatter-count",
       options.threads,
     ],
+    ...(options.intervalPadding
+      ? [`--interval-padding`, options.intervalPadding]
+      : []),
     ...["--intervals", intervals, "-O", output],
     options.quiet ? "--QUIET" : "",
   ];

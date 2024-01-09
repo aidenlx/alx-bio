@@ -10,32 +10,34 @@ export default async function GATKHaplotypeCaller(
   opts: GATKOptions & {
     reference: string;
     memory?: string;
-    threads: number;
+    // threads: number;
     emitRefConfidence?: "NONE" | "GVCF" | "BP_RESOLUTION";
     dbsnp: string;
     intervals?: string;
     intervalPadding?: number;
     quiet?: boolean;
-  }
+  },
 ) {
   const { done, finish } = await checkDone(
     output,
     input,
-    output.replace(/\.gz$/, "")
+    output.replace(/\.gz$/, ""),
   );
   if (done) {
     console.info(`Skipping HaplotypeCaller ${output}`);
     return;
   }
 
-  const threads = opts.threads >= 4 ? 4 : opts.threads;
+  const threads = 2;
 
   /** https://hpc.nih.gov/training/gatk_tutorial/haplotype-caller.html */
   opts.javaOptions = [
     ...(opts.javaOptions ?? []),
-    `-Xmx${opts.memory ?? "20G"}`,
+    "-Xms20G",
+    "-Xmx20G",
+    // `-Xmx${opts.memory ?? "20G"}`,
     /** don't allocate min memory if not explictly specify */
-    opts.memory ? `-Xms${opts.memory}` : "",
+    // opts.memory ? `-Xms${opts.memory}` : "",
     `-XX:ParallelGCThreads=${threads}`,
     gatkTempDirJava(),
   ];

@@ -16,7 +16,7 @@ import genQC from "@/pipeline/module/gen-qc.ts";
 
 // mamba create -y -c conda-forge -c bioconda -n snv-final snpeff snpsift bcftools xsv vcfanno ripgrep
 
-export const finalVersion = "." + "v3_10";
+export const finalVersion = "." + "v4_0";
 const CADDVersion = "." + "v2";
 
 export default new Command()

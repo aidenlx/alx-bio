@@ -1,4 +1,4 @@
-import { freqSource } from "@/pipeline/_freq.ts";
+import { aggregatedFreq } from "@/pipeline/_freq.ts";
 import data from "./filter.json" assert { type: "json" };
 
 export const softFilterKey = "PASS";
@@ -12,7 +12,7 @@ const byEffect = `(${
 })`;
 
 function getFreqQuery(threshold: number) {
-  const exceeds = freqSource.aggregated
+  const exceeds = aggregatedFreq
     .map((key) => `((exists ${key}) & (${key} > ${threshold}))`);
   return `!(${exceeds.join(" | ")})`;
 }

@@ -1,5 +1,5 @@
 import { Command, CsvParseStream, CsvStringifyStream } from "@/deps.ts";
-import { freqSource } from "@/pipeline/_freq.ts";
+import { aggregatedFreq } from "@/pipeline/_freq.ts";
 
 export default new Command()
   .name("tsv.filter")
@@ -8,8 +8,6 @@ export default new Command()
   })
   .action(async ({ freq: threshold }) => {
     let _header: string[] | undefined;
-    const freq = freqSource.aggregated;
-
     await Deno.stdin.readable
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(new CsvParseStream({ skipFirstRow: false, separator: "\t" }))
@@ -26,7 +24,7 @@ export default new Command()
               const data = row[header.indexOf(col)];
               return data && Number.parseFloat(data) >= threshold;
             };
-            if (freq.some(exceedThreshold)) return;
+            if (aggregatedFreq.some(exceedThreshold)) return;
 
             controller.enqueue(row);
           },

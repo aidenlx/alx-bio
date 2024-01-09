@@ -1,18 +1,11 @@
-import { Command, path, ensureDir, cd, assert } from "@/deps.ts";
+import { assert, cd, Command, ensureDir, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
-import {
-  getMarkDupBam,
-  parseFastqOption,
-  readGroup,
-} from "@/pipeline/_res.ts";
+import { parseFastqOption, readGroup } from "@/pipeline/_res.ts";
 import { createLocalFastq } from "@/utils/ln-fastq.ts";
 import { validateOptions } from "@/pipeline/ngs-call/_common.ts";
 import fastp from "@/pipeline/module/fastp.ts";
 import bwaMem2 from "@/pipeline/module/bwa-mem2.ts";
 import samtoolsSort from "@/pipeline/module/samtools/sort.ts";
-import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
-import GATKMarkDuplicates from "@/pipeline/module/gatk/markDup.ts";
-import GATKMarkDuplicatesSpark from "@/pipeline/module/gatk/markDupSpark.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
@@ -36,7 +29,7 @@ export default new Command()
     const { sample, workPath, assembly, cleanup, reference } =
       await validateOptions(options);
 
-      const { threads } = options;
+    const threads = options.threads > 12 ? 12 : options.threads;
     cd(workPath);
 
     const bam_dir = "bamfile";
@@ -53,7 +46,7 @@ export default new Command()
           Deno.lstat(f)
             .then((s) => s.isSymlink)
             .catch((e) => assert(e instanceof Deno.errors.NotFound))
-        )
+        ),
       )
     ).every(Boolean);
 
@@ -80,27 +73,7 @@ export default new Command()
     console.info("TASK: BAM SORT");
     const bam_sort = path.join(bam_dir, `${sample}.sort.${assembly}.bam`);
     await samtoolsSort(bam_raw, bam_sort, { threads, memory: "4G" });
-    await cleanup(bam_raw);
-
-    console.info("TASK: MarkDuplicates");
-    const bam_markdup = path.join(bam_dir, getMarkDupBam(sample, assembly)),
-      metrics = path.join(bam_dir, `${sample}.metrics.${assembly}.txt`);
-    if (options.spark) {
-      await GATKMarkDuplicatesSpark(
-        bam_sort,
-        { bam: bam_markdup, metrics },
-        { threads }
-      );
-    } else {
-      await GATKMarkDuplicates(
-        bam_sort,
-        { bam: bam_markdup, metrics },
-        { threads }
-      );
-    }
-    await cleanup(bam_sort);
-
-    await samtoolsIndex(bam_markdup, { threads });
+    // await cleanup(bam_raw);
 
     console.info("END ALL ************************************* Bey");
   });

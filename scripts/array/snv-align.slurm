@@ -1,9 +1,15 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
-#SBATCH --cpus-per-task 16
+#SBATCH --cpus-per-task 8
+#SBATCH --mem-per-cpu=4G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
+
+# > bwa-mem2 pre-allocates some memory upfront to be used during the execution;
+# It does reallocation if the allocated memory falls short. 
+# Memory usage is directly proportional to the number of threads used. 
+# In practice, the memory usage can range from a few hundred MBs to ~4 GB per thread.
 
 source $HOME/alx-bio/scripts/array/_base.sh
 conda_init mamba

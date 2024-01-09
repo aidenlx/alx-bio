@@ -1,6 +1,6 @@
-import { Command, cd, path, pLimit } from "@/deps.ts";
+import { cd, Command, path, pLimit } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
-import { KnownSites, getMarkDupBam } from "@/pipeline/_res.ts";
+import { getMarkDupBam, KnownSites, wgsInterval } from "@/pipeline/_res.ts";
 import {
   defaultIntervalPadding,
   getIntervals,
@@ -23,8 +23,9 @@ export default new Command()
   .option(
     "--bait-intervals [path]",
     "bed file for WESeq capture region, run in WGS mode if not present",
-    { collect: true }
+    { collect: true },
   )
+  .option("--wgs-parallel", "run in WGS mode with parallel scatter")
   .option("-o, --out-dir <path>", "output directory", { default: "." })
   .option("--no-cleanup", "skip cleanup, keep intermedia files")
   .type("genomeAssembly", genomeAssemblyHs37)
@@ -43,7 +44,15 @@ export default new Command()
     const { threads } = options;
     cd(workPath);
 
-    const baitIntervals = parseBaitIntevals(options.baitIntervals, assembly);
+    const wgsParallelEnabled = options.wgsParallel && assembly === "hg38";
+    const baitIntervals = wgsParallelEnabled
+      ? wgsInterval.hg38
+      : parseBaitIntevals(options.baitIntervals, assembly);
+    const intervalPadding = options.wgsParallel
+      ? undefined
+      : options.intervalPadding;
+    wgsParallelEnabled && console.error("WGS Parallel Enabled");
+
     console.info(`Interval: ${baitIntervals ?? "Disabled"}`);
 
     const knownSites = KnownSites[assembly];
@@ -54,7 +63,7 @@ export default new Command()
 
     const interval_scatter = path.join(
       bam_dir,
-      toIntervalScatter(sample, assembly)
+      toIntervalScatter(sample, assembly),
     );
 
     if (baitIntervals) {
@@ -62,7 +71,7 @@ export default new Command()
       console.info(`SPLIT TAG_REGION using ${baitIntervals}`);
       await GATKSplitIntervals(baitIntervals, interval_scatter, {
         reference,
-        intervalPadding: options.intervalPadding,
+        intervalPadding,
         threads,
         quiet: true,
       });
@@ -74,7 +83,7 @@ export default new Command()
         limit(() =>
           GATKBaseRecalibrator(bam_markdup, toBrOutput(list), {
             intervals: list,
-            intervalPadding: options.intervalPadding,
+            intervalPadding,
             quiet: true,
             reference,
             knownSites,

@@ -1,14 +1,14 @@
-import { Command, D, EnumType, path, cd, tomlStringify } from "@/deps.ts";
-import { snpeff_assembly } from "./_res.ts";
+import { cd, Command, D, EnumType, path, tomlStringify } from "@/deps.ts";
+import { Res, slivarGnotateDb, snpeff_assembly } from "./_res.ts";
 import { getVcfannoCADDCfg, vcfannoCfg, vcfannoLocal } from "./_vcfanno.ts";
 import { orGzip } from "@/utils/or-gzip.ts";
 import vcfanno from "./module/vcfanno.ts";
-// import tableAnnovar from "./module/annovar/table_annovar.ts";
-import { toFinalOutput, pipe } from "./pipe.ts";
+import slivarGnotate from "./module/slivar-gnotate.ts";
+import { pipe, toFinalOutput } from "./pipe.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 import { popmaxPostAnnot } from "@/pipeline/_freq.ts";
 
-export const mVersion = "." + "v2_8";
+export const mVersion = "." + "v3_0";
 
 export default new Command()
   .name("snv.annot.m")
@@ -25,15 +25,15 @@ export default new Command()
   .option(
     "-i, --input <vcf>",
     "Input vcf, should be handled by bcftools norm -m -both",
-    { required: true }
+    { required: true },
   )
   .option(
     "-o, --output-dir <DIR>",
-    "Output directory, default to the same as input vcf"
+    "Output directory, default to the same as input vcf",
   )
   .option(
     "--normed",
-    "skip normalization warning, assume input vcf is already normalized"
+    "skip normalization warning, assume input vcf is already normalized",
   )
   .option("-s, --sample <name>", "Sample Name", { required: true })
   .action(async (options) => {
@@ -59,22 +59,20 @@ export default new Command()
     const output = await toFinalOutput(
       pipe(
         inputVcf,
-        // async (input) => {
-        //   console.info(`annotate ${input} with annovar`);
-        //   const annovarOutBase = prefix + "annovar";
-        //   const {
-        //     vcf: vcfAnnovar,
-        //     avinput,
-        //     tsv: tsvAnnovar,
-        //   } = await tableAnnovar(input, annovarOutBase, {
-        //     threads,
-        //     assembly: ref,
-        //   });
-        //   return [avinput, tsvAnnovar, vcfAnnovar];
-        // },
+        async (input) => {
+          console.info(`annotate ${input} with slivar gnotate`);
+          const output = prefix + `slivar${mVersion}.${ref}.vcf.gz`;
+
+          await slivarGnotate(input, output, {
+            threads,
+            databases: [...slivarGnotateDb.gnomad[ref]],
+            ref: ref === "hg19" ? Res.hs37.refFa : Res.hg38.refFa,
+          });
+          return output;
+        },
         async (input) => {
           console.info(`annotate ${input} with vcfanno`);
-          const output = prefix + `vcfannot${mVersion}.${ref}.vcf.gz`;
+          const output = prefix + `vcfanno${mVersion}.${ref}.vcf.gz`;
           await vcfanno(orGzip(input), output, {
             threads,
             config: {
@@ -83,13 +81,13 @@ export default new Command()
                 options.local && vcfannoLocal[ref],
                 options.cadd && (await getVcfannoCADDCfg(ref, true)),
               ],
-              postannotation: popmaxPostAnnot,
+              postannotation: popmaxPostAnnot(ref),
             },
           });
           return output;
-        }
+        },
       ),
-      prefix + `m${mVersion}.${ref}.vcf`
+      prefix + `m${mVersion}.${ref}.vcf`,
     );
 
     console.info(`multithread Annotation finished. Output: ${output}.gz`);

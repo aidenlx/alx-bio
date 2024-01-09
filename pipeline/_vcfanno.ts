@@ -1,31 +1,70 @@
 import { normalizeVcfKey } from "@/utils/vcf-key.ts";
-import { D, pipe, path, $ } from "@/deps.ts";
+import { $, D, join } from "@/deps.ts";
+import { resDir } from "./_res.ts";
 
 import {
   VcfAnnoAnnotConfig,
   VcfAnnoAnnotConfigCol,
   VcfAnnoAnnotConfigField,
 } from "@/pipeline/module/vcfanno.ts";
-import { annovarDataDir } from "@/pipeline/_res.ts";
+// import { annovarDataDir } from "@/pipeline/_res.ts";
 import { CADDColumns, CADDCommonColumn } from "@/pipeline/_cadd_anno.ts";
 import { assertNever } from "@/utils/assert-never.ts";
 
 export const ClinVar = {
-  hg19: "/cluster/home/jiyuan/res/hg19/clinvar_20231112.vcf.gz",
-  hg38: "/cluster/home/jiyuan/res/hg38/clinvar_20231112.vcf.gz",
+  hg19: join(resDir, "hg19/clinvar_20231230.vcf.gz"),
+  hg38: join(resDir, "hg38/clinvar_20231230.vcf.gz"),
+};
+
+const GnomadStrFields = {
+  hg19: {
+    exomes: join(resDir, `gnomad/v2.1.1/gnomad.e211.str.txt.gz`),
+    genomes: join(resDir, `gnomad/v2.1.1/gnomad.g211.str.txt.gz`),
+  },
+  hg38: {
+    exomes: join(resDir, `gnomad/v4.0/gnomad.e4.str.txt.gz`),
+    genomes: join(resDir, `gnomad/v4.0/gnomad.g4.str.txt.gz`),
+  },
+};
+
+const gnomadStrColumns = {
+  v2: {
+    g: "popmax",
+    e: "popmax",
+  },
+  v4: {
+    g: "grpmax fafmax_faf99_max_gen_anc fafmax_faf95_max_gen_anc",
+    e: "grpmax grpmax_non_ukb fafmax_faf99_max_gen_anc fafmax_faf95_max_gen_anc fafmax_faf99_max_gen_anc_non_ukb fafmax_faf95_max_gen_anc_non_ukb",
+  },
+};
+const GnomadStrFieldsDef = {
+  hg19: (variant: "g" | "e") =>
+    ColToDef(
+      gnomadStrColumns.v2[variant].split(/\s+/).map((
+        field,
+        i,
+      ) => [i + 5, `gnomad_${variant}211_${field}`]),
+    ),
+  hg38: (variant: "g" | "e") =>
+    ColToDef(
+      gnomadStrColumns.v4[variant].split(/\s+/).map((
+        field,
+        i,
+      ) => [i + 5, `gnomad_${variant}4_${field}`]),
+    ),
 };
 
 export const wbbcDatabase = {
-  hs37: "/cluster/home/jiyuan/res/wbbc/WBBC.hs37.vcf.gz",
-  hg38: "/cluster/home/jiyuan/res/wbbc/WBBC.hg38.vcf.gz",
+  hs37: join(resDir, "wbbc/WBBC.hs37.vcf.gz"),
+  hg38: join(resDir, "wbbc/WBBC.hg38.vcf.gz"),
 };
 export const localDatabase = {
-  hs37: "/cluster/home/jiyuan/res/fjmun/fjmun-230822.hg19.vcf.gz",
+  hs37: join(resDir, "fjmun/fjmun-240106.hg19.vcf.gz"),
 };
 
 export const dbnsfpSnpSift = {
-  hg19: "/cluster/home/jiyuan/res/dbNSFP4.4a/dbNSFP4.4a_hg19.txt.gz",
-  hg38: "/cluster/home/jiyuan/res/dbNSFP4.4a/dbNSFP4.4a.txt.gz",
+  hg19: join(resDir, "dbNSFP4.4a/dbNSFP4.4a_hg19.txt.gz"),
+  hg38: join(resDir, "dbNSFP4.4a/dbNSFP4.4a.txt.gz"),
 };
 
 const dbnsfpColumns = ColToDef([
@@ -53,48 +92,60 @@ const dbnsfpColumns = ColToDef([
   [688, "GTEx_V8_tissue"],
 ] as [number, string, string?][]);
 
-const gnomad211ExomeColumns = ColToDef([
-  [6, "gnomad_e211_AF_float"],
-  [14, "gnomad_e211_AF_eas_float"],
-]);
-const gnomad211GenomeColumns = ColToDef([
-  [6, "gnomad_g211_AF_float"],
-  [14, "gnomad_g211_AF_eas_float"],
-]);
-const gnomad312GenomeColumns = ColToDef([
-  [6, "gnomad312_AF_float"],
-  [16, "gnomad312_AF_eas_float"],
-]);
+// const gnomad211ExomeColumns = ColToDef([
+//   [6, "gnomad_e211_AF_float"],
+//   [14, "gnomad_e211_AF_eas_float"],
+// ]);
+// const gnomad211GenomeColumns = ColToDef([
+//   [6, "gnomad_g211_AF_float"],
+//   [14, "gnomad_g211_AF_eas_float"],
+// ]);
+// const gnomad312GenomeColumns = ColToDef([
+//   [6, "gnomad312_AF_float"],
+//   [16, "gnomad312_AF_eas_float"],
+// ]);
 
-const annovar = {
-  hg19_gnomad211_exome: gnomad211ExomeColumns,
-  hg19_gnomad211_genome: gnomad211GenomeColumns,
-  hg38_gnomad211_exome: gnomad211ExomeColumns,
-  hg38_gnomad312_genome: gnomad312GenomeColumns,
-};
+// const annovar = {
+//   hg19_gnomad211_exome: gnomad211ExomeColumns,
+//   hg19_gnomad211_genome: gnomad211GenomeColumns,
+//   hg38_gnomad211_exome: gnomad211ExomeColumns,
+//   hg38_gnomad312_genome: gnomad312GenomeColumns,
+// };
 
 const CADD = {
   inclAnno: {
-    hg19: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh37_v1.6/incl_anno/whole_genome_SNVs_inclAnno.tsv.gz",
-    hg38: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh38_v1.6/incl_anno/whole_genome_SNVs_inclAnno.tsv.gz",
+    hg19: join(
+      resDir,
+      "CADD-scripts/data/prescored/GRCh37_v1.6/incl_anno/whole_genome_SNVs_inclAnno.tsv.gz",
+    ),
+    hg38: join(
+      resDir,
+      "CADD-scripts/data/prescored/GRCh38_v1.6/incl_anno/whole_genome_SNVs_inclAnno.tsv.gz",
+    ),
   },
   noAnno: {
-    hg19: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh37_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
-    hg38: "/cluster/home/jiyuan/res/CADD-scripts/data/prescored/GRCh38_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
+    hg19: join(
+      resDir,
+      "CADD-scripts/data/prescored/GRCh37_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
+    ),
+    hg38: join(
+      resDir,
+      "CADD-scripts/data/prescored/GRCh38_v1.6/no_anno/whole_genome_SNVs.tsv.gz",
+    ),
   },
 };
 
 export async function getVcfannoCADDCfg(
   ref: keyof typeof CADD,
-  inclAnno?: boolean
+  inclAnno?: boolean,
 ): Promise<VcfAnnoAnnotConfigCol>;
 export async function getVcfannoCADDCfg(
   file: string,
-  inclAnno?: boolean
+  inclAnno?: boolean,
 ): Promise<VcfAnnoAnnotConfigCol>;
 export async function getVcfannoCADDCfg(
   fileOrRef: string,
-  inclAnno = false
+  inclAnno = false,
 ): Promise<VcfAnnoAnnotConfigCol> {
   const database = CADD[inclAnno ? "inclAnno" : "noAnno"];
   let version: keyof typeof CADDColumns;
@@ -113,12 +164,11 @@ export async function getVcfannoCADDCfg(
     }
   } else {
     const ref = fileOrRef as keyof typeof database;
-    version =
-      ref === "hg19"
-        ? "GRCh37_v1_6"
-        : ref === "hg38"
-        ? "GRCh38_v1_6"
-        : assertNever(ref);
+    version = ref === "hg19"
+      ? "GRCh37_v1_6"
+      : ref === "hg38"
+      ? "GRCh38_v1_6"
+      : assertNever(ref);
     file = database[ref];
   }
   if (!inclAnno) {
@@ -151,7 +201,7 @@ export async function getVcfannoCADDCfg(
         "GerpRS",
         "GerpRSpval",
         "GerpN",
-        "GerpS"
+        "GerpS",
       ),
     };
   }
@@ -159,8 +209,8 @@ export async function getVcfannoCADDCfg(
 
 // tabix -f -b 2 -e 2 -s 1
 const AlphaMissense = {
-  hg19: "/cluster/home/jiyuan/res/alphamissense/AlphaMissense_hg19.tsv.gz",
-  hg38: "/cluster/home/jiyuan/res/alphamissense/AlphaMissense_hg38.tsv.gz",
+  hg19: join(resDir, "alphamissense/AlphaMissense_hg19.tsv.gz"),
+  hg38: join(resDir, "alphamissense/AlphaMissense_hg38.tsv.gz"),
 };
 
 export const localAC = `FJMUN_AC`,
@@ -178,7 +228,7 @@ export const vcfannoLocal = D.fromPairs(
         ["nhomalt", localNumHomAlt],
       ]),
     },
-  ])
+  ]),
 );
 
 export const vcfannoCfg = D.fromPairs(
@@ -187,6 +237,14 @@ export const vcfannoCfg = D.fromPairs(
       {
         file: dbnsfpSnpSift[ref],
         ...dbnsfpColumns,
+      },
+      {
+        file: GnomadStrFields[ref].exomes,
+        ...GnomadStrFieldsDef[ref]("e"),
+      },
+      {
+        file: GnomadStrFields[ref].genomes,
+        ...GnomadStrFieldsDef[ref]("g"),
       },
       {
         file: ClinVar[ref],
@@ -211,28 +269,28 @@ export const vcfannoCfg = D.fromPairs(
         file: wbbcDatabase[ref === "hg19" ? "hs37" : ref],
         ...FieldsToDef(
           [["AF"], ["North_AF"], ["Central_AF"], ["South_AF"], ["Lingnan_AF"]],
-          (field) => `WBBC_${field}`
+          (field) => `WBBC_${field}`,
         ),
       },
-      ...pipe(
-        annovar,
-        D.filterWithKey((k) => k.startsWith(`${ref}_`)),
-        D.mapWithKey((k, v) => ({
-          file: path.join(annovarDataDir, `${k}.txt.gz`),
-          ...v!,
-        })),
-        D.values
-      ),
+      // ...pipe(
+      //   annovar,
+      //   D.filterWithKey((k) => k.startsWith(`${ref}_`)),
+      //   D.mapWithKey((k, v) => ({
+      //     file: path.join(annovarDataDir, `${k}.txt.gz`),
+      //     ...v!,
+      //   })),
+      //   D.values
+      // ),
     ];
     return [ref, cfg] as const;
-  })
+  }),
 );
 
 type VcfAnnotColumn = [number, string, string?];
 
 export function ColToDef<T extends VcfAnnotColumn[]>(
   inputs: T,
-  toName?: (name: string) => string
+  toName?: (name: string) => string,
 ) {
   return inputs.reduce(
     (out, [column, name, op]) => {
@@ -241,7 +299,7 @@ export function ColToDef<T extends VcfAnnotColumn[]>(
       out.ops.push(op ?? "self");
       return out;
     },
-    { columns: [], names: [], ops: [] } as Omit<VcfAnnoAnnotConfigCol, "file">
+    { columns: [], names: [], ops: [] } as Omit<VcfAnnoAnnotConfigCol, "file">,
   );
 }
 
@@ -271,10 +329,13 @@ export function CADDToDef(
     keys.map((def) => {
       const { key, altName, op } = parseCADDKeyDef(def);
       const { id, name, type } = CADDColumns[version][key];
-      const typeDef =
-        type === "float" ? "_float" : type === "integer" ? "_int" : "";
+      const typeDef = type === "float"
+        ? "_float"
+        : type === "integer"
+        ? "_int"
+        : "";
       return [id, `${altName ?? name}${typeDef}`, op];
-    })
+    }),
   );
 }
 
@@ -282,7 +343,7 @@ type VcfAnnotField = [string, string?, string?];
 
 function FieldsToDef<T extends VcfAnnotField[]>(
   inputs: T,
-  toName?: (name: string) => string
+  toName?: (name: string) => string,
 ) {
   return inputs.reduce(
     (out, [field, name, op]) => {
@@ -292,6 +353,6 @@ function FieldsToDef<T extends VcfAnnotField[]>(
       out.ops.push(op ?? "self");
       return out;
     },
-    { fields: [], names: [], ops: [] } as Omit<VcfAnnoAnnotConfigField, "file">
+    { fields: [], names: [], ops: [] } as Omit<VcfAnnoAnnotConfigField, "file">,
   );
 }

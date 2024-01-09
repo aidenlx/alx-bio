@@ -1,7 +1,7 @@
 export * from "./repo/js/slivar-functions.js";
-import { freqSource } from "../pipeline/_freq.ts";
+import { aggregatedFreq } from "../pipeline/_freq.ts";
 
-const allFreq = freqSource.aggregated.map(function (v) {
+const allFreq = aggregatedFreq.map(function (v) {
   return v.toLowerCase();
 });
 

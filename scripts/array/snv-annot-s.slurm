@@ -1,6 +1,8 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
+#SBATCH --cpus-per-task 1
+#SBATCH --mem=20G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 

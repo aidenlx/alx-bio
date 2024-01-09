@@ -114,6 +114,8 @@ export default new Command()
       if (opts.targetIntervals) {
         targetOption = ["--target-intervals", opts.targetIntervals];
       }
+    } else if (opts.method === "wgs") {
+      baitOption = ["--wgs-parallel"];
     }
 
     const cleanup = opts.cleanup ? "" : "--no-cleanup";
@@ -130,8 +132,17 @@ export default new Command()
             )
           } ${arrayFile} ${ref_call} ${cleanup}`,
       }),
-      hs_stat: () => ({
+      markdup: () => ({
         deps: "align",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-markdup.slurm",
+            )
+          } ${arrayFile} ${ref_call} ${cleanup}`,
+      }),
+      hs_stat: () => ({
+        deps: "markdup",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(
@@ -141,7 +152,7 @@ export default new Command()
         canRun: opts.method === "wes",
       }),
       bam: () => ({
-        deps: "align",
+        deps: "markdup",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(
