@@ -1,11 +1,11 @@
 import { assert, cd, Command, ensureDir, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
-import { parseFastqOption, readGroup } from "@/pipeline/_res.ts";
+import { getRawBam, parseFastqOption, readGroup } from "@/pipeline/_res.ts";
 import { createLocalFastq } from "@/utils/ln-fastq.ts";
 import { validateOptions } from "@/pipeline/ngs-call/_common.ts";
 import fastp from "@/pipeline/module/fastp.ts";
 import bwaMem2 from "@/pipeline/module/bwa-mem2.ts";
-import samtoolsSort from "@/pipeline/module/samtools/sort.ts";
+// import samtoolsSort from "@/pipeline/module/samtools/sort.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
@@ -24,12 +24,11 @@ export default new Command()
   .option("-s, --sample <name>", "Sample Name", {
     required: true,
   })
-  .option("--spark", "Spark")
   .action(async (options) => {
     const { sample, workPath, assembly, cleanup, reference } =
       await validateOptions(options);
 
-    const threads = options.threads > 12 ? 12 : options.threads;
+    const threads = options.threads;
     cd(workPath);
 
     const bam_dir = "bamfile";
@@ -56,24 +55,22 @@ export default new Command()
       console.info("TASK: Running fastp");
       const fastqRaw = parseFastqOption(options);
       const fastq = await createLocalFastq(fastqRaw);
-      await fastp(fastq, fastqTrimmed, { threads });
+      await fastp(fastq, fastqTrimmed, { threads: threads > 2 ? 2 : threads });
     }
 
     await ensureDir(bam_dir);
 
     console.info("TASK: Alignment using BWA MEM");
-    const bam_raw = path.join(bam_dir, `${sample}.${assembly}.bam`);
+    const bam_raw = path.join(bam_dir, getRawBam(sample, assembly));
     await bwaMem2(fastqTrimmed, bam_raw, {
       threads,
       readGroup: readGroup(sample),
       reference,
+      fixmate: false,
     });
     await cleanup(...fastqTrimmed);
 
-    console.info("TASK: BAM SORT");
-    const bam_sort = path.join(bam_dir, `${sample}.sort.${assembly}.bam`);
-    await samtoolsSort(bam_raw, bam_sort, { threads, memory: "4G" });
-    // await cleanup(bam_raw);
+    // do sort after markdup, as markdupspark is optimized for queryname sorted bam
 
     console.info("END ALL ************************************* Bey");
   });

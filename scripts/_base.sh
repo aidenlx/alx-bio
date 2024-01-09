@@ -8,10 +8,12 @@ _ALX_BASE_CONFIGED=1
 
 set -eo pipefail
 
+echoerr() { echo "$@" 1>&2; }
+
 function conda_init() {
   # for fjsc
   if [ -x "$(command -v micromamba)" ]; then
-    echo "using micromamba"
+    echoerr "using micromamba"
     source "$HOME/.bashrc"
     shopt -s expand_aliases
     conda() {
@@ -27,15 +29,13 @@ function conda_init() {
     export MAMBA_EXE=/cluster/home/jiyuan/mambaforge/bin/mamba
     export CONDA_EXE=/cluster/home/jiyuan/mambaforge/bin/conda
   else
-    echo "Error: CONDA env should be conda or mamba, got $1"
+    echoerr "Error: CONDA env should be conda or mamba, got $1"
     exit 1
   fi
   eval "$($CONDA_EXE shell.bash hook)"
 }
 
 THREADS=${SLURM_CPUS_PER_TASK:-8}
-
-echoerr() { echo "$@" 1>&2; }
 
 function validate_input () {
   INPUT=$1

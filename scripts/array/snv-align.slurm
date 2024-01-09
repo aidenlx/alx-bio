@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
-#SBATCH --cpus-per-task 8
+#SBATCH --cpus-per-task 16
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err

@@ -6,8 +6,14 @@ export const resDir = Deno.env.get("ALXBIO_RES") ?? "/cluster/home/jiyuan/res";
 import { D, join, path } from "@/deps.ts";
 import { validBedPath } from "@/utils/validate.ts";
 
+const ver = '.'+'v2'
+
+export const getRawBam = (sample: string, assembly: string) =>
+  `${sample}.raw${ver}.${assembly}.bam`;
+export const getSortBam = (sample: string, assembly: string) =>
+  `${sample}.sort${ver}.${assembly}.bam`;
 export const getMarkDupBam = (sample: string, assembly: string) =>
-  `${sample}.markdup.${assembly}.bam`;
+  `${sample}.markdup${ver}.${assembly}.bam`;
 export const getBqsrBam = (sample: string, assembly: string) =>
   `${sample}.bqsr.${assembly}.bam`;
 export const getGVcfGz = (sample: string, assembly: string) =>

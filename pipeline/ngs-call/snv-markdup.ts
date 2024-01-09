@@ -1,6 +1,6 @@
 import { cd, Command, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
-import { getMarkDupBam } from "@/pipeline/_res.ts";
+import { getMarkDupBam, getRawBam } from "@/pipeline/_res.ts";
 import { validateOptions } from "@/pipeline/ngs-call/_common.ts";
 import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
 import GATKMarkDuplicatesSpark from "@/pipeline/module/gatk/markDupSpark.ts";
@@ -22,21 +22,20 @@ export default new Command()
   })
   // .option("--spark", "Spark")
   .action(async (options) => {
-    const { sample, workPath, assembly } = await validateOptions(options);
+    const { sample, workPath, assembly, cleanup } = await validateOptions(options);
 
     const { threads } = options;
     cd(workPath);
 
     const bam_dir = "bamfile";
 
-    const bam_sort = path.join(bam_dir, `${sample}.sort.${assembly}.bam`);
-
     console.info("TASK: MarkDuplicates");
+    const bam_raw = path.join(bam_dir, getRawBam(sample, assembly));
     const bam_markdup = path.join(bam_dir, getMarkDupBam(sample, assembly)),
       metrics = path.join(bam_dir, `${sample}.metrics.${assembly}.txt`);
     // if (options.spark) {
     await GATKMarkDuplicatesSpark(
-      bam_sort,
+      bam_raw,
       { bam: bam_markdup, metrics },
       { threads },
     );
@@ -50,6 +49,7 @@ export default new Command()
     // await cleanup(bam_sort);
 
     await samtoolsIndex(bam_markdup, { threads });
+    cleanup(bam_raw)
 
     console.info("END ALL ************************************* Bey");
   });

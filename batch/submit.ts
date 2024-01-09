@@ -139,6 +139,15 @@ export default new Command()
             script(
               "snv-markdup.slurm",
             )
+          } ${arrayFile} ${ref_call} --no-cleanup`,
+      }),
+      bam_sort: () => ({
+        deps: "markdup",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-bam-sort.slurm",
+            )
           } ${arrayFile} ${ref_call} ${cleanup}`,
       }),
       hs_stat: () => ({
@@ -152,7 +161,7 @@ export default new Command()
         canRun: opts.method === "wes",
       }),
       bam: () => ({
-        deps: "markdup",
+        deps: "bam_sort",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(

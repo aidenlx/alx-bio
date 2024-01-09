@@ -1,13 +1,25 @@
 #!/bin/bash
-#SBATCH -p normal
+
 #SBATCH -N 1
-#SBATCH --cpus-per-task 8
-#SBATCH --mem-per-cpu=10G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
-# 20G per task, each task requires 2 threads
-# -> 10G mem per thread
+#SBATCH hetjob
+
+#SBATCH -N 1
+#SBATCH --cpus-per-task 2
+#SBATCH --mem=20G
+#SBATCH --output=log-%A-%x_%a.out
+#SBATCH --error=log-%A-%x_%a.err
+
+#SBATCH hetjob
+
+#SBATCH -N 1
+#SBATCH --cpus-per-task 1
+#SBATCH --mem=4
+#SBATCH --output=log-%A-%x_%a.out
+#SBATCH --error=log-%A-%x_%a.err
+
 
 source $HOME/alx-bio/scripts/array/_base.sh
 conda_init mamba
@@ -21,5 +33,27 @@ if [ $TYPE == "WES" ]; then
 fi
 
 conda activate ngs-call
-bioa snv.vcf $BAIT_INTERVALS \
-  -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+
+BIOA_WARP=$HOME/alx-bio/scripts/task/bioa-ngs-call.sh
+
+echo "Preparing intervals"
+PARALLEL=$(
+  srun --het-group=0 $BIOA_WARP snv.hap-split $BAIT_INTERVALS \
+    -t 12 -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+)
+
+# if PARALLEL=-1
+JOB_HC=$SAMPLE_ID.hap-caller
+JOB_MERGE=$SAMPLE_ID.hap-merge
+if [ $PARALLEL -eq -1 ]; then
+  echo "Running in single-threaded mode"
+  srun --het-group=1 -J $JOB_HC $BIOA_WARP snv.hap-caller -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+else
+  echo "Running in parallel mode: 0-$PARALLEL"
+  srun --het-group=1 -J $JOB_HC -a 0-$PARALLEL $BIOA_WARP snv.hap-caller \
+       -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+  echo "Merging haplotype calls"
+  srun --het-group=2 -J $JOB_MERGE $BIOA_WARP snv.hap-merge -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID"
+fi
+
+echo "Done"

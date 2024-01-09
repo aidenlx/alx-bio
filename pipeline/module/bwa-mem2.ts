@@ -26,7 +26,8 @@ export default async function bwaMem2(
     opts.reference,
   ];
 
-  if (opts.fixmate ?? true) {
+  // Fixmate checks the two mates from a paired-end bam (name sorted) and then updates the flags and insert sizes. IMHO that only makes sense if you did any filtering on your bam. For example, I typically filter my bam (for ChIP-seq, ATAC-seq, these kind of assays) for properly-paired reads and MAPQ. In case filtering for MAPQ>30 removes the forward, but not the reverse mate, the actual read is no longer paired, even though the bitwise flag still indicates the remaining mate as such. Running fixmate will then flag this singleton as unpaired and remove the insert size field, which allows subsequent removal by e.g. samtools view -f 2. In your case, as you did align directly from fastq, I do not think that it is necessary. Just be sure in your subsequent SNV calling that you exclude reads with MAPQ=0, as these multimappers are unrealiable.
+  if (opts.fixmate ?? false) {
     await $`bwa-mem2 mem ${bwaArgs} ${forward} ${reverse} \
   | samtools fixmate -@ ${opts.threads} -m - ${output}`;
   } else {

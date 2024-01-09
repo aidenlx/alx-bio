@@ -30,7 +30,7 @@ export default async function GATKMarkDuplicatesSpark(
     ...(options.args ?? []),
     ...[
       "--spark-master",
-      `local[${options.threads >= 12 ? 12 : options.threads}]`,
+      `local[${options.threads}]`,
     ],
     ...gatkTempDir(),
     ...(options.removeAllDuplicates

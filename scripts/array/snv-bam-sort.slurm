@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -p normal
 #SBATCH -N 1
-#SBATCH --cpus-per-task 20
-#SBATCH --mem-per-cpu=4G
+#SBATCH --cpus-per-task 12
+#SBATCH --mem=20G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
@@ -13,7 +13,7 @@ ASSEMBLY=$(validate_input ${2,,} hs37 hg38)
 shift;shift;
 
 conda activate ngs-call
-bioa snv.markdup \
+bioa snv.bam-sort \
   -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
 
 

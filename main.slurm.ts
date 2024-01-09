@@ -12,8 +12,11 @@ import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
 import snvMerge from "@/pipeline/snv-merge.ts";
 import snvAlign from "@/pipeline/ngs-call/snv-align.ts";
 import snvMarkdup from "@/pipeline/ngs-call/snv-markdup.ts";
+import snvBamSort from "@/pipeline/ngs-call/snv-bam-sort.ts";
 import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
-import snvVcf from "@/pipeline/ngs-call/snv-vcf.ts";
+import snvHapSplilt from "@/pipeline/ngs-call/snv-hap-split.ts";
+import snvHapCaller from "@/pipeline/ngs-call/snv-hap-caller.ts";
+import snvHapMerge from "@/pipeline/ngs-call/snv-hap-merge.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
 import snvExtract from "@/pipeline/snv-extract.ts";
 import merlin from "@/pipeline/merlin/merlin.ts";
@@ -38,8 +41,11 @@ await new Command()
   .command(...c(hsStat))
   .command(...c(snvAlign))
   .command(...c(snvMarkdup))
+  .command(...c(snvBamSort))
   .command(...c(snvBam))
-  .command(...c(snvVcf))
+  .command(...c(snvHapSplilt))
+  .command(...c(snvHapCaller))
+  .command(...c(snvHapMerge))
   .command(...c(snvMerge))
   .command(...c(snvAnnotM))
   .command(...c(snvAnnotS))
