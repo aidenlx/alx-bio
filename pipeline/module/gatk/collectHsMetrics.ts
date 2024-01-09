@@ -15,7 +15,7 @@ export default async function GATKCollectHsMetrics(
 ) {
   const { done, finish } = await checkDone(output, inputBam, true);
   if (done) {
-    console.info("Skipping CollectHsMetrics");
+    console.error("Skipping CollectHsMetrics");
     return;
   }
 

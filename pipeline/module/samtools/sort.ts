@@ -16,7 +16,7 @@ export default async function samtoolsSort(
 ) {
   const { done, finish } = await checkDone(output, input, true);
   if (done) {
-    console.info("Skipping samtools sort");
+    console.error("Skipping samtools sort");
     return;
   }
   const args = [

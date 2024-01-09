@@ -17,7 +17,7 @@ export default async function bcftoolsSetGT(
 ) {
   const { done, finish } = await checkDone(output, input);
   if (done) {
-    console.info("Skipping bcftools setgt");
+    console.error("Skipping bcftools setgt");
     return output;
   }
   const args = [...(options.args ?? [])];

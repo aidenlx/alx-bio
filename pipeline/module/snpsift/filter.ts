@@ -15,7 +15,7 @@ export default async function SnpSiftFilter(
 ) {
   const { done, finish } = await checkDone(outputVcfGz, input, true);
   if (done) {
-    console.info(`Skipping SnpSift Filter: ${outputVcfGz}`);
+    console.error(`Skipping SnpSift Filter: ${outputVcfGz}`);
     return outputVcfGz;
   }
 

@@ -28,7 +28,7 @@ export default async function GATKGenotypeGVCFs(
     output.replace(/\.gz$/, "")
   );
   if (done) {
-    console.info("Skipping GenotypeGVCFs");
+    console.error("Skipping GenotypeGVCFs");
     return;
   }
 

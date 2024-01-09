@@ -18,7 +18,7 @@ export default async function fastp(
     true
   );
   if (done) {
-    console.info("Skipping fastp");
+    console.error("Skipping fastp");
     return;
   }
   const args = [

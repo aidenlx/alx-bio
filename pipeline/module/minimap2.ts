@@ -19,7 +19,7 @@ export default async function minimap2(
 ) {
   const { done, finish } = await checkDone(output, input);
   if (done) {
-    console.info("Skipping minimap2");
+    console.error("Skipping minimap2");
     return;
   }
   const minimapOpts = [

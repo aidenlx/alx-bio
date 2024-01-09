@@ -17,7 +17,7 @@ export default async function bwaMem2(
 ) {
   const { done, finish } = await checkDone(output, [forward, reverse], true);
   if (done) {
-    console.info("Skipping bwa mem");
+    console.error("Skipping bwa mem");
     return;
   }
   const bwaArgs = [

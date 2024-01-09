@@ -15,7 +15,7 @@ export default async function GATKMarkDuplicates(
 ) {
   const { done, finish } = await checkDone(bam, input, true);
   if (done) {
-    console.info("Skipping MarkDuplicates");
+    console.error("Skipping MarkDuplicates");
     return;
   }
 

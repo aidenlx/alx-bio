@@ -28,7 +28,7 @@ export default async function SVision(
   };
 
   if (done) {
-    console.info("Skipping SVision");
+    console.error("Skipping SVision");
     return output;
   }
 

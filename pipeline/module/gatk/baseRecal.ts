@@ -17,7 +17,7 @@ export default async function GATKBaseRecalibrator(
 ) {
   const { done, finish } = await checkDone(output, input, true);
   if (done) {
-    console.info(`Skipping BaseRecalibrator ${output}`);
+    console.error(`Skipping BaseRecalibrator ${output}`);
     return;
   }
   const knownSites = opts.knownSites.flatMap((file) => [`--known-sites`, file]);

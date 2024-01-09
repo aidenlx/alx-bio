@@ -24,7 +24,7 @@ export default async function GATKHaplotypeCaller(
     output.replace(/\.gz$/, ""),
   );
   if (done) {
-    console.info(`Skipping HaplotypeCaller ${output}`);
+    console.error(`Skipping HaplotypeCaller ${output}`);
     return;
   }
 

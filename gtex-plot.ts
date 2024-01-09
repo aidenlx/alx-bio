@@ -99,7 +99,7 @@ function toOutputName(gene: string, plotType: PlotType) {
 function getDlGraphFn(browser: Browser, outDir: string) {
   return async function downloadGraph(gene: string, types: PlotType[]) {
     if (types.length === 0) {
-      console.info(`Skipping ${gene}`);
+      console.error(`Skipping ${gene}`);
       return;
     } else {
       console.info(`Downloading ${types.join(", ")}@${gene}`);

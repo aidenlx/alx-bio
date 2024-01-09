@@ -27,7 +27,7 @@ export default async function tableAnnovar(
   console.info("annovar output: " + outBase);
 
   if (done) {
-    console.info("Skipping annovar");
+    console.error("Skipping annovar");
     return output;
   }
 

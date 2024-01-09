@@ -22,7 +22,7 @@ export default async function GATKCombineGVCFs(
     output.replace(/\.gz$/, "")
   );
   if (done) {
-    console.info("Skipping CombineGVCFs");
+    console.error("Skipping CombineGVCFs");
     return;
   }
 

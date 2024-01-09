@@ -20,7 +20,7 @@ export default async function snpEff(
     output.replace(/\.gz$/, "")
   );
   if (done) {
-    console.info("Skipping snpEff");
+    console.error("Skipping snpEff");
     return;
   }
 

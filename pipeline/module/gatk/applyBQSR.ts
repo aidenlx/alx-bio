@@ -13,7 +13,7 @@ export default async function GATKApplyBQSR(
 ) {
   const { done, finish } = await checkDone(output, [bam, bqsr], true);
   if (done) {
-    console.info("Skipping ApplyBQSR");
+    console.error("Skipping ApplyBQSR");
     return;
   }
 

@@ -18,7 +18,7 @@ export default async function gatherVCF(
     output.replace(/\.gz$/, "")
   );
   if (done) {
-    console.info("Skipping mergeVCF");
+    console.error("Skipping mergeVCF");
     return;
   }
   const isGzipped = output.endsWith(".gz");

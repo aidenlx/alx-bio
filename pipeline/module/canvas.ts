@@ -23,7 +23,7 @@ export default async function Canvas(
   );
 
   if (done) {
-    console.info("Skipping Canvas");
+    console.error("Skipping Canvas");
     return;
   }
 

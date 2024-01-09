@@ -17,7 +17,7 @@ export default async function slivarGnotate(
     output.replace(/\.gz$/, ""),
   );
   if (done) {
-    console.info("Skipping slivar gnotate");
+    console.error("Skipping slivar gnotate");
     return output;
   }
 

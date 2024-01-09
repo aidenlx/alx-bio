@@ -76,7 +76,7 @@ async function Extract(
 ) {
   const { done, finish } = await checkDone(outputTsvGz, inputVcf);
   if (done) {
-    console.info("Skipping extract");
+    console.error("Skipping extract");
     return outputTsvGz;
   }
   console.error(`Extracting from ${inputVcf}...`);
@@ -103,7 +103,7 @@ export default async function ExtractAndHpoAnnot(
 ) {
   const { done, finish } = await checkDone(outputTsvGz, inputVcf);
   if (done) {
-    console.info("Skipping hpo annot");
+    console.error("Skipping hpo annot");
     return outputTsvGz;
   }
   console.error(`Extracting from ${inputVcf}...`);

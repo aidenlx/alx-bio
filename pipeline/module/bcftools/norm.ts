@@ -16,7 +16,7 @@ export default async function bcftoolsNorm(
 ) {
   const { done, finish } = await checkDone(output, input, true);
   if (done) {
-    console.info("Skipping bcftools norm");
+    console.error("Skipping bcftools norm");
     return output;
   }
   const args = [

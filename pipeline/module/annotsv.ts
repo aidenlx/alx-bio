@@ -21,7 +21,7 @@ export default async function AnnotSV(
   const { done, finish } = await checkDone(outBase, input);
 
   if (done) {
-    console.info("Skipping AnnotSV");
+    console.error("Skipping AnnotSV");
     return;
   }
 

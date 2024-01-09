@@ -18,7 +18,7 @@ export default async function bcftoolsFilter(
 ) {
   const { done, finish } = await checkDone(output, input);
   if (done) {
-    console.info("Skipping bcftools filter");
+    console.error("Skipping bcftools filter");
     return output;
   }
   const args = [

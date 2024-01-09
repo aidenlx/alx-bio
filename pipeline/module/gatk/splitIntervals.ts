@@ -16,7 +16,7 @@ export default async function GATKSplitIntervals(
 ) {
   const { done, finish } = await checkDone(output, intervals, true);
   if (done) {
-    console.info("Skipping BaseRecalibrator");
+    console.error("Skipping BaseRecalibrator");
     return;
   }
 

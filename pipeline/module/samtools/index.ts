@@ -15,7 +15,7 @@ export default async function samtoolsIndex(
   const output = `${input}.bai`;
   const { done, finish } = await checkDone(output, input, true);
   if (done) {
-    console.info("Skipping samtools index");
+    console.error("Skipping samtools index");
     return output;
   }
   const args = [...(options.args ?? []), ...["-@", options.threads]];

@@ -11,7 +11,7 @@ export default async function GATKGatherBQSRReports(
 ) {
   const { done, finish } = await checkDone(output, inputs, true);
   if (done) {
-    console.info("Skipping GatherBQSRReports");
+    console.error("Skipping GatherBQSRReports");
     return;
   }
 

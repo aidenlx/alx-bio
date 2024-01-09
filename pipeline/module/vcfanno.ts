@@ -47,7 +47,7 @@ export default async function vcfanno(
     output.replace(/\.gz$/, "")
   );
   if (done) {
-    console.info("Skipping vcfanno");
+    console.error("Skipping vcfanno");
     return output;
   }
 

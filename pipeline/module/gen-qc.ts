@@ -13,7 +13,7 @@ export default async function genQC(
 ) {
   const { done, finish } = await checkDone(outputVcfGz, inputVcfGz);
   if (done) {
-    console.info("Skipping qc vcf gen");
+    console.error("Skipping qc vcf gen");
     return outputVcfGz;
   }
   if (!outputVcfGz.endsWith(".gz")) {
