@@ -12,9 +12,10 @@ import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
 import snvMerge from "@/pipeline/snv-merge.ts";
 import snvAlign from "@/pipeline/ngs-call/snv-align.ts";
 import snvMarkdup from "@/pipeline/ngs-call/snv-markdup.ts";
-import snvBamSort from "@/pipeline/ngs-call/snv-bam-sort.ts";
-import snvBam from "@/pipeline/ngs-call/snv-bam.ts";
-import snvHapSplilt from "@/pipeline/ngs-call/snv-hap-split.ts";
+import snvBamSort from "./pipeline/ngs-call/snv-markdup-post.ts";
+import snvBqsrRun from "@/pipeline/ngs-call/snv-bqsr-run.ts";
+import snvBqsrApply from "@/pipeline/ngs-call/snv-bqsr-apply.ts";
+import snvHapSplilt from "./pipeline/ngs-call/snv-interval-split.ts";
 import snvHapCaller from "@/pipeline/ngs-call/snv-hap-caller.ts";
 import snvHapMerge from "@/pipeline/ngs-call/snv-hap-merge.ts";
 import tsvFilter from "@/pipeline/tsv-filter.ts";
@@ -26,7 +27,6 @@ import famCheck from "@/batch/fam-check.ts";
 import _3gsMap from "./pipeline/3GS/3gs-map.ts";
 import svAnnot from "@/pipeline/3GS/sv-annot.ts";
 import svCall from "@/pipeline/3GS/sv-call.ts";
-import pavToVcf from "@/pipeline/pav/to-vcf.ts";
 import canvas from "@/pipeline/3GS/canvas.ts";
 
 await new Command()
@@ -42,7 +42,8 @@ await new Command()
   .command(...c(snvAlign))
   .command(...c(snvMarkdup))
   .command(...c(snvBamSort))
-  .command(...c(snvBam))
+  .command(...c(snvBqsrRun))
+  .command(...c(snvBqsrApply))
   .command(...c(snvHapSplilt))
   .command(...c(snvHapCaller))
   .command(...c(snvHapMerge))
@@ -58,7 +59,6 @@ await new Command()
   .command(...c(_3gsMap))
   .command(...c(svCall))
   .command(...c(svAnnot))
-  .command(...c(pavToVcf))
   .command(...c(canvas))
   .command("help", new HelpCommand().global())
   .command("completions", new CompletionsCommand())

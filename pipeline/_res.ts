@@ -10,8 +10,8 @@ const ver = '.'+'v2'
 
 export const getRawBam = (sample: string, assembly: string) =>
   `${sample}.raw${ver}.${assembly}.bam`;
-export const getSortBam = (sample: string, assembly: string) =>
-  `${sample}.sort${ver}.${assembly}.bam`;
+export const getTagBam = (sample: string, assembly: string) =>
+  `${sample}.nmu_tags${ver}.${assembly}.bam`;
 export const getMarkDupBam = (sample: string, assembly: string) =>
   `${sample}.markdup${ver}.${assembly}.bam`;
 export const getBqsrBam = (sample: string, assembly: string) =>

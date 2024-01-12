@@ -55,13 +55,14 @@ export default new Command()
         vcf_dir,
         toIntervalScatter(sample, assembly),
       );
+      const scatterIdStr = scatterId.toString().padStart(4, "0");
       const intervals = path.join(
         interval_scatter,
-        `${scatterId}-scattered.interval_list`,
+        `${scatterIdStr}-scattered.interval_list`,
       );
       const output = path.join(
         interval_scatter,
-        `${scatterId}-scattered.g.vcf.gz`,
+        `${scatterIdStr}-scattered.g.vcf.gz`,
       );
       if (!await exists(intervals)) {
         throw new Error(`intervals file not found: ${intervals}`);

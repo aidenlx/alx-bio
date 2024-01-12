@@ -25,8 +25,7 @@ if [ -z "$SAMPLE_ID" ]; then
     exit 1
 fi
 
-export TMPDIR=./$SAMPLE_ID/$SLURM_JOB_ID.tmp
-mkdir -p $TMPDIR
+export TMPDIR=$(mktemp -d --tmpdir=./$SAMPLE_ID/)
 export TMPDIR=$(realpath $TMPDIR)
 
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf -- "$TMPDIR"' EXIT

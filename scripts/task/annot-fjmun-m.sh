@@ -2,6 +2,7 @@
 #SBATCH -p normal
 #SBATCH -N 1
 #SBATCH --cpus-per-task 12
+#SBATCH --mem-per-cpu=2G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 

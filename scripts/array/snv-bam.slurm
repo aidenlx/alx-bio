@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -p normal
-#SBATCH -N 1
-#SBATCH --cpus-per-task 12
-#SBATCH --mem-per-cpu=4G
+#SBATCH --nodes 1
+#SBATCH --ntasks 6
+#SBATCH --cpus-per-task 2
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
 
@@ -13,12 +13,44 @@ ASSEMBLY=$(validate_input ${2,,} hs37 hg38)
 TYPE=$(validate_input ${3^^} WGS WES)
 shift;shift;shift;
 
-mkdir -p $SAMPLE_ID/
-
 if [ $TYPE == "WES" ]; then
   BAIT_INTERVALS="--bait-intervals"
 fi
 
 conda activate ngs-call
-bioa snv.bam $BAIT_INTERVALS \
-  -t $THREADS -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+
+BIOA_WARP="$HOME/alx-bio/scripts/task/bioa-ngs-call.sh"
+
+echo "Preparing intervals"
+PARALLEL=$(
+  srun -N 1 -n 1 "$BIOA_WARP" "$TMPDIR" snv.interval-split \ 
+    $BAIT_INTERVALS -t 12 -r $ASSEMBLY -o "$SAMPLE_ID/bamfile/" -s "$SAMPLE_ID" "$@"
+)
+
+echo "Parallel: $PARALLEL"
+
+# if PARALLEL=-1
+JOB_HC=$SAMPLE_ID.bqsr-run
+JOB_MERGE=$SAMPLE_ID.bqsr-apply
+if [ "$PARALLEL" = "-1" ]; then
+  echo "Running in single-threaded mode"
+  srun -N 1 -n 1 --cpus-per-task 2 --mem=0 -J $JOB_HC "$BIOA_WARP" "$TMPDIR" snv.bqsr-run \
+    -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+else
+  PARALLEL=$((PARALLEL - 1))
+  echo "Running in parallel mode: 0-$PARALLEL"
+  for i in $(seq 0 $PARALLEL); do
+    echo "Running bqsr for interval $i"
+    # allow sharing resources within the same node
+    # it's --exclusive by default
+    srun -N 1 -n 1 --oversubscribe --cpus-per-task 2 --mem=0 -J $JOB_HC "$BIOA_WARP" "$TMPDIR" snv.bqsr-run \
+      -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" --id $i "$@" &
+  done
+  wait
+fi
+
+echo "Applying bqsr"
+srun -N 1 -n 1 --cpus-per-task 2 --mem=0 -J $JOB_MERGE "$BIOA_WARP" "$TMPDIR" snv.bqsr-apply \
+  -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+
+echo "bam Done"

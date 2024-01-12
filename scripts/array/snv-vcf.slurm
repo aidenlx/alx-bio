@@ -1,25 +1,10 @@
 #!/bin/bash
-
-#SBATCH -N 1
-#SBATCH --output=log-%A-%x_%a.out
-#SBATCH --error=log-%A-%x_%a.err
-
-#SBATCH hetjob
-
-#SBATCH -N 1
+#SBATCH -p normal
+#SBATCH --nodes 1
+#SBATCH --ntasks 6
 #SBATCH --cpus-per-task 2
-#SBATCH --mem=20G
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err
-
-#SBATCH hetjob
-
-#SBATCH -N 1
-#SBATCH --cpus-per-task 1
-#SBATCH --mem=4
-#SBATCH --output=log-%A-%x_%a.out
-#SBATCH --error=log-%A-%x_%a.err
-
 
 source $HOME/alx-bio/scripts/array/_base.sh
 conda_init mamba
@@ -34,26 +19,37 @@ fi
 
 conda activate ngs-call
 
-BIOA_WARP=$HOME/alx-bio/scripts/task/bioa-ngs-call.sh
+BIOA_WARP="$HOME/alx-bio/scripts/task/bioa-ngs-call.sh"
 
 echo "Preparing intervals"
 PARALLEL=$(
-  srun --het-group=0 $BIOA_WARP snv.hap-split $BAIT_INTERVALS \
-    -t 12 -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+  srun -N 1 -n 1 "$BIOA_WARP" "$TMPDIR" snv.interval-split $BAIT_INTERVALS \
+    -t 12 -r $ASSEMBLY -o "$SAMPLE_ID/vcf/" -s "$SAMPLE_ID" "$@"
 )
+
+echo "Parallel: $PARALLEL"
 
 # if PARALLEL=-1
 JOB_HC=$SAMPLE_ID.hap-caller
 JOB_MERGE=$SAMPLE_ID.hap-merge
-if [ $PARALLEL -eq -1 ]; then
+if [ "$PARALLEL" = "-1" ]; then
   echo "Running in single-threaded mode"
-  srun --het-group=1 -J $JOB_HC $BIOA_WARP snv.hap-caller -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+  srun -N 1 -n 1 --cpus-per-task 2 --mem=0 -J $JOB_HC "$BIOA_WARP" "$TMPDIR" snv.hap-caller \
+     -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
 else
+  PARALLEL=$((PARALLEL - 1))
   echo "Running in parallel mode: 0-$PARALLEL"
-  srun --het-group=1 -J $JOB_HC -a 0-$PARALLEL $BIOA_WARP snv.hap-caller \
-       -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
+  for i in $(seq 0 $PARALLEL); do
+    echo "Running haplotype caller for interval $i"
+    # allow sharing resources within the same node
+    # it's --exclusive by default
+    srun -N 1 -n 1 --oversubscribe --cpus-per-task 2 --mem=0 -J $JOB_HC "$BIOA_WARP" "$TMPDIR" snv.hap-caller \
+      -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" --id $i "$@" &
+  done
+  wait
   echo "Merging haplotype calls"
-  srun --het-group=2 -J $JOB_MERGE $BIOA_WARP snv.hap-merge -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID"
+  srun -N 1 -n 1 --cpus-per-task 1 --mem=0 -J $JOB_MERGE "$BIOA_WARP" "$TMPDIR" snv.hap-merge \
+     -r $ASSEMBLY -o "$SAMPLE_ID/" -s "$SAMPLE_ID" "$@"
 fi
 
-echo "Done"
+echo "vcf Done"

@@ -22,7 +22,9 @@ export default new Command()
   })
   // .option("--spark", "Spark")
   .action(async (options) => {
-    const { sample, workPath, assembly, cleanup } = await validateOptions(options);
+    const { sample, workPath, assembly, cleanup } = await validateOptions(
+      options,
+    );
 
     const { threads } = options;
     cd(workPath);
@@ -31,14 +33,10 @@ export default new Command()
 
     console.info("TASK: MarkDuplicates");
     const bam_raw = path.join(bam_dir, getRawBam(sample, assembly));
-    const bam_markdup = path.join(bam_dir, getMarkDupBam(sample, assembly)),
-      metrics = path.join(bam_dir, `${sample}.metrics.${assembly}.txt`);
+    const bam_markdup = path.join(bam_dir, getMarkDupBam(sample, assembly));
+    // skip metrics collection as it slows down spark version and is optional
+    await GATKMarkDuplicatesSpark(bam_raw, { bam: bam_markdup }, { threads });
     // if (options.spark) {
-    await GATKMarkDuplicatesSpark(
-      bam_raw,
-      { bam: bam_markdup, metrics },
-      { threads },
-    );
     // } else {
     //   await GATKMarkDuplicates(
     //     bam_sort,
@@ -49,7 +47,7 @@ export default new Command()
     // await cleanup(bam_sort);
 
     await samtoolsIndex(bam_markdup, { threads });
-    cleanup(bam_raw)
+    cleanup(bam_raw);
 
     console.info("END ALL ************************************* Bey");
   });

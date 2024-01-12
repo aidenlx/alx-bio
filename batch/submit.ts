@@ -141,17 +141,17 @@ export default new Command()
             )
           } ${arrayFile} ${ref_call} --no-cleanup`,
       }),
-      bam_sort: () => ({
+      markdup_post: () => ({
         deps: "markdup",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(
-              "snv-bam-sort.slurm",
+              "snv-markdup-post.slurm",
             )
           } ${arrayFile} ${ref_call} ${cleanup}`,
       }),
       hs_stat: () => ({
-        deps: "markdup",
+        deps: "markdup_post",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(
@@ -161,7 +161,7 @@ export default new Command()
         canRun: opts.method === "wes",
       }),
       bam: () => ({
-        deps: "bam_sort",
+        deps: "markdup_post",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(

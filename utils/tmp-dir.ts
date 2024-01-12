@@ -4,7 +4,10 @@ import sharedStart from "@/utils/share-start.ts";
 let tempDir: string | null = null;
 export function getTempDir() {
   if (tempDir) return tempDir;
-  const globalTempDir = Deno.env.get("TMPDIR");
+  let globalTempDir = Deno.env.get("TMPDIR");
+  if (globalTempDir?.startsWith("'") && globalTempDir.endsWith("'")) {
+    globalTempDir = globalTempDir.slice(1, -1);
+  }
   if (globalTempDir && sharedStart(globalTempDir, Deno.cwd())) {
     tempDir = globalTempDir;
     return globalTempDir;

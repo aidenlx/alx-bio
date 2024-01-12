@@ -1,5 +1,6 @@
 import { checkDone } from "@/utils/check-done.ts";
 import { $ } from "@/deps.ts";
+import { getTempDir } from "@/utils/tmp-dir.ts";
 
 export default async function gatherVCF(
   inputs: string[],
@@ -28,6 +29,6 @@ zcat -f ${hcOutputs} | rg -v "^#"
 ) \
 | bcftools sort - ${isGzipped ? "-Oz" : "-Ov"} -o ${output} --max-mem ${
     options.memory ?? "4G"
-  }`;
+  } --temp-dir ${getTempDir()}`;
   await finish();
 }

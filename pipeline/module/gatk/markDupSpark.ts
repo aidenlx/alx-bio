@@ -6,12 +6,12 @@ export { required } from "./_common.ts";
 
 export default async function GATKMarkDuplicatesSpark(
   input: string,
-  { bam, metrics }: { bam: string; metrics: string },
+  { bam, metrics }: { bam: string; metrics?: string },
   options: GATKOptions & {
     threads: number;
     removeAllDuplicates?: boolean;
     removeSequencingDuplicates?: boolean;
-  }
+  },
 ) {
   const { done, finish } = await checkDone(bam, input, true);
   if (done) {
@@ -35,17 +35,18 @@ export default async function GATKMarkDuplicatesSpark(
     ...gatkTempDir(),
     ...(options.removeAllDuplicates
       ? [
-          "--remove-all-duplicates",
-          String(options.removeAllDuplicates ?? false),
-        ]
+        "--remove-all-duplicates",
+        String(options.removeAllDuplicates ?? false),
+      ]
       : []),
     ...(options.removeSequencingDuplicates
       ? [
-          "--remove-sequencing-duplicates",
-          String(options.removeSequencingDuplicates ?? false),
-        ]
+        "--remove-sequencing-duplicates",
+        String(options.removeSequencingDuplicates ?? false),
+      ]
       : []),
-    ...["-I", input, "-O", bam, "-M", metrics],
+    ...["-I", input, "-O", bam],
+    ...(metrics ? ["-M", metrics] : []),
   ];
 
   await $`gatk ${java(options)} MarkDuplicatesSpark ${args}`;

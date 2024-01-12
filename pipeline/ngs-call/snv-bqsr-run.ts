@@ -1,22 +1,21 @@
-import { cd, Command, path, pLimit } from "@/deps.ts";
+import { cd, Command, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
-import { getMarkDupBam, KnownSites, wgsInterval } from "@/pipeline/_res.ts";
+import {
+  getTagBam,
+  KnownSites,
+  wgsInterval,
+} from "@/pipeline/_res.ts";
 import {
   defaultIntervalPadding,
-  getIntervals,
   toIntervalScatter,
   validateOptions,
 } from "@/pipeline/ngs-call/_common.ts";
 import { parseBaitIntevals } from "@/pipeline/ngs-call/parseBaitIntevals.ts";
-import GATKSplitIntervals from "@/pipeline/module/gatk/splitIntervals.ts";
 import GATKBaseRecalibrator from "@/pipeline/module/gatk/baseRecal.ts";
-import GATKGatherBQSRReports from "@/pipeline/module/gatk/gatherBQSRReports.ts";
-import GATKApplyBQSR from "@/pipeline/module/gatk/applyBQSR.ts";
-import samtoolsIndex from "@/pipeline/module/samtools/index.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
-  .name("snv.bam")
+  .name("snv.bqsr-run")
   .description("Prepare raw mapped bam reads for varinat calling")
   .type("positiveInt", PositiveInt)
   .option("-t, --threads <count:positiveInt>", "Threads", { default: 4 })
@@ -25,6 +24,7 @@ export default new Command()
     "bed file for WESeq capture region, run in WGS mode if not present",
     { collect: true },
   )
+  .option("--id <value:number>", "scatter id", { required: false })
   .option("--wgs-parallel", "run in WGS mode with parallel scatter")
   .option("-o, --out-dir <path>", "output directory", { default: "." })
   .option("--no-cleanup", "skip cleanup, keep intermedia files")
@@ -39,10 +39,12 @@ export default new Command()
     default: defaultIntervalPadding,
   })
   .action(async (options) => {
-    const { sample, workPath, assembly, cleanup, reference } =
+    const { sample, workPath, assembly, reference } =
       await validateOptions(options);
-    const { threads } = options;
     cd(workPath);
+
+    const scatterId = options.id ?? -1;
+    const scatterIdStr = scatterId.toString().padStart(4, "0");
 
     const wgsParallelEnabled = options.wgsParallel && assembly === "hg38";
     const baitIntervals = wgsParallelEnabled
@@ -58,8 +60,7 @@ export default new Command()
     const knownSites = KnownSites[assembly];
 
     const bam_dir = "bamfile";
-    const bam_bqsr = path.join(bam_dir, `${sample}.bqsr.${assembly}.bam`);
-    const bam_markdup = path.join(bam_dir, getMarkDupBam(sample, assembly));
+    const bam_sort = path.join(bam_dir, getTagBam(sample, assembly));
 
     const interval_scatter = path.join(
       bam_dir,
@@ -67,60 +68,29 @@ export default new Command()
     );
 
     if (baitIntervals) {
-      const limit = pLimit(threads);
-      console.info(`SPLIT TAG_REGION using ${baitIntervals}`);
-      await GATKSplitIntervals(baitIntervals, interval_scatter, {
-        reference,
-        intervalPadding,
-        threads,
-        quiet: true,
-      });
-
-      const intervals = await getIntervals(interval_scatter);
-      const toBrOutput = (list: string) =>
-        list.replace(/\.interval_list$/, ".recal.table");
-      const brTasks = intervals.map((list) =>
-        limit(() =>
-          GATKBaseRecalibrator(bam_markdup, toBrOutput(list), {
-            intervals: list,
-            intervalPadding,
-            quiet: true,
-            reference,
-            knownSites,
-          })
-        )
+      console.info("TASK: BaseRecalibrator for " + scatterId);
+      const intervals = path.join(
+        interval_scatter,
+        `${scatterIdStr}-scattered.interval_list`,
       );
-      await Promise.all(brTasks);
-
-      console.info("MERGE BaseRecalibrator");
-
-      const bqsr_tab = path.join(bam_dir, `${sample}.recal.${assembly}.table`);
-      await GATKGatherBQSRReports(intervals.map(toBrOutput), bqsr_tab, {
-        args: ["--QUIET"],
-      });
-
-      console.info("TASK: ApplyBQSR");
-      await GATKApplyBQSR({ bam: bam_markdup, bqsr: bqsr_tab }, bam_bqsr, {
+      const output = path.join(
+        interval_scatter,
+        `${scatterIdStr}-scattered.recal.table`,
+      );
+      await GATKBaseRecalibrator(bam_sort, output, {
+        intervals: intervals,
+        intervalPadding,
         reference,
+        knownSites,
       });
-      await cleanup(bqsr_tab, ...intervals.map(toBrOutput));
     } else {
       console.info("TASK: BaseRecalibrator");
       const recal = path.join(bam_dir, `${sample}.recal.${assembly}.table`);
 
-      await GATKBaseRecalibrator(bam_markdup, recal, {
+      await GATKBaseRecalibrator(bam_sort, recal, {
         reference,
         knownSites: KnownSites[assembly],
       });
-
-      console.info("TASK: ApplyBQSR");
-      await GATKApplyBQSR({ bam: bam_markdup, bqsr: recal }, bam_bqsr, {
-        reference,
-      });
-      await cleanup(recal);
     }
-    console.info("TASK: BAM INDEXING");
-    await samtoolsIndex(bam_bqsr, { threads });
-
     console.info("END ALL ************************************* Bey");
   });

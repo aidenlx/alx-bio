@@ -2,12 +2,12 @@ import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import { getGVcfGz } from "@/pipeline/_res.ts";
 import { cd, Command, ensureDir, path } from "@/deps.ts";
 import {
+  defaultIntervalPadding,
   getIntervals,
   toIntervalScatter,
   validateOptions,
-  defaultIntervalPadding
 } from "@/pipeline/ngs-call/_common.ts";
-import gatherVCF from "@/pipeline/module/gatherVcf.ts";
+import bcftoolsConcat from "@/pipeline/module/bcftools/concat.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
 const dummpOptDesc = "dummy option to keep the same interface";
@@ -18,7 +18,7 @@ export default new Command()
   .type("positiveInt", PositiveInt)
   .option("-t, --threads <count:positiveInt>", dummpOptDesc, { default: 2 })
   .option("--bait-intervals [path]", dummpOptDesc, { collect: true })
-  .option("--wgs-parallel", dummpOptDesc)
+  .option("--wgs-parallel", "run in WGS mode with parallel scatter")
   .option("-o, --out-dir <path>", "output directory", { default: "." })
   .option("--no-cleanup", "skip cleanup, keep intermedia files")
   .type("genomeAssembly", genomeAssemblyHs37)
@@ -51,7 +51,11 @@ export default new Command()
       list.replace(/\.interval_list$/, ".g.vcf.gz");
     const hcOutputs = intervals.map(toHcOutput);
     console.info("MERGE GVCF");
-    await gatherVCF(hcOutputs, gVcfGz);
+    await bcftoolsConcat(
+      hcOutputs,
+      gVcfGz,
+      options.wgsParallel ? { naive: true } : { allowOverlaps: true },
+    );
     await cleanup(...hcOutputs);
 
     console.info("TASK: GVCF MERGE END");

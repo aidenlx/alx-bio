@@ -1,6 +1,6 @@
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import { wgsInterval } from "@/pipeline/_res.ts";
-import { cd, Command, ensureDir, path } from "@/deps.ts";
+import { cd, Command, ensureDir } from "@/deps.ts";
 import {
   defaultIntervalPadding,
   getIntervals,
@@ -12,7 +12,7 @@ import GATKSplitIntervals from "@/pipeline/module/gatk/splitIntervals.ts";
 import { PositiveInt } from "@/utils/validate.ts";
 
 export default new Command()
-  .name("snv.hap-split")
+  .name("snv.interval-split")
   .description("Per-sample variant calling pipeline")
   .type("positiveInt", PositiveInt)
   .option("-t, --threads <count:positiveInt>", "Threads", { default: 2 })
@@ -41,6 +41,7 @@ export default new Command()
 
     const parallel = Math.floor(threads / 2);
 
+    ensureDir(workPath);
     cd(workPath);
 
     const wgsParallelEnabled = options.wgsParallel && assembly === "hg38";
@@ -54,19 +55,13 @@ export default new Command()
 
     console.error(`baitIntervals: ${baitIntervals ?? "Disabled"}`);
 
-    const vcf_dir = "vcf";
-    ensureDir(vcf_dir);
-
     if (baitIntervals) {
-      const interval_scatter = path.join(
-        vcf_dir,
-        toIntervalScatter(sample, assembly),
-      );
+      const interval_scatter = toIntervalScatter(sample, assembly);
       console.error(`SPLIT TAG_REGION using ${baitIntervals}`);
       await GATKSplitIntervals(baitIntervals, interval_scatter, {
         reference,
         intervalPadding,
-        threads: parallel,
+        scatterCount: parallel,
         quiet: true,
       });
       const intervals = await getIntervals(interval_scatter);
