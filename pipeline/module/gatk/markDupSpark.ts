@@ -1,4 +1,4 @@
-import { checkDone } from "@/utils/check-done.ts";
+import { checkDone, optOptional } from "@/utils/check-done.ts";
 import { GATKOptions, gatkTempDir, gatkTempDirJava, java } from "./_common.ts";
 import { $ } from "@/deps.ts";
 
@@ -28,23 +28,19 @@ export default async function GATKMarkDuplicatesSpark(
 
   const args = [
     ...(options.args ?? []),
-    ...[
-      "--spark-master",
-      `local[${options.threads}]`,
-    ],
+    ...optOptional(options.threads, (cores) => [
+      "--conf",
+      `spark.executor.cores=${cores}`,
+    ]),
     ...gatkTempDir(),
-    ...(options.removeAllDuplicates
-      ? [
-        "--remove-all-duplicates",
-        String(options.removeAllDuplicates ?? false),
-      ]
-      : []),
-    ...(options.removeSequencingDuplicates
-      ? [
-        "--remove-sequencing-duplicates",
-        String(options.removeSequencingDuplicates ?? false),
-      ]
-      : []),
+    ...optOptional(options.removeAllDuplicates, (bool) => [
+      "--remove-all-duplicates",
+      String(bool ?? false),
+    ]),
+    ...optOptional(options.removeSequencingDuplicates, (bool) => [
+      "--remove-sequencing-duplicates",
+      String(bool ?? false),
+    ]),
     ...["-I", input, "-O", bam],
     ...(metrics ? ["-M", metrics] : []),
   ];

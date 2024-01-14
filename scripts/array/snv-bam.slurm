@@ -23,7 +23,7 @@ BIOA_WARP="$HOME/alx-bio/scripts/task/bioa-ngs-call.sh"
 
 echo "Preparing intervals"
 PARALLEL=$(
-  srun -N 1 -n 1 "$BIOA_WARP" "$TMPDIR" snv.interval-split \ 
+  srun -N 1 -n 1 "$BIOA_WARP" "$TMPDIR" snv.interval-split \
     $BAIT_INTERVALS -t 12 -r $ASSEMBLY -o "$SAMPLE_ID/bamfile/" -s "$SAMPLE_ID" "$@"
 )
 

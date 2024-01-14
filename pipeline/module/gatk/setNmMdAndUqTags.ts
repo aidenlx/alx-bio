@@ -26,10 +26,10 @@ export default async function GATKSetNmMdAndUqTags(
 
   const args = [
     ...(opts.args ?? []),
-    ...gatkTempDir(),
-    ...["--reference", opts.reference],
+    ...gatkTempDir(true),
+    ...["-R", opts.reference],
     ...["-I", input],
-    ...["--output", output],
+    ...["-O", output],
   ];
   await $`gatk ${java(opts)} SetNmMdAndUqTags ${args}`;
   await finish();
