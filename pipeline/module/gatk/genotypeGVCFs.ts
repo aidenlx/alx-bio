@@ -1,4 +1,4 @@
-import { checkDone } from "@/utils/check-done.ts";
+import { checkDone, optOptional } from "@/utils/check-done.ts";
 import {
   GATKOptions,
   gatkTempDir,
@@ -15,6 +15,7 @@ export default async function GATKGenotypeGVCFs(
   output: string,
   opts: GATKOptions & {
     reference: string;
+    intervals?: string;
     standardMinConfidenceThresholdForCalling?: number;
   }
 ) {
@@ -46,6 +47,7 @@ export default async function GATKGenotypeGVCFs(
   const args = [
     ...(opts.args ?? []),
     ...gatkTempDir(),
+    ...optOptional(opts.intervals, (intervals) => ["-L", intervals]),
     ...["--reference", opts.reference],
     ...["-stand-call-conf", standCallConf],
     ...["--variant", input, "--output", output],

@@ -1,6 +1,7 @@
 #!/bin/bash
-#SBATCH -p normal
+#SBATCH -p scpu-p1
 #SBATCH -N 1
+#SBATCH --mem=0
 #SBATCH --cpus-per-task 16
 #SBATCH --output=log-%A-%x_%a.out
 #SBATCH --error=log-%A-%x_%a.err

@@ -1,10 +1,8 @@
-import { Command, ensureDir, path } from "@/deps.ts";
+import { $, Command, ensureDir, path } from "@/deps.ts";
 import { genomeAssemblyHs37 } from "@/modules/common.ts";
 import { nonAscii } from "@/utils/ascii.ts";
 import { getGVcfGz, Res } from "@/pipeline/_res.ts";
 import GATKCombineGVCFs from "@/pipeline/module/gatk/combineGVCFs.ts";
-import GATKGenotypeGVCFs from "@/pipeline/module/gatk/genotypeGVCFs.ts";
-import bcftoolsNorm from "@/pipeline/module/bcftools/norm.ts";
 
 export const mergeVersion = "." + "v2";
 
@@ -16,7 +14,6 @@ export default new Command()
   .option("-r, --ref <name:genomeAssembly>", "reference genome", {
     required: true,
   })
-  .option("--no-normalize", "skip normalization")
   .arguments("<input...>")
   .action(async (options, ...gvcfInputs) => {
     const output = options.output.replace(/\.+?$/, "");
@@ -34,29 +31,20 @@ export default new Command()
     const assembly = options.ref;
     const reference = Res[assembly].refFa;
 
-    const gVcfGz = getGVcfGz(output, assembly),
-      rawVcfGz = `${output}.raw.${assembly}.vcf.gz`,
-      normVcfGz = `${output}.norm${mergeVersion}.${assembly}.vcf.gz`;
+    const gVcfGz = getGVcfGz(output, assembly);
 
     if (gvcfInputs.length > 1) {
       console.error(
         `Merging ${gvcfInputs.length} gvcfs: \n${gvcfInputs.join("\n")}`,
       );
       await GATKCombineGVCFs(gvcfInputs, gVcfGz, { reference });
-      console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
-      await GATKGenotypeGVCFs(gVcfGz, rawVcfGz, { reference });
+      // console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
+      // await GATKGenotypeGVCFs(gVcfGz, rawVcfGz, { reference });
     } else {
-      console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
-      await GATKGenotypeGVCFs(gvcfInputs[0], rawVcfGz, { reference });
-    }
-
-    if (options.normalize) {
-      console.info("normalize vcf");
-      // split multiallelic variants into biallelic variants
-      // required by annovar
-      await bcftoolsNorm(rawVcfGz, normVcfGz, { fastaRef: reference });
-    } else {
-      console.info("skip normalization");
+      console.error(`Skip merging, only 1 gvcf: ${gvcfInputs[0]}`);
+      await $`ln -sf ${gvcfInputs[0]} ${gVcfGz}`;
+      // console.info("GenotypeGVCFs, inputs: " + gvcfInputs.join(", "));
+      // await GATKGenotypeGVCFs(gvcfInputs[0], rawVcfGz, { reference });
     }
     console.info("END ALL ************************************* Bey");
   });

@@ -18,7 +18,6 @@ if [ -z "$OUTPUT" ] || [ -z "$INPUT" ]; then
 fi
 ASSEMBLY=$(validate_input ${2,,} hg19 hg38)
 
-conda activate $HOME/miniconda3/envs/annotsv
 if [ $ASSEMBLY == "hg19" ]; then
   ASSEMBLY="${ALXBIO_RES}/hg19/hs37d5.fa"
 elif [ $ASSEMBLY == "hg38" ]; then

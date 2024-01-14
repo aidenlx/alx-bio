@@ -41,9 +41,9 @@ function parseMtimeDone(data: string) {
 
 export function optOptional<T>(
   option: T,
-  ifTrue: ((val: T) => string[] | string) | string |string[],
+  ifTrue: ((val: NonNullable<T>) => string[] | string) | string | string[],
 ): string[] {
-  if (!option) return [];
+  if (option === undefined || option === null) return [];
   if (typeof ifTrue === "string") return [ifTrue];
   else if (Array.isArray(ifTrue)) return ifTrue;
   const output = ifTrue(option);

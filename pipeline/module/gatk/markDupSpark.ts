@@ -21,8 +21,8 @@ export default async function GATKMarkDuplicatesSpark(
 
   options.javaOptions = [
     ...(options.javaOptions ?? []),
-    "-Xms60G",
-    "-Xmx60G",
+    "-Xms120G",
+    "-Xmx120G",
     gatkTempDirJava(),
   ];
 
@@ -45,6 +45,6 @@ export default async function GATKMarkDuplicatesSpark(
     ...(metrics ? ["-M", metrics] : []),
   ];
 
-  await $`gatk ${java(options)} MarkDuplicatesSpark ${args}`;
+  await $`srun gatk ${java(options)} MarkDuplicatesSpark ${args}`;
   await finish();
 }

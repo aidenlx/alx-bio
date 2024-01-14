@@ -18,6 +18,10 @@ export const getBqsrBam = (sample: string, assembly: string) =>
   `${sample}.bqsr.${assembly}.bam`;
 export const getGVcfGz = (sample: string, assembly: string) =>
   `${sample}.g.${assembly}.vcf.gz`;
+export const getRawGz = (sample: string, assembly: string) =>
+  `${sample}.raw.${assembly}.vcf.gz`;
+export const getNormGz = (sample: string, assembly: string) =>
+  `${sample}.norm.v2.${assembly}.vcf.gz`;
 
 // conda create -y -c conda-forge -c bioconda -n hs37-WGS fastqc trim-galore bwa-mem2 samtools gatk4 ncurses
 export const Res = {

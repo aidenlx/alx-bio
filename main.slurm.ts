@@ -10,6 +10,9 @@ import snvAnnotM from "@/pipeline/snv-annot-m.ts";
 import snvAnnotS from "@/pipeline/snv-annot-s.ts";
 import vcfFilterQuery from "@/pipeline/vcf-filter-query.ts";
 import snvMerge from "@/pipeline/snv-merge.ts";
+import snvGtGvcf from "@/pipeline/snv-gt-gvcf.ts";
+import snvGtMerge from "@/pipeline/snv-gt-merge.ts";
+import snvNormVcf from "@/pipeline/snv-norm-vcf.ts";
 import snvAlign from "@/pipeline/ngs-call/snv-align.ts";
 import snvMarkdup from "@/pipeline/ngs-call/snv-markdup.ts";
 import snvBamSort from "./pipeline/ngs-call/snv-markdup-post.ts";
@@ -48,6 +51,9 @@ await new Command()
   .command(...c(snvHapCaller))
   .command(...c(snvHapMerge))
   .command(...c(snvMerge))
+  .command(...c(snvGtGvcf))
+  .command(...c(snvGtMerge))
+  .command(...c(snvNormVcf))
   .command(...c(snvAnnotM))
   .command(...c(snvAnnotS))
   .command(...c(snvFinal))

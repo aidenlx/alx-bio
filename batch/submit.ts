@@ -194,6 +194,15 @@ export default new Command()
             )
           } ${arrayFile} ${ref_call}`,
       }),
+      gt_gvcf: () => ({
+        deps: "merge",
+        run: (name, deps) =>
+          $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
+            script(
+              "snv-gt-gvcf.slurm",
+            )
+          } ${arrayFile} ${ref_call}`,
+      }),
       // automap: () => ({
       //   deps: "merge",
       //   run: (name, deps) =>
@@ -202,7 +211,7 @@ export default new Command()
       //     )} ${arrayFile} ${ref_annot}`,
       // }),
       cadd: () => ({
-        deps: "merge",
+        deps: "gt_gvcf",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(
@@ -212,7 +221,7 @@ export default new Command()
         canRun: useCADDScript,
       }),
       annot_s: () => ({
-        deps: "merge",
+        deps: "gt_gvcf",
         run: (name, deps) =>
           $`sbatch ${slurmOpts} ${job(name)} ${deps} ${
             script(
